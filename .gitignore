@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.env
+AGENTS.md
+AGENT.md
+GEMINI.md
+CLAUDE.md
+.agents/
+graphify-out/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/

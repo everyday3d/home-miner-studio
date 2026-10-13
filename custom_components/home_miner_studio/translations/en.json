@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Cryptocurrency Miner",
+        "description": "Select your miner hardware or software platform.",
+        "data": {
+          "miner_type": "Miner Type",
+          "name": "Miner Friendly Name",
+          "host": "IP Address or Hostname",
+          "port": "Port",
+          "password": "Password (if required)"
+        }
+      },
+      "optional_config": {
+        "title": "Mining Pool & Economics",
+        "description": "Configure pool telemetry and electricity rate tracking for net profit calculation.",
+        "data": {
+          "coin": "Coin Ticker (e.g. BTC, KAS, LTC)",
+          "pool_user": "Pool Worker / Wallet Address",
+          "electricity_rate_sensor": "Electricity Rate Sensor (e.g. sensor.grid_electricity_price)",
+          "scan_interval": "Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to miner. Check IP address and port.",
+      "invalid_auth": "Authentication failed.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "Device is already configured."
+    }
+  }
+}
