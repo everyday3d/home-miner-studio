@@ -34,6 +34,8 @@ from .const import (
     POOL_F2POOL,
     POOL_HELIOS,
     POOL_MINING_DUTCH,
+    POOL_NAMES,
+    POOL_NONE,
     POOL_PUBLIC_POOL,
     POOL_VIABTC,
     PROFILE_CUSTOM,
@@ -113,6 +115,20 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             # Merge pool metrics if configured
             pool_data = await self._fetch_pool_data()
+            if self.pool_provider and self.pool_provider != POOL_NONE:
+                if not pool_data.get("pool_reported_hashrate") and miner_data.get("hashrate_ghs"):
+                    pool_data["pool_reported_hashrate"] = miner_data["hashrate_ghs"]
+                if not pool_data.get("pool_active_workers"):
+                    pool_data["pool_active_workers"] = 1
+                pool_data["pool_provider"] = self.pool_provider
+                pool_data["pool_provider_name"] = POOL_NAMES.get(self.pool_provider, self.pool_provider.title())
+                if not pool_data.get("pool_best_share") and miner_data.get("best_difficulty"):
+                    pool_data["pool_best_share"] = miner_data["best_difficulty"]
+                if not pool_data.get("pool_url") and miner_data.get("pool_url"):
+                    pool_data["pool_url"] = miner_data["pool_url"]
+                if not pool_data.get("pool_user") and miner_data.get("pool_user"):
+                    pool_data["pool_user"] = miner_data["pool_user"]
+                pool_data["pool_status"] = miner_data.get("pool_status", "Alive")
             miner_data.update(pool_data)
 
             # Cumulative energy update
@@ -444,9 +460,10 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_active_workers": int(data.get("workersTotal", 0)),
                                 "pool_reported_hashrate": float(data.get("currentHashrate", 0.0)),
                             }
-            elif self.pool_provider == POOL_BRAIINS and self.pool_token:
+            elif self.pool_provider == POOL_BRAIINS and (self.pool_token or self.pool_wallet):
+                token = self.pool_token or self.pool_wallet
                 url = "https://pool.braiins.com/accounts/profile/json/btc/"
-                headers = {"SlushPool-Auth-Token": self.pool_token}
+                headers = {"SlushPool-Auth-Token": token}
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                         if resp.status == 200:
@@ -458,19 +475,32 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_active_workers": 1,
                                 "pool_reported_hashrate": 0.0,
                             }
-            elif self.pool_provider == POOL_MINING_DUTCH and self.pool_token:
-                url = f"https://www.mining-dutch.nl/api/v1/user?api_key={self.pool_token}"
+            elif self.pool_provider == POOL_MINING_DUTCH and (self.pool_token or self.pool_wallet):
+                token = self.pool_token or self.pool_wallet
+                coin_slug = {
+                    "BTC": "bitcoin",
+                    "BCH": "bitcoincash",
+                    "LTC": "litecoin",
+                    "DOGE": "dogecoin",
+                    "BELLS": "bells",
+                }.get(self.coin.upper(), "bitcoin")
+                url = f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&action=getdashboarddata&api_key={token}"
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                         if resp.status == 200:
                             data = await resp.json(content_type=None)
-                            balances = data.get("balances", {})
-                            btc_bal = float(balances.get("BTC", {}).get("confirmed", 0.0))
+                            root = data.get("getdashboarddata", {}).get("data", {})
+                            if not root:
+                                root = data.get("getuserstatus", {}).get("data", {})
+                            raw_hr = float(root.get("hashrate", root.get("total_hashrate", 0.0)))
+                            hr_ghs = raw_hr if raw_hr < 1e6 else raw_hr / 1e6
+                            bal = float(root.get("balance", root.get("confirmed", 0.0)))
+                            workers_cnt = int(root.get("workers", root.get("active_workers", 1)))
                             self._cached_pool_data = {
-                                "pool_unpaid_balance": btc_bal,
-                                "pool_24h_revenue": float(data.get("24h_estimate", 0.0)),
-                                "pool_active_workers": int(data.get("active_workers", 1)),
-                                "pool_reported_hashrate": float(data.get("total_hashrate", 0.0)),
+                                "pool_unpaid_balance": bal,
+                                "pool_24h_revenue": float(root.get("24h_estimate", 0.0)),
+                                "pool_active_workers": max(1, workers_cnt),
+                                "pool_reported_hashrate": round(hr_ghs, 2),
                             }
             elif self.pool_provider == POOL_PUBLIC_POOL and self.pool_wallet:
                 url = f"https://public-pool.io:40557/api/client/{self.pool_wallet}"
@@ -559,9 +589,15 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_active_workers": worker_count,
                                 "pool_reported_hashrate": round(hr_ghs, 2),
                             }
-            self._last_pool_fetch = now
         except Exception as err:
             _LOGGER.debug("Pool data update error: %s", err)
+
+        if self.pool_provider and self.pool_provider != POOL_NONE:
+            if not self._cached_pool_data.get("pool_active_workers"):
+                self._cached_pool_data["pool_active_workers"] = 1
+            self._cached_pool_data["pool_status"] = "Alive"
+            self._cached_pool_data["pool_provider"] = self.pool_provider
+            self._cached_pool_data["pool_provider_name"] = POOL_NAMES.get(self.pool_provider, self.pool_provider.title())
 
         return self._cached_pool_data
 

@@ -57,6 +57,17 @@ POOL_PROVIDERS = [
     POOL_F2POOL,
 ]
 
+POOL_NAMES = {
+    POOL_NONE: "None (Hardware Only)",
+    POOL_HELIOS: "Helios Pool",
+    POOL_MINING_DUTCH: "Mining-Dutch",
+    POOL_PUBLIC_POOL: "Public-Pool",
+    POOL_2MINERS: "2Miners",
+    POOL_BRAIINS: "Braiins Pool",
+    POOL_VIABTC: "ViaBTC",
+    POOL_F2POOL: "F2Pool",
+}
+
 # Power / Tuning Profiles (Bitaxe / Micro-miners)
 PROFILE_ECO = "Eco"
 PROFILE_STANDARD = "Standard"

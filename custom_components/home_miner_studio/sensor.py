@@ -24,7 +24,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN
+from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, POOL_NAMES, POOL_NONE
 from .coordinator import MinerDataUpdateCoordinator
 
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
@@ -287,11 +287,15 @@ class HomeMinerSensor(CoordinatorEntity[MinerDataUpdateCoordinator], SensorEntit
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return sensor state attributes."""
         if self.entity_description.key == "pool_status":
+            cdata = self.coordinator.data or {}
+            prov = self.coordinator.pool_provider or cdata.get("pool_provider", POOL_NONE)
             return {
-                "pool_provider": self.coordinator.pool_provider,
-                "pool_wallet": self.coordinator.pool_wallet,
-                "pool_url": self.coordinator.data.get("pool_url") if self.coordinator.data else None,
-                "pool_user": self.coordinator.data.get("pool_user") if self.coordinator.data else None,
+                "pool_provider": prov,
+                "pool_provider_name": cdata.get("pool_provider_name", POOL_NAMES.get(prov, prov.replace("_", " ").title())),
+                "pool_wallet": self.coordinator.pool_wallet or cdata.get("pool_wallet") or cdata.get("pool_user"),
+                "pool_url": cdata.get("pool_url"),
+                "pool_user": cdata.get("pool_user"),
+                "pool_is_active": bool(prov and prov != POOL_NONE),
             }
         if self.entity_description.key in ("btc_price_usd", "coin_price_usd"):
             cdata = self.coordinator.data or {}

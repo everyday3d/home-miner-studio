@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Designed interactive Luminous Market Intelligence Console with responsive cubic Bezier spline SVG chart, neon gradient fill, timeframe pills (`24H`, `7D`, `30D`, `1Y`), and hover scrubber with price/time tooltip.
 
 ### Fixed
+- **Active Pool Telemetry & High-Contrast Modal Dropdowns** ([#12](https://github.com/everyday3d/home-miner-studio/issues/12)):
+  - Fixed white-on-white dropdown rendering across browser select popups by applying explicit dark high-contrast styling (`background-color: #0f172a !important; color: #f8fafc !important;`) and inline styles to all `<select>` and `<option>` elements.
+  - Enabled active pool telemetry for Mining-Dutch and Braiins by accepting credentials from either `pool_token` or `pool_wallet` and querying authenticated endpoints (`pools/{coin_slug}.php?page=api&action=getdashboarddata&api_key=...`).
+  - Added fallback synthesis in `_async_update_data()` ensuring that whenever a mining pool is selected in miner configuration, active worker count, reported hashrate, connection status, and pool provider name are immediately populated from hardware stratum telemetry.
+  - Bound `_minerPools` and `_minerWallets` into client-side cache and `localStorage` to guarantee instant visual updates upon saving changes in the edit modal.
+  - Highlighted active mining pools in the top Fleet Supported Pool Providers rack with dynamic green status orbs (`🟢 Mining-Dutch (1 Active)`).
+  - Injected dedicated **Active Pool Integration Strip** into each miner's workstation card displaying active pool name, worker identity, live status, and current hashrate.
 - **Modal DOM Isolation & Keyboard Event Containment** ([#10](https://github.com/everyday3d/home-miner-studio/issues/10)):
   - Completely isolated modal dialogs into a permanent `#modal-root` container separated from dynamic card content `#card-root`, preventing card re-renders from destroying open dialog markup or stealing input focus.
   - Intercepted and stopped event propagation (`e.stopPropagation()`) for `keydown`, `keyup`, and `keypress` on `#modal-root`, modal dialogs, and text/select inputs, preventing Home Assistant Lovelace from interpreting typed letters ('e', 'c', 'm', 'd', Escape) as global dashboard shortcuts.

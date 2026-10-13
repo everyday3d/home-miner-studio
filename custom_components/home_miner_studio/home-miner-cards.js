@@ -20,6 +20,8 @@ class HomeMinerFleetCard extends HTMLElement {
     this._selectedCoin = 'BTC';
     this._discoveredMiners = [];
     this._selectedDiscoveredHosts = new Set();
+    this._minerPools = {};
+    this._minerWallets = {};
   }
 
   connectedCallback() {
@@ -613,13 +615,13 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="modal-field">
                 <label class="modal-label">Miner Hardware Type</label>
                 <select id="modal-type" class="modal-select">
-                  <option value="bitaxe">Bitaxe / AxeOS</option>
-                  <option value="cgminer_rpc">Canaan Avalon / CGMiner</option>
-                  <option value="whatsminer">MicroBT Whatsminer</option>
-                  <option value="antminer">Antminer / Braiins OS</option>
-                  <option value="nerdminer">ESP32 NerdMiner</option>
-                  <option value="hiveos">HiveOS Rig Farm</option>
-                  <option value="generic_rest">Generic REST API</option>
+                  <option value="bitaxe" style="background-color: #0f172a; color: #f8fafc;">Bitaxe / AxeOS</option>
+                  <option value="cgminer_rpc" style="background-color: #0f172a; color: #f8fafc;">Canaan Avalon / CGMiner</option>
+                  <option value="whatsminer" style="background-color: #0f172a; color: #f8fafc;">MicroBT Whatsminer</option>
+                  <option value="antminer" style="background-color: #0f172a; color: #f8fafc;">Antminer / Braiins OS</option>
+                  <option value="nerdminer" style="background-color: #0f172a; color: #f8fafc;">ESP32 NerdMiner</option>
+                  <option value="hiveos" style="background-color: #0f172a; color: #f8fafc;">HiveOS Rig Farm</option>
+                  <option value="generic_rest" style="background-color: #0f172a; color: #f8fafc;">Generic REST API</option>
                 </select>
               </div>
               <div class="modal-field">
@@ -637,14 +639,14 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="modal-field">
                 <label class="modal-label">Mining Pool</label>
                 <select id="modal-pool" class="modal-select">
-                  <option value="none">None (Hardware Only)</option>
-                  <option value="helios">Helios Pool (Solo CKPool)</option>
-                  <option value="mining_dutch">Mining Dutch</option>
-                  <option value="public_pool">Public Pool (Solo)</option>
-                  <option value="2miners">2Miners</option>
-                  <option value="braiins">Braiins Pool</option>
-                  <option value="viabtc">ViaBTC</option>
-                  <option value="f2pool">F2Pool</option>
+                  <option value="none" style="background-color: #0f172a; color: #f8fafc;">None (Hardware Only)</option>
+                  <option value="helios" style="background-color: #0f172a; color: #f8fafc;">Helios Pool (Solo CKPool)</option>
+                  <option value="mining_dutch" style="background-color: #0f172a; color: #f8fafc;">Mining Dutch</option>
+                  <option value="public_pool" style="background-color: #0f172a; color: #f8fafc;">Public Pool (Solo)</option>
+                  <option value="2miners" style="background-color: #0f172a; color: #f8fafc;">2Miners</option>
+                  <option value="braiins" style="background-color: #0f172a; color: #f8fafc;">Braiins Pool</option>
+                  <option value="viabtc" style="background-color: #0f172a; color: #f8fafc;">ViaBTC</option>
+                  <option value="f2pool" style="background-color: #0f172a; color: #f8fafc;">F2Pool</option>
                 </select>
               </div>
               <div class="modal-field">
@@ -856,6 +858,14 @@ class HomeMinerFleetCard extends HTMLElement {
               this._minerNames[host] = name;
               try { localStorage.setItem('miner_name_' + host, name); } catch (e) {}
             }
+            if (poolProvider) {
+              this._minerPools[host] = poolProvider;
+              try { localStorage.setItem('miner_pool_' + host, poolProvider); } catch (e) {}
+            }
+            if (poolWallet !== undefined) {
+              this._minerWallets[host] = poolWallet;
+              try { localStorage.setItem('miner_wallet_' + host, poolWallet); } catch (e) {}
+            }
             await this._hass.callService('home_miner_studio', 'add_miner', {
               host,
               name: name || `Miner (${host})`,
@@ -870,6 +880,14 @@ class HomeMinerFleetCard extends HTMLElement {
             if (name) {
               this._minerNames[targetHost] = name;
               try { localStorage.setItem('miner_name_' + targetHost, name); } catch (e) {}
+            }
+            if (poolProvider) {
+              this._minerPools[targetHost] = poolProvider;
+              try { localStorage.setItem('miner_pool_' + targetHost, poolProvider); } catch (e) {}
+            }
+            if (poolWallet !== undefined) {
+              this._minerWallets[targetHost] = poolWallet;
+              try { localStorage.setItem('miner_wallet_' + targetHost, poolWallet); } catch (e) {}
             }
             await this._hass.callService('home_miner_studio', 'edit_miner', {
               host: targetHost,
@@ -1139,8 +1157,10 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-host').value = host;
     this.shadowRoot.querySelector('#modal-host').disabled = true;
     this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
-    this.shadowRoot.querySelector('#modal-pool').value = pool || 'none';
-    this.shadowRoot.querySelector('#modal-wallet').value = wallet || '';
+    const activePool = this._minerPools[host] || localStorage.getItem('miner_pool_' + host) || pool || 'none';
+    const activeWallet = this._minerWallets[host] || localStorage.getItem('miner_wallet_' + host) || wallet || '';
+    this.shadowRoot.querySelector('#modal-pool').value = activePool;
+    this.shadowRoot.querySelector('#modal-wallet').value = activeWallet;
     if (minerModal) minerModal.style.display = 'flex';
   }
 
@@ -1415,7 +1435,7 @@ class HomeMinerFleetCard extends HTMLElement {
           text-transform: uppercase;
         }
 
-        .modal-input, .modal-select {
+        .modal-input {
           background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 8px;
@@ -1426,9 +1446,46 @@ class HomeMinerFleetCard extends HTMLElement {
           outline: none;
         }
 
-        .modal-input:focus, .modal-select:focus {
+        .modal-input:focus {
           border-color: #38bdf8;
           box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        /* High-Contrast Modal Dropdown Select & Option Styling (Anti White-on-White) */
+        select.modal-input, select.modal-select, .modal-select {
+          background-color: #0f172a !important;
+          color: #f8fafc !important;
+          border: 1px solid rgba(56, 189, 248, 0.4) !important;
+          border-radius: 8px !important;
+          padding: 8px 12px !important;
+          font-size: 13px !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          outline: none !important;
+          cursor: pointer !important;
+        }
+
+        select.modal-input:focus, select.modal-select:focus, .modal-select:focus {
+          border-color: #38bdf8 !important;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+        }
+
+        select.modal-input option, select.modal-select option, .modal-select option, option {
+          background-color: #0f172a !important;
+          color: #f8fafc !important;
+          padding: 10px 14px !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          font-size: 13px !important;
+        }
+
+        select.modal-input option:checked, select.modal-select option:checked, .modal-select option:checked {
+          background-color: #0284c7 !important;
+          color: #ffffff !important;
+          font-weight: 700 !important;
+        }
+
+        select.modal-input option:hover, select.modal-select option:hover, .modal-select option:hover {
+          background-color: #1e293b !important;
+          color: #38bdf8 !important;
         }
 
         .modal-footer {
@@ -1870,12 +1927,14 @@ class HomeMinerFleetCard extends HTMLElement {
       const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
       const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
       const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
+      const bitaxeSavedPool = this._minerPools['192.168.1.91'] || localStorage.getItem('miner_pool_192.168.1.91');
+      const bitaxeSavedWallet = this._minerWallets['192.168.1.91'] || localStorage.getItem('miner_wallet_192.168.1.91');
       const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
       const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
       const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'public-pool.io:21496';
       const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'bc1q...bitaxe';
-      const bitaxePoolProvider = bitaxePoolStatusObj?.attributes?.pool_provider || 'public_pool';
-      const bitaxePoolWallet = bitaxePoolStatusObj?.attributes?.pool_wallet || '';
+      const bitaxePoolProvider = bitaxeSavedPool || bitaxePoolStatusObj?.attributes?.pool_provider || (bitaxePoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'public_pool');
+      const bitaxePoolWallet = bitaxeSavedWallet || bitaxePoolStatusObj?.attributes?.pool_wallet || '';
 
       miners.push({
         id: 'bitaxe',
@@ -1944,11 +2003,13 @@ class HomeMinerFleetCard extends HTMLElement {
       const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
       const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
       const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
+      const avalonSavedPool = this._minerPools['192.168.1.154'] || localStorage.getItem('miner_pool_192.168.1.154');
+      const avalonSavedWallet = this._minerWallets['192.168.1.154'] || localStorage.getItem('miner_wallet_192.168.1.154');
       const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
       const poolStatus = avalonPoolStatusObj?.state ||
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
-      const avalonPoolProvider = avalonPoolStatusObj?.attributes?.pool_provider || 'mining_dutch';
-      const avalonPoolWallet = avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
+      const avalonPoolProvider = avalonSavedPool || avalonPoolStatusObj?.attributes?.pool_provider || (cleanPoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
+      const avalonPoolWallet = avalonSavedWallet || avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
       const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
 
       const avalonName = this._getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', ['sensor.192_168_1_154_hashrate_th_s', 'sensor.avalon_nano_3s_hashrate_current', 'sensor.avalon_nano_3s_hashrate_avg']);
@@ -2073,6 +2134,24 @@ class HomeMinerFleetCard extends HTMLElement {
     let poolHashGhs = 0;
     let maxBestDiff = 0;
 
+    const poolProviderMap = {
+      'helios': 'Helios Pool',
+      'mining_dutch': 'Mining-Dutch',
+      'public_pool': 'Public-Pool',
+      '2miners': '2Miners',
+      'braiins': 'Braiins Pool',
+      'viabtc': 'ViaBTC',
+      'f2pool': 'F2Pool'
+    };
+
+    const activePoolCounts = {};
+    miners.forEach(m => {
+      const p = m.poolProvider;
+      if (p && p !== 'none') {
+        activePoolCounts[p] = (activePoolCounts[p] || 0) + 1;
+      }
+    });
+
     Object.keys(states).forEach(eid => {
       if (eid.startsWith('sensor.') && eid.endsWith('_pool_reported_hashrate')) {
         const v = parseFloat(states[eid]?.state || 0);
@@ -2096,9 +2175,21 @@ class HomeMinerFleetCard extends HTMLElement {
       }
     });
 
+    // Fallback: If sensor states not yet populated from remote API, count active miners with configured pools
+    if (totalPoolWorkers === 0) {
+      miners.forEach(m => {
+        if (m.poolProvider && m.poolProvider !== 'none') {
+          totalPoolWorkers++;
+          if (poolHashGhs === 0 && m.ths > 0) {
+            poolHashGhs += m.ths * 1000;
+          }
+        }
+      });
+    }
+
     const poolReportedHrStr = poolHashGhs > 0 
       ? (poolHashGhs >= 1000 ? (poolHashGhs / 1000).toFixed(2) + ' TH/s' : poolHashGhs.toFixed(1) + ' GH/s')
-      : totalHashThs.toFixed(2) + ' TH/s';
+      : (totalHashThs > 0 ? totalHashThs.toFixed(2) + ' TH/s' : '0.0 TH/s');
     const bestShareDisplay = maxBestDiff >= 1e9 ? (maxBestDiff / 1e9).toFixed(2) + ' G' : (maxBestDiff >= 1e6 ? (maxBestDiff / 1e6).toFixed(2) + ' M' : (maxBestDiff > 0 ? maxBestDiff.toLocaleString() : '--'));
 
     // SVG Radial Arc Metrics
@@ -2215,13 +2306,19 @@ class HomeMinerFleetCard extends HTMLElement {
             <span style="font-size: 13px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;">Supported Mining Pool Providers</span>
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);">Helios Pool</span>
-            <span class="badge-glass-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">Mining-Dutch</span>
-            <span class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.35);">Public-Pool</span>
-            <span class="badge-glass-pill" style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.35);">2Miners</span>
-            <span class="badge-glass-pill" style="color: #f472b6; border-color: rgba(244, 114, 182, 0.35);">Braiins</span>
-            <span class="badge-glass-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">ViaBTC</span>
-            <span class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.35);">F2Pool</span>
+            ${Object.entries(poolProviderMap).map(([pid, pname]) => {
+              const activeCount = activePoolCounts[pid] || 0;
+              const isActive = activeCount > 0;
+              return `
+                <span class="badge-glass-pill ${isActive ? 'active-pool-pill' : ''}" style="${
+                  isActive
+                    ? 'color: #38bdf8; border-color: #38bdf8; background: rgba(56, 189, 248, 0.22); font-weight: 700; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);'
+                    : 'color: #94a3b8; border-color: rgba(255, 255, 255, 0.1); opacity: 0.65;'
+                }">
+                  ${isActive ? '🟢 ' : ''}${pname}${isActive ? ` (${activeCount} Active)` : ''}
+                </span>
+              `;
+            }).join('')}
           </div>
         </div>
 
@@ -2419,7 +2516,27 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
               ` : ''}
 
-              <div class="stratum-card-strip" style="${isBitaxe ? 'margin-top: 14px;' : ''}">
+              <!-- Active Pool Integration Header -->
+              <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; margin-top: 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #34d399; box-shadow: 0 0 10px #34d399;"></span>
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">Active Pool Integration:</span>
+                  <span style="font-size: 13px; font-weight: 800; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">
+                    ${poolProviderMap[miner.poolProvider] || miner.poolProvider || 'Direct Stratum'}
+                  </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+                  <span style="color: #94a3b8;">Worker: <b style="color: #fbbf24;">${miner.poolUser || miner.poolWallet || 'Auto'}</b></span>
+                  <span style="color: rgba(255,255,255,0.2);">|</span>
+                  <span style="color: #34d399; font-weight: 700;">● ${miner.poolStatus || 'Alive'}</span>
+                  ${miner.ths > 0 ? `
+                    <span style="color: rgba(255,255,255,0.2);">|</span>
+                    <span style="color: #38bdf8; font-weight: 700;">${miner.ths.toFixed(2)} TH/s</span>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="stratum-card-strip">
                   <div class="stratum-chips-row">
                     <div class="stratum-host-pill">
                       <span style="color: #94a3b8;">Stratum Pool:</span>
