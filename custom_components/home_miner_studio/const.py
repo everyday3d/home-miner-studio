@@ -1,7 +1,7 @@
 """Constants for the Home Miner Studio integration."""
 
 DOMAIN = "home_miner_studio"
-PLATFORMS = ["sensor", "binary_sensor", "switch", "button"]
+PLATFORMS = ["sensor", "binary_sensor", "switch", "button", "number", "select"]
 
 # Configuration keys
 CONF_MINER_TYPE = "miner_type"
@@ -11,8 +11,9 @@ CONF_NAME = "name"
 CONF_PASSWORD = "password"
 CONF_API_KEY = "api_key"
 CONF_COIN = "coin"
-CONF_POOL_TYPE = "pool_type"
-CONF_POOL_USER = "pool_user"
+CONF_POOL_PROVIDER = "pool_provider"
+CONF_POOL_WALLET = "pool_wallet"
+CONF_POOL_TOKEN = "pool_token"
 CONF_ELECTRICITY_RATE_SENSOR = "electricity_rate_sensor"
 CONF_SCAN_INTERVAL = "scan_interval"
 
@@ -30,6 +31,40 @@ MINER_TYPES = [
     TYPE_NERDMINER,
     TYPE_GENERIC_REST,
 ]
+
+# Mining Pools
+POOL_NONE = "none"
+POOL_2MINERS = "2miners"
+POOL_BRAIINS = "braiins"
+POOL_VIABTC = "viabtc"
+POOL_F2POOL = "f2pool"
+
+POOL_PROVIDERS = [
+    POOL_NONE,
+    POOL_2MINERS,
+    POOL_BRAIINS,
+    POOL_VIABTC,
+    POOL_F2POOL,
+]
+
+# Power / Tuning Profiles (Bitaxe / Micro-miners)
+PROFILE_ECO = "Eco"
+PROFILE_STANDARD = "Standard"
+PROFILE_TURBO = "Turbo"
+PROFILE_CUSTOM = "Custom"
+
+TUNING_PROFILES = [
+    PROFILE_ECO,
+    PROFILE_STANDARD,
+    PROFILE_TURBO,
+    PROFILE_CUSTOM,
+]
+
+BITAXE_PROFILE_CONFIGS = {
+    PROFILE_ECO: {"frequency": 425, "core_voltage": 1100},
+    PROFILE_STANDARD: {"frequency": 500, "core_voltage": 1150},
+    PROFILE_TURBO: {"frequency": 550, "core_voltage": 1250},
+}
 
 # Default Ports
 DEFAULT_PORT_BITAXE = 80

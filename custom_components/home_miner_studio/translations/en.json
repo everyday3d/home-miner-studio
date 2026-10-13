@@ -17,7 +17,9 @@
         "description": "Configure pool telemetry and electricity rate tracking for net profit calculation.",
         "data": {
           "coin": "Coin Ticker (e.g. BTC, KAS, LTC)",
-          "pool_user": "Pool Worker / Wallet Address",
+          "pool_provider": "Mining Pool Provider",
+          "pool_wallet": "Pool Wallet Address or Username",
+          "pool_token": "Pool API Token (if required)",
           "electricity_rate_sensor": "Electricity Rate Sensor (e.g. sensor.grid_electricity_price)",
           "scan_interval": "Update Interval (seconds)"
         }

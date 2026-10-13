@@ -7,7 +7,6 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
@@ -17,6 +16,9 @@ from .const import (
     CONF_MINER_TYPE,
     CONF_NAME,
     CONF_PASSWORD,
+    CONF_POOL_PROVIDER,
+    CONF_POOL_TOKEN,
+    CONF_POOL_WALLET,
     CONF_PORT,
     CONF_SCAN_INTERVAL,
     DEFAULT_PORT_BITAXE,
@@ -24,6 +26,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MINER_TYPES,
+    POOL_PROVIDERS,
     TYPE_BITAXE,
     TYPE_CGMINER_RPC,
 )
@@ -41,7 +44,7 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._data: dict[str, Any] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> config_entries.FlowResult:
-        """Handle the initial step."""
+        """Handle the initial hardware connection step."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -87,6 +90,17 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema({
             vol.Optional(CONF_COIN, default="BTC"): str,
+            vol.Optional(CONF_POOL_PROVIDER, default="none"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": p, "label": "None" if p == "none" else p.title()}
+                        for p in POOL_PROVIDERS
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional(CONF_POOL_WALLET): str,
+            vol.Optional(CONF_POOL_TOKEN): str,
             vol.Optional(CONF_ELECTRICITY_RATE_SENSOR): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="sensor")
             ),

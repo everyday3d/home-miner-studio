@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
@@ -78,7 +79,7 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     ),
     SensorEntityDescription(
         key="vr_temp_c",
-        name="Voltage Regulator Temperature",
+        name="VR Temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
@@ -95,6 +96,27 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         name="Core Voltage",
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement="V",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="core_voltage_actual",
+        name="Actual Core Voltage",
+        native_unit_of_measurement="mV",
+        icon="mdi:flash-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="input_voltage",
+        name="Input Voltage",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement="V",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="current_a",
+        name="Current Draw",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
@@ -117,6 +139,12 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
+        key="hw_errors",
+        name="Hardware Errors",
+        icon="mdi:alert-circle-outline",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
         key="best_difficulty",
         name="Best Difficulty",
         icon="mdi:trophy-outline",
@@ -126,6 +154,36 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         name="Uptime",
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    # Mining Pool Telemetry
+    SensorEntityDescription(
+        key="pool_unpaid_balance",
+        name="Pool Unpaid Balance",
+        icon="mdi:wallet-outline",
+        state_class=SensorStateClass.TOTAL,
+    ),
+    SensorEntityDescription(
+        key="pool_24h_revenue",
+        name="Pool 24h Revenue",
+        icon="mdi:cash-clock",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pool_active_workers",
+        name="Pool Active Workers",
+        icon="mdi:account-hard-hat",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pool_reported_hashrate",
+        name="Pool Reported Hashrate",
+        icon="mdi:cloud-sync",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="pool_status",
+        name="Pool Connection Status",
+        icon="mdi:server-network",
     ),
 )
 
@@ -138,10 +196,11 @@ async def async_setup_entry(
     """Set up Home Miner Studio sensor platform."""
     coordinator: MinerDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    entities = [
+    entities: list[SensorEntity] = [
         HomeMinerSensor(coordinator, entry, description)
         for description in SENSOR_TYPES
     ]
+
     async_add_entities(entities)
 
 
