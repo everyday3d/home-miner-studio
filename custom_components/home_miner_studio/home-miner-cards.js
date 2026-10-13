@@ -11,6 +11,19 @@ class HomeMinerFleetCard extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this._modalOpen = false;
+    this._domReady = false;
+    this._minerNames = {};
+    this._modalMode = 'add';
+    this._activeHost = '';
+    this._deleteTargetHost = '';
+  }
+
+  connectedCallback() {
+    this._ensureDom();
+  }
+
+  getCardSize() {
+    return 6;
   }
 
   setConfig(config) {
@@ -25,262 +38,326 @@ class HomeMinerFleetCard extends HTMLElement {
     this.render();
   }
 
-  render() {
-    if (!this._hass) return;
+  _getMinerName(host, defaultName, entityIds = []) {
+    if (this._minerNames && this._minerNames[host]) {
+      return this._minerNames[host];
+    }
+    try {
+      const local = localStorage.getItem('miner_name_' + host);
+      if (local && local.trim()) return local.trim();
+    } catch (e) {}
 
-    const states = this._hass.states;
-    const miners = [];
-
-    // Blacklist filter to ensure non-mining appliances (Bambu printers, ESPresense) are strictly excluded
-    const isBlacklisted = (eid) => {
-      const lower = eid.toLowerCase();
-      return lower.includes('bambu') ||
-             lower.includes('cooling_fan') ||
-             lower.includes('heatbreak_fan') ||
-             lower.includes('chamber_fan') ||
-             lower.includes('aux_fan') ||
-             lower.includes('espresense') ||
-             lower.includes('a1_') ||
-             lower.includes('p2s_') ||
-             lower.includes('x1_') ||
-             lower.includes('p1_');
-    };
-
-    // Strict Celsius conversion helper
-    const toCelsius = (stateObj) => {
-      if (!stateObj || stateObj.state === undefined || stateObj.state === 'unknown' || stateObj.state === 'unavailable') return null;
-      const val = parseFloat(stateObj.state);
-      if (isNaN(val)) return null;
-      const unit = stateObj.attributes?.unit_of_measurement;
-      if (unit === '°F' || unit === 'F') {
-        return (val - 32) * (5 / 9);
-      }
-      if (unit === '°C' || unit === 'C') {
-        return val;
-      }
-      if (val > 65) {
-        return (val - 32) * (5 / 9);
-      }
-      return val;
-    };
-
-    // Dynamic Miner Name Resolver (LocalStorage > HA Entity Attribute > Default Fallback)
-    const getMinerName = (host, defaultName, entityId) => {
-      try {
-        const local = localStorage.getItem('miner_name_' + host);
-        if (local && local.trim()) return local.trim();
-      } catch (e) {}
-      const stateObj = entityId ? states[entityId] : null;
+    const states = this._hass?.states || {};
+    const eids = Array.isArray(entityIds) ? entityIds : [entityIds];
+    for (const eid of eids) {
+      if (!eid) continue;
+      const stateObj = states[eid];
       if (stateObj?.attributes?.friendly_name) {
-        const clean = stateObj.attributes.friendly_name.replace(/\s+(Hashrate|Power|Temp|Status|Daily|Efficiency).*$/i, '').trim();
-        if (clean && clean.toLowerCase() !== 'miner') return clean;
+        const clean = stateObj.attributes.friendly_name
+          .replace(/\s+(Hashrate|Power|Temp|Status|Daily|Efficiency|Chip\s+Temperature|Core\s+Frequency|Fan\s+Speed|Voltage).*$/i, '')
+          .trim();
+        if (clean && clean.toLowerCase() !== 'miner' && clean.toLowerCase() !== 'sensor') {
+          return clean;
+        }
       }
-      return defaultName;
-    };
-
-    // 1. Bitaxe Miner Detection & Aggregation
-    const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
-    if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
-      const bitaxeName = getMinerName('192.168.1.91', 'My Bitaxe Supra', 'sensor.my_bitaxe_hashrate_th_s');
-      const ths = parseFloat(states['sensor.my_bitaxe_hashrate_th_s']?.state || 0) ||
-                  (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
-      const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
-      const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.my_bitaxe_efficiency']?.state || '0.0');
-      const temp = toCelsius(states['sensor.my_bitaxe_chip_temperature']) ?? 0;
-      const vrTemp = toCelsius(states['sensor.my_bitaxe_vr_temperature']) ?? 0;
-      const fan = parseInt(states['sensor.my_bitaxe_fan_speed']?.state || 0);
-      const freq = states['number.my_bitaxe_target_frequency']?.state || states['sensor.my_bitaxe_core_frequency']?.state || '675';
-      const volt = states['number.my_bitaxe_target_core_voltage']?.state || '1170';
-      const actVolt = states['sensor.my_bitaxe_actual_core_voltage']?.state || volt;
-      const inVolt = parseFloat(states['sensor.my_bitaxe_input_voltage']?.state || 0).toFixed(2);
-      const inAmps = parseFloat(states['sensor.my_bitaxe_current_draw']?.state || 0).toFixed(2);
-      const profile = states['select.my_bitaxe_power_profile']?.state || 'Custom';
-
-      const bitaxeAccepted = parseInt(states['sensor.my_bitaxe_shares_accepted']?.state || 0);
-      const bitaxeRejected = parseInt(states['sensor.my_bitaxe_shares_rejected']?.state || 0);
-      const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
-      const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
-      const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
-      const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
-      const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
-      const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'public-pool.io:21496';
-      const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'bc1q...bitaxe';
-      const bitaxePoolProvider = bitaxePoolStatusObj?.attributes?.pool_provider || 'public_pool';
-      const bitaxePoolWallet = bitaxePoolStatusObj?.attributes?.pool_wallet || '';
-
-      miners.push({
-        id: 'bitaxe',
-        name: bitaxeName,
-        type: 'bitaxe',
-        host: '192.168.1.91',
-        asic: 'BM1370 ASIC',
-        os: 'AxeOS v2.13.0',
-        ths,
-        watts,
-        eff,
-        temp,
-        vrTemp,
-        fan,
-        freq,
-        volt,
-        actVolt,
-        inVolt,
-        inAmps,
-        profile,
-        accepted: bitaxeAccepted.toLocaleString(),
-        rejected: bitaxeRejected.toLocaleString(),
-        hwErrors: bitaxeHw,
-        bestShareStr: bitaxeBestStr,
-        blocksFound: '--',
-        poolUrl: bitaxePoolUrl,
-        poolUser: bitaxePoolUser,
-        poolStatus: bitaxePoolStatus,
-        poolProvider: bitaxePoolProvider,
-        poolWallet: bitaxePoolWallet,
-        rebootEntity: 'button.my_bitaxe_reboot_miner',
-        restartEntity: 'button.my_bitaxe_restart_mining_process',
-        freqEntity: 'number.my_bitaxe_target_frequency',
-        voltEntity: 'number.my_bitaxe_target_core_voltage',
-        profileEntity: 'select.my_bitaxe_power_profile'
-      });
     }
+    return defaultName;
+  }
 
-    // 2. Canaan Avalon Nano 3S Detection & Aggregation (unifies 192_168_1_154 and avalon_nano_3s)
-    const avalonHashState = states['sensor.192_168_1_154_hashrate_th_s'] || 
-                            states['sensor.avalon_nano_3s_hashrate_current'] ||
-                            states['sensor.avalon_nano_3s_hashrate_avg'];
-    if (avalonHashState && !isBlacklisted('192_168_1_154')) {
-      const ths = parseFloat(states['sensor.192_168_1_154_hashrate_th_s']?.state || 0) ||
-                  parseFloat(states['sensor.avalon_nano_3s_hashrate_current']?.state || 0) ||
-                  parseFloat(states['sensor.avalon_nano_3s_hashrate_avg']?.state || 0);
-      const watts = parseFloat(states['sensor.192_168_1_154_power_draw']?.state || 0) ||
-                    parseFloat(states['sensor.avalon_nano_3s_power']?.state || 0);
-      const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.192_168_1_154_efficiency']?.state || '0.0');
-      const temp = toCelsius(states['sensor.192_168_1_154_chip_temperature']) ??
-                   toCelsius(states['sensor.avalon_nano_3s_miner_temp_avg']) ??
-                   toCelsius(states['sensor.avalon_nano_3s_asic_temp_avg']) ?? 0;
-      const fan = parseInt(states['sensor.192_168_1_154_fan_speed']?.state || 0) ||
-                  parseInt(states['sensor.avalon_nano_3s_fan_1']?.state || 0);
-      const freq = states['sensor.192_168_1_154_core_frequency']?.state || 
-                   states['sensor.avalon_nano_3s_frequency']?.state || '351.7';
-      const accepted = parseInt(states['sensor.192_168_1_154_shares_accepted']?.state || 0) ||
-                       parseInt(states['sensor.avalon_nano_3s_shares_accepted']?.state || 0);
-      const rejected = parseInt(states['sensor.192_168_1_154_shares_rejected']?.state || 0) ||
-                       parseInt(states['sensor.avalon_nano_3s_shares_rejected']?.state || 0);
-      const hwErrors = parseInt(states['sensor.192_168_1_154_hardware_errors']?.state || 0) ||
-                       parseInt(states['sensor.avalon_nano_3s_device_hw']?.state || 0);
-      const bestShare = states['sensor.avalon_nano_3s_best_share']?.state;
-      const bestShareStr = bestShare ? (parseFloat(bestShare) / 1000000000).toFixed(2) + ' G' : '--';
-      const blocksFound = states['sensor.avalon_nano_3s_found_blocks']?.state || '--';
-      const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
-      const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
-      const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
-      const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
-      const poolStatus = avalonPoolStatusObj?.state ||
-                         states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
-      const avalonPoolProvider = avalonPoolStatusObj?.attributes?.pool_provider || 'mining_dutch';
-      const avalonPoolWallet = avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
-      const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
-
-      const avalonName = getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', 'sensor.192_168_1_154_hashrate_th_s');
-
-      miners.push({
-        id: 'avalon',
-        name: avalonName,
-        type: 'avalon',
-        host: '192.168.1.154',
-        asic: 'A3197S ASIC',
-        os: 'CGMiner ' + cgminerVer,
-        ths,
-        watts,
-        eff,
-        temp,
-        fan,
-        freq,
-        accepted: accepted.toLocaleString(),
-        rejected: rejected.toLocaleString(),
-        hwErrors,
-        bestShareStr,
-        blocksFound,
-        poolUrl: cleanPoolUrl,
-        poolUser,
-        poolStatus,
-        poolProvider: avalonPoolProvider,
-        poolWallet: avalonPoolWallet,
-        rebootEntity: 'button.192_168_1_154_reboot_miner'
-      });
-    }
-
-    // Calculate Fleet Totals
-    let totalHashThs = 0;
-    let totalWatts = 0;
-    let tempSum = 0;
-    let tempCount = 0;
-
-    miners.forEach(m => {
-      totalHashThs += m.ths;
-      totalWatts += m.watts;
-      if (m.temp > 0) {
-        tempSum += m.temp;
-        tempCount++;
-      }
-    });
-
-    const fleetEfficiency = totalHashThs > 0 ? (totalWatts / totalHashThs).toFixed(1) : '0.0';
-    const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
-    const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
-
-    // Aggregate Mining Pool Telemetry across Fleet
-    let totalPoolWorkers = 0;
-    let totalUnpaidBtc = 0;
-    let total24hRevBtc = 0;
-    let poolHashGhs = 0;
-    let maxBestDiff = 0;
-
-    Object.keys(states).forEach(eid => {
-      if (eid.startsWith('sensor.') && eid.endsWith('_pool_reported_hashrate')) {
-        const v = parseFloat(states[eid]?.state || 0);
-        if (!isNaN(v) && v > 0) poolHashGhs += v;
-      }
-      if (eid.startsWith('sensor.') && eid.endsWith('_pool_unpaid_balance')) {
-        const v = parseFloat(states[eid]?.state || 0);
-        if (!isNaN(v) && v > 0) totalUnpaidBtc += v;
-      }
-      if (eid.startsWith('sensor.') && eid.endsWith('_pool_24h_revenue')) {
-        const v = parseFloat(states[eid]?.state || 0);
-        if (!isNaN(v) && v > 0) total24hRevBtc += v;
-      }
-      if (eid.startsWith('sensor.') && eid.endsWith('_pool_active_workers')) {
-        const v = parseInt(states[eid]?.state || 0);
-        if (!isNaN(v) && v > 0) totalPoolWorkers += v;
-      }
-      if (eid.startsWith('sensor.') && (eid.endsWith('_pool_best_share') || eid.endsWith('_best_difficulty'))) {
-        const v = parseFloat(states[eid]?.state || 0);
-        if (!isNaN(v) && v > maxBestDiff) maxBestDiff = v;
-      }
-    });
-
-    const poolReportedHrStr = poolHashGhs > 0 
-      ? (poolHashGhs >= 1000 ? (poolHashGhs / 1000).toFixed(2) + ' TH/s' : poolHashGhs.toFixed(1) + ' GH/s')
-      : totalHashThs.toFixed(2) + ' TH/s';
-    const bestShareDisplay = maxBestDiff >= 1e9 ? (maxBestDiff / 1e9).toFixed(2) + ' G' : (maxBestDiff >= 1e6 ? (maxBestDiff / 1e6).toFixed(2) + ' M' : (maxBestDiff > 0 ? maxBestDiff.toLocaleString() : '--'));
-
-    // SVG Radial Arc Metrics
-    // Circumference = 2 * PI * 42 = 263.89
-    const hashTarget = 7.0;
-    const hashOffset = Math.max(0, 264 - Math.min(1, totalHashThs / hashTarget) * 264);
-    const hashPct = Math.round((totalHashThs / hashTarget) * 100);
-
-    const pwrTarget = 150.0;
-    const pwrOffset = Math.max(0, 264 - Math.min(1, totalWatts / pwrTarget) * 264);
-
-    const tempTarget = 80.0;
-    const tempOffset = Math.max(0, 264 - Math.min(1, avgTempNum / tempTarget) * 264);
-    const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
-    const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
-
+  _ensureDom() {
+    if (this._domReady) return;
     this.shadowRoot.innerHTML = `
       <style>
+        ${this._getStyles()}
+      </style>
+      <div id="card-root"></div>
+      <div id="modal-root">
+        <!-- ADD / EDIT MINER GLASS MODAL -->
+        <div id="miner-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box">
+            <div class="modal-header">
+              <span class="modal-title" id="modal-title">➕ Add Cryptocurrency Miner</span>
+              <button class="glass-btn" id="modal-close-btn" style="padding: 4px 8px;">✕</button>
+            </div>
+            <div class="modal-grid">
+              <div class="modal-field full">
+                <label class="modal-label">Friendly Name</label>
+                <input type="text" id="modal-name" class="modal-input" placeholder="e.g. My Bitaxe Supra" autocomplete="off" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Miner Hardware Type</label>
+                <select id="modal-type" class="modal-select">
+                  <option value="bitaxe">Bitaxe / AxeOS</option>
+                  <option value="cgminer_rpc">Canaan Avalon / CGMiner</option>
+                  <option value="whatsminer">MicroBT Whatsminer</option>
+                  <option value="antminer">Antminer / Braiins OS</option>
+                  <option value="nerdminer">ESP32 NerdMiner</option>
+                  <option value="hiveos">HiveOS Rig Farm</option>
+                  <option value="generic_rest">Generic REST API</option>
+                </select>
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Coin</label>
+                <input type="text" id="modal-coin" class="modal-input" value="BTC" placeholder="BTC" autocomplete="off" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">IP Address / Host</label>
+                <input type="text" id="modal-host" class="modal-input" placeholder="e.g. 192.168.1.91" autocomplete="off" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Port</label>
+                <input type="number" id="modal-port" class="modal-input" value="80" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Mining Pool</label>
+                <select id="modal-pool" class="modal-select">
+                  <option value="none">None (Hardware Only)</option>
+                  <option value="helios">Helios Pool (Solo CKPool)</option>
+                  <option value="mining_dutch">Mining Dutch</option>
+                  <option value="public_pool">Public Pool (Solo)</option>
+                  <option value="2miners">2Miners</option>
+                  <option value="braiins">Braiins Pool</option>
+                  <option value="viabtc">ViaBTC</option>
+                  <option value="f2pool">F2Pool</option>
+                </select>
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Pool Wallet / Worker</label>
+                <input type="text" id="modal-wallet" class="modal-input" placeholder="e.g. bc1q...worker1" autocomplete="off" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="glass-btn" id="modal-cancel-btn">Cancel</button>
+              <button class="glass-btn primary" id="modal-save-btn">Save Miner</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DELETE CONFIRMATION GLASS MODAL -->
+        <div id="delete-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-header">
+              <span class="modal-title" style="color: #fb7185;">🗑️ Remove Miner</span>
+              <button class="glass-btn" id="delete-modal-close" style="padding: 4px 8px;">✕</button>
+            </div>
+            <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5;" id="delete-modal-text">
+              Are you sure you want to remove this miner from Home Assistant? All associated sensors will be removed.
+            </p>
+            <div class="modal-footer">
+              <button class="glass-btn" id="delete-cancel-btn">Cancel</button>
+              <button class="glass-btn danger" id="delete-confirm-btn">Confirm Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    this._attachModalListeners();
+    this._domReady = true;
+  }
+
+  _attachModalListeners() {
+    const modalRoot = this.shadowRoot.querySelector('#modal-root');
+    const minerModal = this.shadowRoot.querySelector('#miner-modal');
+    const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+
+    // Intercept keyboard event bubbling: NEVER allow keydown/keyup/keypress to escape to Lovelace
+    const stopPropagation = (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        this._closeModals();
+      }
+    };
+
+    ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+      modalRoot.addEventListener(eventType, stopPropagation);
+      minerModal.addEventListener(eventType, stopPropagation);
+      deleteModal.addEventListener(eventType, stopPropagation);
+    });
+
+    const inputsAndSelects = modalRoot.querySelectorAll('input, select, button');
+    inputsAndSelects.forEach(el => {
+      ['keydown', 'keyup', 'keypress'].forEach(evt => {
+        el.addEventListener(evt, stopPropagation);
+      });
+    });
+
+    // Prevent clicks inside .modal-box from bubbling to backdrop
+    minerModal.querySelectorAll('.modal-box').forEach(box => {
+      box.addEventListener('click', (e) => e.stopPropagation());
+    });
+    deleteModal.querySelectorAll('.modal-box').forEach(box => {
+      box.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    // Close on backdrop click
+    minerModal.addEventListener('click', (e) => {
+      if (e.target === minerModal) {
+        this._closeModals();
+      }
+    });
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        this._closeModals();
+      }
+    });
+
+    // Close and cancel buttons
+    const closeBtn = this.shadowRoot.querySelector('#modal-close-btn');
+    const cancelBtn = this.shadowRoot.querySelector('#modal-cancel-btn');
+    if (closeBtn) closeBtn.addEventListener('click', () => this._closeModals());
+    if (cancelBtn) cancelBtn.addEventListener('click', () => this._closeModals());
+
+    const delCloseBtn = this.shadowRoot.querySelector('#delete-modal-close');
+    const delCancelBtn = this.shadowRoot.querySelector('#delete-cancel-btn');
+    if (delCloseBtn) delCloseBtn.addEventListener('click', () => this._closeModals());
+    if (delCancelBtn) delCancelBtn.addEventListener('click', () => this._closeModals());
+
+    // Auto default port based on miner type
+    const modalTypeSelect = this.shadowRoot.querySelector('#modal-type');
+    const modalPortInput = this.shadowRoot.querySelector('#modal-port');
+    if (modalTypeSelect && modalPortInput) {
+      modalTypeSelect.addEventListener('change', () => {
+        if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
+          modalPortInput.value = 80;
+        } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
+          modalPortInput.value = 4028;
+        }
+      });
+    }
+
+    // Save Miner Button (Add or Edit)
+    const modalSaveBtn = this.shadowRoot.querySelector('#modal-save-btn');
+    if (modalSaveBtn) {
+      modalSaveBtn.addEventListener('click', async () => {
+        const host = this.shadowRoot.querySelector('#modal-host').value.trim();
+        const name = this.shadowRoot.querySelector('#modal-name').value.trim();
+        const minerType = this.shadowRoot.querySelector('#modal-type').value;
+        const port = parseInt(this.shadowRoot.querySelector('#modal-port').value, 10) || 80;
+        const coin = this.shadowRoot.querySelector('#modal-coin').value.trim() || 'BTC';
+        const poolProvider = this.shadowRoot.querySelector('#modal-pool').value;
+        const poolWallet = this.shadowRoot.querySelector('#modal-wallet').value.trim();
+
+        if (!host) {
+          alert('Host / IP address is required.');
+          return;
+        }
+
+        modalSaveBtn.textContent = 'Saving...';
+        try {
+          if (this._modalMode === 'add') {
+            if (name) {
+              this._minerNames[host] = name;
+              try { localStorage.setItem('miner_name_' + host, name); } catch (e) {}
+            }
+            await this._hass.callService('home_miner_studio', 'add_miner', {
+              host,
+              name: name || `Miner (${host})`,
+              miner_type: minerType,
+              port,
+              coin,
+              pool_provider: poolProvider,
+              pool_wallet: poolWallet
+            });
+          } else {
+            const targetHost = this._activeHost || host;
+            if (name) {
+              this._minerNames[targetHost] = name;
+              try { localStorage.setItem('miner_name_' + targetHost, name); } catch (e) {}
+            }
+            await this._hass.callService('home_miner_studio', 'edit_miner', {
+              host: targetHost,
+              name: name || undefined,
+              pool_provider: poolProvider,
+              pool_wallet: poolWallet
+            });
+          }
+          this._closeModals();
+          modalSaveBtn.textContent = 'Save Miner';
+          this.render();
+        } catch (err) {
+          modalSaveBtn.textContent = 'Save Miner';
+          alert('Error saving miner: ' + err.message);
+        }
+      });
+    }
+
+    // Confirm Delete Button
+    const confirmDeleteBtn = this.shadowRoot.querySelector('#delete-confirm-btn');
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', async () => {
+        if (!this._deleteTargetHost) return;
+        confirmDeleteBtn.textContent = 'Removing...';
+        try {
+          const host = this._deleteTargetHost;
+          delete this._minerNames[host];
+          try { localStorage.removeItem('miner_name_' + host); } catch (e) {}
+          await this._hass.callService('home_miner_studio', 'delete_miner', { host });
+          this._closeModals();
+          confirmDeleteBtn.textContent = 'Confirm Delete';
+          this.render();
+        } catch (err) {
+          confirmDeleteBtn.textContent = 'Confirm Delete';
+          alert('Error deleting miner: ' + err.message);
+        }
+      });
+    }
+  }
+
+  _closeModals() {
+    this._modalOpen = false;
+    const minerModal = this.shadowRoot.querySelector('#miner-modal');
+    const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+    if (minerModal) minerModal.style.display = 'none';
+    if (deleteModal) deleteModal.style.display = 'none';
+  }
+
+  _openAddModal() {
+    this._ensureDom();
+    this._modalOpen = true;
+    this._modalMode = 'add';
+    this._activeHost = '';
+    const minerModal = this.shadowRoot.querySelector('#miner-modal');
+    this.shadowRoot.querySelector('#modal-title').textContent = '➕ Add Cryptocurrency Miner';
+    this.shadowRoot.querySelector('#modal-name').value = '';
+    this.shadowRoot.querySelector('#modal-host').value = '';
+    this.shadowRoot.querySelector('#modal-host').disabled = false;
+    this.shadowRoot.querySelector('#modal-port').value = 80;
+    this.shadowRoot.querySelector('#modal-coin').value = 'BTC';
+    this.shadowRoot.querySelector('#modal-type').value = 'bitaxe';
+    this.shadowRoot.querySelector('#modal-pool').value = 'helios';
+    this.shadowRoot.querySelector('#modal-wallet').value = '';
+    if (minerModal) minerModal.style.display = 'flex';
+  }
+
+  _openEditModal(host, name, type, pool, wallet) {
+    this._ensureDom();
+    this._modalOpen = true;
+    this._modalMode = 'edit';
+    this._activeHost = host;
+    const minerModal = this.shadowRoot.querySelector('#miner-modal');
+    this.shadowRoot.querySelector('#modal-title').textContent = `⚙️ Edit Miner (${host})`;
+    this.shadowRoot.querySelector('#modal-name').value = name || '';
+    this.shadowRoot.querySelector('#modal-host').value = host;
+    this.shadowRoot.querySelector('#modal-host').disabled = true;
+    this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
+    this.shadowRoot.querySelector('#modal-pool').value = pool || 'none';
+    this.shadowRoot.querySelector('#modal-wallet').value = wallet || '';
+    if (minerModal) minerModal.style.display = 'flex';
+  }
+
+  _openDeleteModal(host, name) {
+    this._ensureDom();
+    this._modalOpen = true;
+    this._deleteTargetHost = host;
+    const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+    this.shadowRoot.querySelector('#delete-modal-text').textContent =
+      `Are you sure you want to permanently delete "${name}" (${host}) from Home Assistant? All associated sensors will be removed.`;
+    if (deleteModal) deleteModal.style.display = 'flex';
+  }
+
+  _getStyles() {
+    return `
+
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         :host {
@@ -924,8 +1001,259 @@ class HomeMinerFleetCard extends HTMLElement {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
         }
-      </style>
+      
+`;
+  }
 
+  render() {
+    if (!this._hass) return;
+    this._ensureDom();
+    if (this._modalOpen) return;
+
+    const states = this._hass.states;
+    const miners = [];
+
+    // Blacklist filter to ensure non-mining appliances (Bambu printers, ESPresense) are strictly excluded
+    const isBlacklisted = (eid) => {
+      const lower = eid.toLowerCase();
+      return lower.includes('bambu') ||
+             lower.includes('cooling_fan') ||
+             lower.includes('heatbreak_fan') ||
+             lower.includes('chamber_fan') ||
+             lower.includes('aux_fan') ||
+             lower.includes('espresense') ||
+             lower.includes('a1_') ||
+             lower.includes('p2s_') ||
+             lower.includes('x1_') ||
+             lower.includes('p1_');
+    };
+
+    // Strict Celsius conversion helper
+    const toCelsius = (stateObj) => {
+      if (!stateObj || stateObj.state === undefined || stateObj.state === 'unknown' || stateObj.state === 'unavailable') return null;
+      const val = parseFloat(stateObj.state);
+      if (isNaN(val)) return null;
+      const unit = stateObj.attributes?.unit_of_measurement;
+      if (unit === '°F' || unit === 'F') {
+        return (val - 32) * (5 / 9);
+      }
+      if (unit === '°C' || unit === 'C') {
+        return val;
+      }
+      if (val > 65) {
+        return (val - 32) * (5 / 9);
+      }
+      return val;
+    };
+
+    
+
+    // 1. Bitaxe Miner Detection & Aggregation
+    const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
+    if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
+      const bitaxeName = this._getMinerName('192.168.1.91', 'My Bitaxe Supra', ['sensor.my_bitaxe_hashrate_th_s', 'sensor.my_bitaxe_hashrate_gh_s', 'sensor.my_bitaxe_power_draw']);
+      const ths = parseFloat(states['sensor.my_bitaxe_hashrate_th_s']?.state || 0) ||
+                  (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
+      const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
+      const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.my_bitaxe_efficiency']?.state || '0.0');
+      const temp = toCelsius(states['sensor.my_bitaxe_chip_temperature']) ?? 0;
+      const vrTemp = toCelsius(states['sensor.my_bitaxe_vr_temperature']) ?? 0;
+      const fan = parseInt(states['sensor.my_bitaxe_fan_speed']?.state || 0);
+      const freq = states['number.my_bitaxe_target_frequency']?.state || states['sensor.my_bitaxe_core_frequency']?.state || '675';
+      const volt = states['number.my_bitaxe_target_core_voltage']?.state || '1170';
+      const actVolt = states['sensor.my_bitaxe_actual_core_voltage']?.state || volt;
+      const inVolt = parseFloat(states['sensor.my_bitaxe_input_voltage']?.state || 0).toFixed(2);
+      const inAmps = parseFloat(states['sensor.my_bitaxe_current_draw']?.state || 0).toFixed(2);
+      const profile = states['select.my_bitaxe_power_profile']?.state || 'Custom';
+
+      const bitaxeAccepted = parseInt(states['sensor.my_bitaxe_shares_accepted']?.state || 0);
+      const bitaxeRejected = parseInt(states['sensor.my_bitaxe_shares_rejected']?.state || 0);
+      const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
+      const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
+      const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
+      const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
+      const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
+      const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'public-pool.io:21496';
+      const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'bc1q...bitaxe';
+      const bitaxePoolProvider = bitaxePoolStatusObj?.attributes?.pool_provider || 'public_pool';
+      const bitaxePoolWallet = bitaxePoolStatusObj?.attributes?.pool_wallet || '';
+
+      miners.push({
+        id: 'bitaxe',
+        name: bitaxeName,
+        type: 'bitaxe',
+        host: '192.168.1.91',
+        asic: 'BM1370 ASIC',
+        os: 'AxeOS v2.13.0',
+        ths,
+        watts,
+        eff,
+        temp,
+        vrTemp,
+        fan,
+        freq,
+        volt,
+        actVolt,
+        inVolt,
+        inAmps,
+        profile,
+        accepted: bitaxeAccepted.toLocaleString(),
+        rejected: bitaxeRejected.toLocaleString(),
+        hwErrors: bitaxeHw,
+        bestShareStr: bitaxeBestStr,
+        blocksFound: '--',
+        poolUrl: bitaxePoolUrl,
+        poolUser: bitaxePoolUser,
+        poolStatus: bitaxePoolStatus,
+        poolProvider: bitaxePoolProvider,
+        poolWallet: bitaxePoolWallet,
+        rebootEntity: 'button.my_bitaxe_reboot_miner',
+        restartEntity: 'button.my_bitaxe_restart_mining_process',
+        freqEntity: 'number.my_bitaxe_target_frequency',
+        voltEntity: 'number.my_bitaxe_target_core_voltage',
+        profileEntity: 'select.my_bitaxe_power_profile'
+      });
+    }
+
+    // 2. Canaan Avalon Nano 3S Detection & Aggregation (unifies 192_168_1_154 and avalon_nano_3s)
+    const avalonHashState = states['sensor.192_168_1_154_hashrate_th_s'] || 
+                            states['sensor.avalon_nano_3s_hashrate_current'] ||
+                            states['sensor.avalon_nano_3s_hashrate_avg'];
+    if (avalonHashState && !isBlacklisted('192_168_1_154')) {
+      const ths = parseFloat(states['sensor.192_168_1_154_hashrate_th_s']?.state || 0) ||
+                  parseFloat(states['sensor.avalon_nano_3s_hashrate_current']?.state || 0) ||
+                  parseFloat(states['sensor.avalon_nano_3s_hashrate_avg']?.state || 0);
+      const watts = parseFloat(states['sensor.192_168_1_154_power_draw']?.state || 0) ||
+                    parseFloat(states['sensor.avalon_nano_3s_power']?.state || 0);
+      const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.192_168_1_154_efficiency']?.state || '0.0');
+      const temp = toCelsius(states['sensor.192_168_1_154_chip_temperature']) ??
+                   toCelsius(states['sensor.avalon_nano_3s_miner_temp_avg']) ??
+                   toCelsius(states['sensor.avalon_nano_3s_asic_temp_avg']) ?? 0;
+      const fan = parseInt(states['sensor.192_168_1_154_fan_speed']?.state || 0) ||
+                  parseInt(states['sensor.avalon_nano_3s_fan_1']?.state || 0);
+      const freq = states['sensor.192_168_1_154_core_frequency']?.state || 
+                   states['sensor.avalon_nano_3s_frequency']?.state || '351.7';
+      const accepted = parseInt(states['sensor.192_168_1_154_shares_accepted']?.state || 0) ||
+                       parseInt(states['sensor.avalon_nano_3s_shares_accepted']?.state || 0);
+      const rejected = parseInt(states['sensor.192_168_1_154_shares_rejected']?.state || 0) ||
+                       parseInt(states['sensor.avalon_nano_3s_shares_rejected']?.state || 0);
+      const hwErrors = parseInt(states['sensor.192_168_1_154_hardware_errors']?.state || 0) ||
+                       parseInt(states['sensor.avalon_nano_3s_device_hw']?.state || 0);
+      const bestShare = states['sensor.avalon_nano_3s_best_share']?.state;
+      const bestShareStr = bestShare ? (parseFloat(bestShare) / 1000000000).toFixed(2) + ' G' : '--';
+      const blocksFound = states['sensor.avalon_nano_3s_found_blocks']?.state || '--';
+      const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
+      const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
+      const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
+      const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
+      const poolStatus = avalonPoolStatusObj?.state ||
+                         states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
+      const avalonPoolProvider = avalonPoolStatusObj?.attributes?.pool_provider || 'mining_dutch';
+      const avalonPoolWallet = avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
+      const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
+
+      const avalonName = this._getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', ['sensor.192_168_1_154_hashrate_th_s', 'sensor.avalon_nano_3s_hashrate_current', 'sensor.avalon_nano_3s_hashrate_avg']);
+
+      miners.push({
+        id: 'avalon',
+        name: avalonName,
+        type: 'avalon',
+        host: '192.168.1.154',
+        asic: 'A3197S ASIC',
+        os: 'CGMiner ' + cgminerVer,
+        ths,
+        watts,
+        eff,
+        temp,
+        fan,
+        freq,
+        accepted: accepted.toLocaleString(),
+        rejected: rejected.toLocaleString(),
+        hwErrors,
+        bestShareStr,
+        blocksFound,
+        poolUrl: cleanPoolUrl,
+        poolUser,
+        poolStatus,
+        poolProvider: avalonPoolProvider,
+        poolWallet: avalonPoolWallet,
+        rebootEntity: 'button.192_168_1_154_reboot_miner'
+      });
+    }
+
+    // Calculate Fleet Totals
+    let totalHashThs = 0;
+    let totalWatts = 0;
+    let tempSum = 0;
+    let tempCount = 0;
+
+    miners.forEach(m => {
+      totalHashThs += m.ths;
+      totalWatts += m.watts;
+      if (m.temp > 0) {
+        tempSum += m.temp;
+        tempCount++;
+      }
+    });
+
+    const fleetEfficiency = totalHashThs > 0 ? (totalWatts / totalHashThs).toFixed(1) : '0.0';
+    const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
+    const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
+
+    // Aggregate Mining Pool Telemetry across Fleet
+    let totalPoolWorkers = 0;
+    let totalUnpaidBtc = 0;
+    let total24hRevBtc = 0;
+    let poolHashGhs = 0;
+    let maxBestDiff = 0;
+
+    Object.keys(states).forEach(eid => {
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_reported_hashrate')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) poolHashGhs += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_unpaid_balance')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) totalUnpaidBtc += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_24h_revenue')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) total24hRevBtc += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_active_workers')) {
+        const v = parseInt(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) totalPoolWorkers += v;
+      }
+      if (eid.startsWith('sensor.') && (eid.endsWith('_pool_best_share') || eid.endsWith('_best_difficulty'))) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > maxBestDiff) maxBestDiff = v;
+      }
+    });
+
+    const poolReportedHrStr = poolHashGhs > 0 
+      ? (poolHashGhs >= 1000 ? (poolHashGhs / 1000).toFixed(2) + ' TH/s' : poolHashGhs.toFixed(1) + ' GH/s')
+      : totalHashThs.toFixed(2) + ' TH/s';
+    const bestShareDisplay = maxBestDiff >= 1e9 ? (maxBestDiff / 1e9).toFixed(2) + ' G' : (maxBestDiff >= 1e6 ? (maxBestDiff / 1e6).toFixed(2) + ' M' : (maxBestDiff > 0 ? maxBestDiff.toLocaleString() : '--'));
+
+    // SVG Radial Arc Metrics
+    // Circumference = 2 * PI * 42 = 263.89
+    const hashTarget = 7.0;
+    const hashOffset = Math.max(0, 264 - Math.min(1, totalHashThs / hashTarget) * 264);
+    const hashPct = Math.round((totalHashThs / hashTarget) * 100);
+
+    const pwrTarget = 150.0;
+    const pwrOffset = Math.max(0, 264 - Math.min(1, totalWatts / pwrTarget) * 264);
+
+    const tempTarget = 80.0;
+    const tempOffset = Math.max(0, 264 - Math.min(1, avgTempNum / tempTarget) * 264);
+    const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
+    const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
+
+    
+
+    const cardRoot = this.shadowRoot.querySelector('#card-root');
+    if (!cardRoot) return;
+    cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
         <div class="brand-cluster">
@@ -1249,90 +1577,13 @@ class HomeMinerFleetCard extends HTMLElement {
           `;
         }).join('')}
       </div>
-
-      <!-- ADD / EDIT MINER GLASS MODAL -->
-      <div id="miner-modal" class="modal-backdrop" style="display: none;">
-        <div class="modal-box">
-          <div class="modal-header">
-            <span class="modal-title" id="modal-title">➕ Add Cryptocurrency Miner</span>
-            <button class="glass-btn" id="modal-close-btn" style="padding: 4px 8px;">✕</button>
-          </div>
-          <div class="modal-grid">
-            <div class="modal-field full">
-              <label class="modal-label">Friendly Name</label>
-              <input type="text" id="modal-name" class="modal-input" placeholder="e.g. My Bitaxe Supra" />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Miner Hardware Type</label>
-              <select id="modal-type" class="modal-select">
-                <option value="bitaxe">Bitaxe / AxeOS</option>
-                <option value="cgminer_rpc">Canaan Avalon / CGMiner</option>
-                <option value="whatsminer">MicroBT Whatsminer</option>
-                <option value="antminer">Antminer / Braiins OS</option>
-                <option value="nerdminer">ESP32 NerdMiner</option>
-                <option value="hiveos">HiveOS Rig Farm</option>
-                <option value="generic_rest">Generic REST API</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Coin</label>
-              <input type="text" id="modal-coin" class="modal-input" value="BTC" placeholder="BTC" />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">IP Address / Host</label>
-              <input type="text" id="modal-host" class="modal-input" placeholder="e.g. 192.168.1.91" />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Port</label>
-              <input type="number" id="modal-port" class="modal-input" value="80" />
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Mining Pool</label>
-              <select id="modal-pool" class="modal-select">
-                <option value="none">None (Hardware Only)</option>
-                <option value="helios">Helios Pool (Solo CKPool)</option>
-                <option value="mining_dutch">Mining Dutch</option>
-                <option value="public_pool">Public Pool (Solo)</option>
-                <option value="2miners">2Miners</option>
-                <option value="braiins">Braiins Pool</option>
-                <option value="viabtc">ViaBTC</option>
-                <option value="f2pool">F2Pool</option>
-              </select>
-            </div>
-            <div class="modal-field">
-              <label class="modal-label">Pool Wallet / Worker</label>
-              <input type="text" id="modal-wallet" class="modal-input" placeholder="e.g. bc1q...worker1" />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="glass-btn" id="modal-cancel-btn">Cancel</button>
-            <button class="glass-btn primary" id="modal-save-btn">Save Miner</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- DELETE CONFIRMATION GLASS MODAL -->
-      <div id="delete-modal" class="modal-backdrop" style="display: none;">
-        <div class="modal-box" style="max-width: 420px;">
-          <div class="modal-header">
-            <span class="modal-title" style="color: #fb7185;">🗑️ Remove Miner</span>
-            <button class="glass-btn" id="delete-modal-close" style="padding: 4px 8px;">✕</button>
-          </div>
-          <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5;" id="delete-modal-text">
-            Are you sure you want to remove this miner from Home Assistant? All associated sensors will be unloaded.
-          </p>
-          <div class="modal-footer">
-            <button class="glass-btn" id="delete-cancel-btn">Cancel</button>
-            <button class="glass-btn danger" id="delete-confirm-btn">Confirm Delete</button>
-          </div>
-        </div>
-      </div>
     `;
 
-    this._attachEventHandlers();
+    this._attachCardEventHandlers();
   }
 
-  _attachEventHandlers() {
+  _attachCardEventHandlers() {
+    
     // 1-Click Miner Discovery Button
     const importBtn = this.shadowRoot.querySelector('#import-btn');
     if (importBtn) {
@@ -1425,196 +1676,36 @@ class HomeMinerFleetCard extends HTMLElement {
       });
     });
 
-    // --- MODAL CRUD EVENT HANDLERS ---
-    const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    const deleteModal = this.shadowRoot.querySelector('#delete-modal');
-    let modalMode = 'add';
-    let activeHost = '';
+    
 
     // Add Miner Button
     const addMinerBtn = this.shadowRoot.querySelector('#add-miner-btn');
     if (addMinerBtn) {
-      addMinerBtn.addEventListener('click', () => {
-        this._modalOpen = true;
-        modalMode = 'add';
-        activeHost = '';
-        this.shadowRoot.querySelector('#modal-title').textContent = '➕ Add Cryptocurrency Miner';
-        this.shadowRoot.querySelector('#modal-name').value = '';
-        this.shadowRoot.querySelector('#modal-host').value = '';
-        this.shadowRoot.querySelector('#modal-host').disabled = false;
-        this.shadowRoot.querySelector('#modal-port').value = 80;
-        this.shadowRoot.querySelector('#modal-coin').value = 'BTC';
-        this.shadowRoot.querySelector('#modal-type').value = 'bitaxe';
-        this.shadowRoot.querySelector('#modal-pool').value = 'helios';
-        this.shadowRoot.querySelector('#modal-wallet').value = '';
-        minerModal.style.display = 'flex';
-      });
-    }
-
-    // Auto default port based on miner type
-    const modalTypeSelect = this.shadowRoot.querySelector('#modal-type');
-    const modalPortInput = this.shadowRoot.querySelector('#modal-port');
-    if (modalTypeSelect && modalPortInput) {
-      modalTypeSelect.addEventListener('change', () => {
-        if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
-          modalPortInput.value = 80;
-        } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
-          modalPortInput.value = 4028;
-        }
-      });
+      addMinerBtn.addEventListener('click', () => this._openAddModal());
     }
 
     // Edit Miner Buttons
     const editBtns = this.shadowRoot.querySelectorAll('.edit-miner-btn');
     editBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        this._modalOpen = true;
-        modalMode = 'edit';
-        activeHost = btn.getAttribute('data-host');
+        const host = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
         const type = btn.getAttribute('data-type');
         const pool = btn.getAttribute('data-pool') || 'none';
         const wallet = btn.getAttribute('data-wallet') || '';
-        this.shadowRoot.querySelector('#modal-title').textContent = `⚙️ Edit Miner (${activeHost})`;
-        this.shadowRoot.querySelector('#modal-name').value = name || '';
-        this.shadowRoot.querySelector('#modal-host').value = activeHost;
-        this.shadowRoot.querySelector('#modal-host').disabled = true;
-        this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
-        this.shadowRoot.querySelector('#modal-pool').value = pool;
-        this.shadowRoot.querySelector('#modal-wallet').value = wallet;
-        minerModal.style.display = 'flex';
+        this._openEditModal(host, name, type, pool, wallet);
       });
     });
-
-    // Save Miner Button (Add or Edit)
-    const modalSaveBtn = this.shadowRoot.querySelector('#modal-save-btn');
-    if (modalSaveBtn) {
-      modalSaveBtn.addEventListener('click', async () => {
-        const host = this.shadowRoot.querySelector('#modal-host').value.trim();
-        const name = this.shadowRoot.querySelector('#modal-name').value.trim();
-        const minerType = this.shadowRoot.querySelector('#modal-type').value;
-        const port = parseInt(this.shadowRoot.querySelector('#modal-port').value, 10) || 80;
-        const coin = this.shadowRoot.querySelector('#modal-coin').value.trim() || 'BTC';
-        const poolProvider = this.shadowRoot.querySelector('#modal-pool').value;
-        const poolWallet = this.shadowRoot.querySelector('#modal-wallet').value.trim();
-
-        if (!host) {
-          alert('Host / IP address is required.');
-          return;
-        }
-
-        modalSaveBtn.textContent = 'Saving...';
-        try {
-          if (modalMode === 'add') {
-            if (name) {
-              try { localStorage.setItem('miner_name_' + host, name); } catch (e) {}
-            }
-            await this._hass.callService('home_miner_studio', 'add_miner', {
-              host,
-              name: name || `Miner (${host})`,
-              miner_type: minerType,
-              port,
-              coin,
-              pool_provider: poolProvider,
-              pool_wallet: poolWallet
-            });
-          } else {
-            if (name) {
-              try { localStorage.setItem('miner_name_' + activeHost, name); } catch (e) {}
-            }
-            await this._hass.callService('home_miner_studio', 'edit_miner', {
-              host: activeHost,
-              name: name || undefined,
-              pool_provider: poolProvider,
-              pool_wallet: poolWallet
-            });
-          }
-          this._modalOpen = false;
-          minerModal.style.display = 'none';
-          modalSaveBtn.textContent = 'Save Miner';
-          this.render();
-        } catch (err) {
-          modalSaveBtn.textContent = 'Save Miner';
-          alert('Error saving miner: ' + err.message);
-        }
-      });
-    }
-
-    // Modal Close / Cancel
-    const closeBtns = [
-      this.shadowRoot.querySelector('#modal-close-btn'),
-      this.shadowRoot.querySelector('#modal-cancel-btn')
-    ];
-    closeBtns.forEach(b => {
-      if (b) b.addEventListener('click', () => {
-        this._modalOpen = false;
-        minerModal.style.display = 'none';
-      });
-    });
-
-    if (minerModal) {
-      minerModal.addEventListener('click', (e) => {
-        if (e.target === minerModal) {
-          this._modalOpen = false;
-          minerModal.style.display = 'none';
-        }
-      });
-    }
 
     // Delete Miner Buttons
-    let deleteTargetHost = '';
     const deleteBtns = this.shadowRoot.querySelectorAll('.delete-miner-btn');
     deleteBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        this._modalOpen = true;
-        deleteTargetHost = btn.getAttribute('data-host');
+        const host = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
-        this.shadowRoot.querySelector('#delete-modal-text').textContent =
-          `Are you sure you want to permanently delete "${name}" (${deleteTargetHost}) from Home Assistant? All associated sensors will be removed.`;
-        deleteModal.style.display = 'flex';
+        this._openDeleteModal(host, name);
       });
     });
-
-    // Confirm Delete Button
-    const confirmDeleteBtn = this.shadowRoot.querySelector('#delete-confirm-btn');
-    if (confirmDeleteBtn) {
-      confirmDeleteBtn.addEventListener('click', async () => {
-        if (!deleteTargetHost) return;
-        confirmDeleteBtn.textContent = 'Removing...';
-        try {
-          try { localStorage.removeItem('miner_name_' + deleteTargetHost); } catch (e) {}
-          await this._hass.callService('home_miner_studio', 'delete_miner', { host: deleteTargetHost });
-          this._modalOpen = false;
-          deleteModal.style.display = 'none';
-          confirmDeleteBtn.textContent = 'Confirm Delete';
-          this.render();
-        } catch (err) {
-          confirmDeleteBtn.textContent = 'Confirm Delete';
-          alert('Error deleting miner: ' + err.message);
-        }
-      });
-    }
-
-    // Delete Modal Close / Cancel
-    const closeDelBtns = [
-      this.shadowRoot.querySelector('#delete-modal-close'),
-      this.shadowRoot.querySelector('#delete-cancel-btn')
-    ];
-    closeDelBtns.forEach(b => {
-      if (b) b.addEventListener('click', () => {
-        this._modalOpen = false;
-        deleteModal.style.display = 'none';
-      });
-    });
-
-    if (deleteModal) {
-      deleteModal.addEventListener('click', (e) => {
-        if (e.target === deleteModal) {
-          this._modalOpen = false;
-          deleteModal.style.display = 'none';
-        }
-      });
-    }
   }
 }
 

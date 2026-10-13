@@ -172,8 +172,12 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             if (entry_id and e.entry_id == entry_id) or (host and e.data.get(CONF_HOST) == host):
                 target = e
                 break
+
+        new_title = call.data.get(CONF_NAME)
+
         if target:
-            new_title = call.data.get(CONF_NAME) or target.title
+            if not new_title:
+                new_title = target.title
             new_data = {**target.data, **call.data}
             if CONF_NAME in call.data:
                 new_data[CONF_NAME] = call.data[CONF_NAME]
@@ -183,14 +187,44 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 data=new_data,
             )
             try:
-                from homeassistant.helpers import device_registry as dr
+                from homeassistant.helpers import device_registry as dr, entity_registry as er
                 dev_reg = dr.async_get(hass)
+                ent_reg = er.async_get(hass)
                 device = dev_reg.async_get_device(identifiers={(DOMAIN, target.entry_id)})
                 if device and new_title:
                     dev_reg.async_update_device(device.id, name_by_user=new_title)
+                    for ent in ent_reg.entities.values():
+                        if ent.device_id == device.id:
+                            base_sensor = ent.original_name or ent.entity_id.split(".")[-1]
+                            ent_reg.async_update_entity(ent.entity_id, name=f"{new_title} {base_sensor}")
             except Exception as d_err:
-                _LOGGER.warning("Could not update device registry name: %s", d_err)
+                _LOGGER.warning("Could not update device/entity registry name: %s", d_err)
             await hass.config_entries.async_reload(target.entry_id)
+        else:
+            try:
+                from homeassistant.helpers import device_registry as dr, entity_registry as er
+                dev_reg = dr.async_get(hass)
+                ent_reg = er.async_get(hass)
+                found_dev = None
+                if host:
+                    devices_list = getattr(dev_reg, "devices", [])
+                    for dev in (devices_list.values() if hasattr(devices_list, "values") else devices_list):
+                        if dev.configuration_url and host in str(dev.configuration_url):
+                            found_dev = dev
+                            break
+                        for _, conn_val in dev.connections:
+                            if host in str(conn_val):
+                                found_dev = dev
+                                break
+                if found_dev and new_title:
+                    dev_reg.async_update_device(found_dev.id, name_by_user=new_title)
+                    for ent in ent_reg.entities.values():
+                        if ent.device_id == found_dev.id:
+                            base_sensor = ent.original_name or ent.entity_id.split(".")[-1]
+                            ent_reg.async_update_entity(ent.entity_id, name=f"{new_title} {base_sensor}")
+                    _LOGGER.info("Updated device and entities for external miner %s to '%s'", host, new_title)
+            except Exception as dev_err:
+                _LOGGER.warning("Could not update external miner device: %s", dev_err)
 
     async def handle_delete_miner_service(call: ServiceCall) -> None:
         """Handle deleting a miner programmatically."""

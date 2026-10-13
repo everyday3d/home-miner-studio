@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Fixed
+- **Modal DOM Isolation & Keyboard Event Containment** ([#10](https://github.com/everyday3d/home-miner-studio/issues/10)):
+  - Completely isolated modal dialogs into a permanent `#modal-root` container separated from dynamic card content `#card-root`, preventing card re-renders from destroying open dialog markup or stealing input focus.
+  - Intercepted and stopped event propagation (`e.stopPropagation()`) for `keydown`, `keyup`, and `keypress` on `#modal-root`, modal dialogs, and text/select inputs, preventing Home Assistant Lovelace from interpreting typed letters ('e', 'c', 'm', 'd', Escape) as global dashboard shortcuts.
+  - Added event containment to `.modal-box` to prevent click and text-selection bubbling from triggering unintended backdrop dismissal.
+  - Implemented clean Escape key dismissal handler across all modals.
+  - Enhanced `handle_edit_miner_service` in `__init__.py` to update both `device_registry` and all associated sensor entities in `entity_registry`, with fallback resolution for external discovered miners.
+  - Bound in-memory card cache (`this._minerNames`) and `localStorage` to guarantee instantaneous friendly name updates on save and persistence across reloads.
 - **Complete Mining Pool Coverage & Telemetry Rack** ([#9](https://github.com/everyday3d/home-miner-studio/issues/9)):
   - Exhaustively documented and surfaced all 7 supported mining pool providers: **Helios Pool**, **Mining-Dutch**, **Public-Pool**, **2Miners**, **Braiins Pool**, **ViaBTC**, and **F2Pool**.
   - Added dedicated **Supported Mining Pool Providers** telemetry rack to `home-miner-cards.js` displaying active pool worker count, pool reported hashrate, total unpaid balances, and fleet best share.
