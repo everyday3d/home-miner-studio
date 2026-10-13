@@ -89,7 +89,8 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
 
     # 2. Scan Device Registry for Bitaxe / ASIC devices with configuration_url
     device_registry = dr.async_get(hass)
-    for device in device_registry.devices.values():
+    devices_list = getattr(device_registry, "devices", [])
+    for device in (devices_list.values() if hasattr(devices_list, "values") else devices_list):
         name = device.name or device.name_by_user or ""
         model = device.model or ""
         manufacturer = device.manufacturer or ""
@@ -106,9 +107,9 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
         port: int = DEFAULT_PORT_BITAXE
 
         # Extract from configuration_url (e.g. http://192.168.1.120:80)
-        if device.configuration_url:
+        if device.configuration_url and not str(device.configuration_url).startswith("homeassistant:"):
             parsed = urlparse(device.configuration_url)
-            if parsed.hostname:
+            if parsed.hostname and parsed.hostname != "hacs":
                 host = parsed.hostname
                 port = parsed.port or (DEFAULT_PORT_BITAXE if is_bitaxe or is_nerdminer else DEFAULT_PORT_CGMINER)
 
@@ -136,7 +137,8 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
 
     # 3. Scan Entity Registry for entities matching miner patterns
     entity_registry = er.async_get(hass)
-    for entity in entity_registry.entities.values():
+    entities_list = getattr(entity_registry, "entities", [])
+    for entity in (entities_list.values() if hasattr(entities_list, "values") else entities_list):
         eid = entity.entity_id
         if not eid.startswith("sensor."):
             continue
@@ -148,9 +150,9 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                 continue
 
             # Look up parent device
-            if entity.device_id and entity.device_id in device_registry.devices:
-                dev = device_registry.devices[entity.device_id]
-                if dev.configuration_url:
+            if entity.device_id:
+                dev = device_registry.async_get(entity.device_id)
+                if dev and dev.configuration_url:
                     parsed = urlparse(dev.configuration_url)
                     if parsed.hostname and parsed.hostname.lower() not in already_configured_hosts:
                         dev_name = dev.name or entity.name or "Imported Miner"

@@ -1,0 +1,3 @@
+import_existing_miners:
+  name: Import Existing Miners
+  description: Automatically discover and import miners configured in other Home Assistant integrations or found on LAN.

@@ -32,17 +32,24 @@ class HomeMinerFleetCard extends HTMLElement {
 
     // Group entities by prefix/device
     Object.keys(states).forEach(eid => {
-      const match = eid.match(/^(?:sensor|binary_sensor|button|number|select)\.([a-zA-Z0-9_]+?)_(hashrate_ths|hashrate_ghs|power_draw|efficiency|daily_electricity_cost|chip_temperature|vr_temperature|fan_speed|core_voltage|target_frequency|power_profile|connectivity|overheat_alert|reboot_miner|pool_unpaid_balance|pool_24h_revenue|hardware_errors)$/);
+      const match = eid.match(/^(?:sensor|binary_sensor|button|number|select)\.([a-zA-Z0-9_]+?)_(hashrate_th_s|hashrate_ths|hashrate_gh_s|hashrate_ghs|power_draw|efficiency|daily_electricity_cost|chip_temperature|vr_temperature|fan_speed|core_voltage|target_frequency|power_profile|connectivity|overheat_alert|reboot_miner|pool_unpaid_balance|pool_24h_revenue|hardware_errors)$/);
       if (match) {
         const [_, prefix, metric] = match;
+        const normMetric = metric.replace('_th_s', '_ths').replace('_gh_s', '_ghs');
         if (!deviceGroups[prefix]) {
+          let displayName = prefix.replace(/_/g, ' ');
+          if (prefix.includes('192_168_')) {
+            displayName = 'Avalon Nano 3S (' + prefix.replace(/_/g, '.') + ')';
+          } else {
+            displayName = displayName.replace(/\b\w/g, l => l.toUpperCase());
+          }
           deviceGroups[prefix] = {
             prefix,
-            name: prefix.replace(/_/g, ' '),
+            name: displayName,
             entities: {}
           };
         }
-        deviceGroups[prefix].entities[metric] = { entity_id: eid, state: states[eid] };
+        deviceGroups[prefix].entities[normMetric] = { entity_id: eid, state: states[eid] };
       }
     });
 

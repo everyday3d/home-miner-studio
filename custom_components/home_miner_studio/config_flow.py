@@ -66,9 +66,12 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     })
                     return await self.async_step_optional_config()
 
-            self._data.update(user_input)
-            self._data.pop(CONF_DISCOVERED_DEVICE, None)
-            return await self.async_step_optional_config()
+            if not user_input.get(CONF_HOST):
+                errors[CONF_HOST] = "cannot_connect"
+            else:
+                self._data.update(user_input)
+                self._data.pop(CONF_DISCOVERED_DEVICE, None)
+                return await self.async_step_optional_config()
 
         # Discover any existing miners in other integrations or device registry
         self._discovered_miners = await async_discover_existing_miners(self.hass)
@@ -103,8 +106,8 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Required(CONF_HOST): str,
-            vol.Required(CONF_PORT, default=DEFAULT_PORT_BITAXE): int,
+            vol.Optional(CONF_HOST): str,
+            vol.Optional(CONF_PORT, default=DEFAULT_PORT_BITAXE): int,
             vol.Optional(CONF_PASSWORD): str,
         })
 

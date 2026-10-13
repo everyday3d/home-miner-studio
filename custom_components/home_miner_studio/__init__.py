@@ -44,11 +44,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         imported = await async_auto_import_miners(hass)
         _LOGGER.info("Home Miner Studio auto-imported %d miners: %s", len(imported), imported)
 
+    import voluptuous as vol
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_IMPORT_EXISTING,
         handle_import_service,
-        schema=cv.make_entity_service_schema({}),
+        schema=vol.Schema({}),
     )
 
     return True

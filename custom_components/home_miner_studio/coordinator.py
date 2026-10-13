@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import timedelta
 from typing import Any
@@ -115,9 +116,13 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         power_w = float(raw.get("power", 0.0))
         temp = float(raw.get("temp", 0.0))
         vr_temp = float(raw.get("vrTemp", 0.0)) if "vrTemp" in raw else None
-        fan_rpm = int(raw.get("fanSpeed", 0))
+        fan_rpm = int(raw.get("fanrpm") or raw.get("fanSpeed", 0))
         voltage = float(raw.get("voltage", 0.0))
+        if voltage > 100:
+            voltage = voltage / 1000.0
         current_a = float(raw.get("current", 0.0))
+        if current_a > 100:
+            current_a = current_a / 1000.0
         frequency = int(raw.get("frequency", 0))
         core_voltage = int(raw.get("coreVoltage", 0))
         core_voltage_actual = float(raw.get("coreVoltageActual", core_voltage))
@@ -171,8 +176,12 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         pools_raw = await self._query_cgminer_socket("pools")
 
         summary = summary_raw.get("SUMMARY", [{}])[0]
-        ghs_5s = float(summary.get("GHS 5s", summary.get("GHS av", 0.0)))
-        hashrate_ths = ghs_5s / 1000.0
+        ghs_5s = 0.0
+        if "GHS 5s" in summary or "GHS av" in summary:
+            ghs_5s = float(summary.get("GHS 5s", summary.get("GHS av", 0.0)))
+        elif "MHS 5s" in summary or "MHS av" in summary:
+            ghs_5s = float(summary.get("MHS 5s", summary.get("MHS av", 0.0))) / 1000.0
+
         accepted = int(summary.get("Accepted", 0))
         rejected = int(summary.get("Rejected", 0))
         hw_errors = int(summary.get("Hardware Errors", 0))
@@ -184,6 +193,8 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         chain_temps_chip: dict[str, float] = {}
         chain_rates: dict[str, float] = {}
         chain_acn: dict[str, int] = {}
+        power_w: float = 0.0
+        frequency_mhz: float | None = None
 
         stats_list = stats_raw.get("STATS", [])
         for block in stats_list:
@@ -199,6 +210,49 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     chain_rates[k] = float(v)
                 elif k.startswith("chain_acn") and isinstance(v, (int, float)):
                     chain_acn[k] = int(v)
+                elif k.startswith("MM ID") and isinstance(v, str):
+                    # Parse Canaan Avalon Nano bracket notation
+                    mm_dict = dict(re.findall(r"(\w+)\[([^\]]*)\]", v))
+                    if "TAvg" in mm_dict:
+                        try:
+                            chain_temps_chip["avalon_avg"] = float(mm_dict["TAvg"])
+                        except ValueError:
+                            pass
+                    if "TMax" in mm_dict:
+                        try:
+                            chain_temps_pcb["avalon_max"] = float(mm_dict["TMax"])
+                        except ValueError:
+                            pass
+                    if "Fan1" in mm_dict:
+                        try:
+                            fan_speeds["fan1"] = int(mm_dict["Fan1"])
+                        except ValueError:
+                            pass
+                    if "GHSspd" in mm_dict:
+                        try:
+                            av_ghs = float(mm_dict["GHSspd"])
+                            if av_ghs > 0:
+                                ghs_5s = av_ghs
+                        except ValueError:
+                            pass
+                    if "Freq" in mm_dict:
+                        try:
+                            frequency_mhz = float(mm_dict["Freq"])
+                        except ValueError:
+                            pass
+                    if "MPO" in mm_dict:
+                        try:
+                            power_w = float(mm_dict["MPO"])
+                        except ValueError:
+                            pass
+
+        hashrate_ths = ghs_5s / 1000.0
+
+        # Efficiency & energy metrics if power known
+        efficiency_j_th = (power_w / hashrate_ths) if (hashrate_ths > 0 and power_w > 0) else 0.0
+        daily_kwh = (power_w / 1000.0) * 24.0 if power_w > 0 else 0.0
+        electricity_rate = self._get_electricity_rate()
+        daily_power_cost = daily_kwh * electricity_rate if (electricity_rate and daily_kwh > 0) else 0.0
 
         # Primary chip temp is highest chip temp or average
         primary_temp = max(chain_temps_chip.values()) if chain_temps_chip else (
@@ -216,10 +270,14 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "online": True,
             "hashrate_ghs": round(ghs_5s, 2),
             "hashrate_ths": round(hashrate_ths, 4),
-            "power_w": 0.0,
-            "efficiency_j_th": 0.0,
+            "power_w": round(power_w, 2),
+            "efficiency_j_th": round(efficiency_j_th, 2),
+            "daily_kwh": round(daily_kwh, 3),
+            "daily_power_cost": round(daily_power_cost, 2),
+            "electricity_rate": electricity_rate,
             "temp_c": round(primary_temp, 1),
             "fan_rpm": primary_fan,
+            "frequency_mhz": round(frequency_mhz, 1) if frequency_mhz is not None else None,
             "shares_accepted": accepted,
             "shares_rejected": rejected,
             "hw_errors": hw_errors,
