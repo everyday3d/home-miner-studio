@@ -10,6 +10,7 @@ class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._modalOpen = false;
   }
 
   setConfig(config) {
@@ -18,6 +19,9 @@ class HomeMinerFleetCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._modalOpen) {
+      return; // Freeze rendering so typing focus and open dialogs are NEVER disturbed
+    }
     this.render();
   }
 
@@ -60,9 +64,24 @@ class HomeMinerFleetCard extends HTMLElement {
       return val;
     };
 
+    // Dynamic Miner Name Resolver (LocalStorage > HA Entity Attribute > Default Fallback)
+    const getMinerName = (host, defaultName, entityId) => {
+      try {
+        const local = localStorage.getItem('miner_name_' + host);
+        if (local && local.trim()) return local.trim();
+      } catch (e) {}
+      const stateObj = entityId ? states[entityId] : null;
+      if (stateObj?.attributes?.friendly_name) {
+        const clean = stateObj.attributes.friendly_name.replace(/\s+(Hashrate|Power|Temp|Status|Daily|Efficiency).*$/i, '').trim();
+        if (clean && clean.toLowerCase() !== 'miner') return clean;
+      }
+      return defaultName;
+    };
+
     // 1. Bitaxe Miner Detection & Aggregation
     const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
     if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
+      const bitaxeName = getMinerName('192.168.1.91', 'My Bitaxe Supra', 'sensor.my_bitaxe_hashrate_th_s');
       const ths = parseFloat(states['sensor.my_bitaxe_hashrate_th_s']?.state || 0) ||
                   (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
       const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
@@ -79,7 +98,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
       miners.push({
         id: 'bitaxe',
-        name: 'My Bitaxe Supra',
+        name: bitaxeName,
         type: 'bitaxe',
         host: '192.168.1.91',
         asic: 'BM1370 ASIC',
@@ -138,9 +157,11 @@ class HomeMinerFleetCard extends HTMLElement {
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
       const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
 
+      const avalonName = getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', 'sensor.192_168_1_154_hashrate_th_s');
+
       miners.push({
         id: 'avalon',
-        name: 'Canaan Avalon Nano 3S',
+        name: avalonName,
         type: 'avalon',
         host: '192.168.1.154',
         asic: 'A3197S ASIC',
@@ -1301,6 +1322,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const addMinerBtn = this.shadowRoot.querySelector('#add-miner-btn');
     if (addMinerBtn) {
       addMinerBtn.addEventListener('click', () => {
+        this._modalOpen = true;
         modalMode = 'add';
         activeHost = '';
         this.shadowRoot.querySelector('#modal-title').textContent = '➕ Add Cryptocurrency Miner';
@@ -1333,6 +1355,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const editBtns = this.shadowRoot.querySelectorAll('.edit-miner-btn');
     editBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        this._modalOpen = true;
         modalMode = 'edit';
         activeHost = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
@@ -1366,6 +1389,9 @@ class HomeMinerFleetCard extends HTMLElement {
         modalSaveBtn.textContent = 'Saving...';
         try {
           if (modalMode === 'add') {
+            if (name) {
+              try { localStorage.setItem('miner_name_' + host, name); } catch (e) {}
+            }
             await this._hass.callService('home_miner_studio', 'add_miner', {
               host,
               name: name || `Miner (${host})`,
@@ -1376,6 +1402,9 @@ class HomeMinerFleetCard extends HTMLElement {
               pool_wallet: poolWallet
             });
           } else {
+            if (name) {
+              try { localStorage.setItem('miner_name_' + activeHost, name); } catch (e) {}
+            }
             await this._hass.callService('home_miner_studio', 'edit_miner', {
               host: activeHost,
               name: name || undefined,
@@ -1383,6 +1412,7 @@ class HomeMinerFleetCard extends HTMLElement {
               pool_wallet: poolWallet
             });
           }
+          this._modalOpen = false;
           minerModal.style.display = 'none';
           modalSaveBtn.textContent = 'Save Miner';
           this.render();
@@ -1399,14 +1429,27 @@ class HomeMinerFleetCard extends HTMLElement {
       this.shadowRoot.querySelector('#modal-cancel-btn')
     ];
     closeBtns.forEach(b => {
-      if (b) b.addEventListener('click', () => { minerModal.style.display = 'none'; });
+      if (b) b.addEventListener('click', () => {
+        this._modalOpen = false;
+        minerModal.style.display = 'none';
+      });
     });
+
+    if (minerModal) {
+      minerModal.addEventListener('click', (e) => {
+        if (e.target === minerModal) {
+          this._modalOpen = false;
+          minerModal.style.display = 'none';
+        }
+      });
+    }
 
     // Delete Miner Buttons
     let deleteTargetHost = '';
     const deleteBtns = this.shadowRoot.querySelectorAll('.delete-miner-btn');
     deleteBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        this._modalOpen = true;
         deleteTargetHost = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
         this.shadowRoot.querySelector('#delete-modal-text').textContent =
@@ -1422,7 +1465,9 @@ class HomeMinerFleetCard extends HTMLElement {
         if (!deleteTargetHost) return;
         confirmDeleteBtn.textContent = 'Removing...';
         try {
+          try { localStorage.removeItem('miner_name_' + deleteTargetHost); } catch (e) {}
           await this._hass.callService('home_miner_studio', 'delete_miner', { host: deleteTargetHost });
+          this._modalOpen = false;
           deleteModal.style.display = 'none';
           confirmDeleteBtn.textContent = 'Confirm Delete';
           this.render();
@@ -1439,8 +1484,20 @@ class HomeMinerFleetCard extends HTMLElement {
       this.shadowRoot.querySelector('#delete-cancel-btn')
     ];
     closeDelBtns.forEach(b => {
-      if (b) b.addEventListener('click', () => { deleteModal.style.display = 'none'; });
+      if (b) b.addEventListener('click', () => {
+        this._modalOpen = false;
+        deleteModal.style.display = 'none';
+      });
     });
+
+    if (deleteModal) {
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+          this._modalOpen = false;
+          deleteModal.style.display = 'none';
+        }
+      });
+    }
   }
 }
 

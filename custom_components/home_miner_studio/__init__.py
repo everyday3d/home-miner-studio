@@ -173,12 +173,23 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 target = e
                 break
         if target:
+            new_title = call.data.get(CONF_NAME) or target.title
             new_data = {**target.data, **call.data}
+            if CONF_NAME in call.data:
+                new_data[CONF_NAME] = call.data[CONF_NAME]
             hass.config_entries.async_update_entry(
                 target,
-                title=call.data.get(CONF_NAME, target.title),
+                title=new_title,
                 data=new_data,
             )
+            try:
+                from homeassistant.helpers import device_registry as dr
+                dev_reg = dr.async_get(hass)
+                device = dev_reg.async_get_device(identifiers={(DOMAIN, target.entry_id)})
+                if device and new_title:
+                    dev_reg.async_update_device(device.id, name_by_user=new_title)
+            except Exception as d_err:
+                _LOGGER.warning("Could not update device registry name: %s", d_err)
             await hass.config_entries.async_reload(target.entry_id)
 
     async def handle_delete_miner_service(call: ServiceCall) -> None:
