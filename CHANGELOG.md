@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Interactive Auto-Import Discovery Modal & Hardware Illustrations** ([#11](https://github.com/everyday3d/home-miner-studio/issues/11)):
+  - Replaced blind auto-import service invocation on "⚡ 1-Click Discovery" with an interactive Glassmorphic modal displaying all detected LAN hardware.
+  - Rendered custom vector SVG hardware graphics for Bitaxe, Canaan Avalon Nano, Antminer / Whatsminer, and NerdMiner with real-time selection checkmarks.
+  - Tagged miners with `already_configured` status to distinguish already managed nodes from newly discoverable rigs.
+  - Added "Select All", "Deselect All", and selective multi-rig batch import triggering `home_miner_studio.add_miner` sequentially.
+  - Maintained complete modal keypress containment (`e.stopPropagation()`) and backdrop dismissal.
+- **Per-Rig Coin Price Ticker & Multi-Timeframe Valuation Chart** ([#11](https://github.com/everyday3d/home-miner-studio/issues/11)):
+  - Built 15-minute background market polling engine (`market.py`) with CoinGecko and Kraken fallback fetching and global domain-level caching.
+  - Multi-coin market support covering BTC, BCH, LTC, DOGE, KAS, BELLS, PEPE, and XMR with custom currency symbols.
+  - Exposed 24-hour, 7-day, 30-day, and 1-year historical price series (`history_24h`, `history_7d`, `history_30d`, `history_1y`) and stats (`high`, `low`, `change_pct`) on `coin_price_usd` sensor entities.
+  - Injected Per-Rig Active Coin Valuation Bar into individual workstation cards.
+  - Designed interactive Luminous Market Intelligence Console with responsive cubic Bezier spline SVG chart, neon gradient fill, timeframe pills (`24H`, `7D`, `30D`, `1Y`), and hover scrubber with price/time tooltip.
+
 ### Fixed
 - **Modal DOM Isolation & Keyboard Event Containment** ([#10](https://github.com/everyday3d/home-miner-studio/issues/10)):
   - Completely isolated modal dialogs into a permanent `#modal-root` container separated from dynamic card content `#card-root`, preventing card re-renders from destroying open dialog markup or stealing input focus.

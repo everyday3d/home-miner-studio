@@ -86,6 +86,14 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="coin_price_usd",
+        name="Coin Price",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="$",
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
         key="daily_est_revenue",
         name="Daily Gross Revenue",
         device_class=SensorDeviceClass.MONETARY,
@@ -284,5 +292,18 @@ class HomeMinerSensor(CoordinatorEntity[MinerDataUpdateCoordinator], SensorEntit
                 "pool_wallet": self.coordinator.pool_wallet,
                 "pool_url": self.coordinator.data.get("pool_url") if self.coordinator.data else None,
                 "pool_user": self.coordinator.data.get("pool_user") if self.coordinator.data else None,
+            }
+        if self.entity_description.key in ("btc_price_usd", "coin_price_usd"):
+            cdata = self.coordinator.data or {}
+            return {
+                "coin": cdata.get("coin_symbol", self.coordinator.coin),
+                "coin_name": cdata.get("coin_name", "Bitcoin"),
+                "coin_sign": cdata.get("coin_sign", "₿"),
+                "change_24h_pct": cdata.get("coin_change_24h_pct", 0.0),
+                "history_24h": cdata.get("history_24h", []),
+                "history_7d": cdata.get("history_7d", []),
+                "history_30d": cdata.get("history_30d", []),
+                "history_1y": cdata.get("history_1y", []),
+                "market_stats": cdata.get("market_stats", {}),
             }
         return None

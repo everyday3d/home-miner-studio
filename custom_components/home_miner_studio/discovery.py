@@ -46,16 +46,17 @@ KNOWN_MINER_DOMAINS = {
 IP_PATTERN = re.compile(r"^(?:https?://)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::(\d+))?")
 
 
-async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, Any]]:
+async def async_discover_existing_miners(hass: HomeAssistant, include_all: bool = False) -> list[dict[str, Any]]:
     """Scan existing Home Assistant integrations and device registry for unimported miners."""
     discovered: list[dict[str, Any]] = []
-    already_configured_hosts: set[str] = set()
+    configured_hosts: set[str] = set()
+    seen_hosts: set[str] = set()
 
     # Collect hosts already in home_miner_studio
     for entry in hass.config_entries.async_entries(DOMAIN):
         host = entry.data.get(CONF_HOST)
         if host:
-            already_configured_hosts.add(host.lower())
+            configured_hosts.add(str(host).strip().lower())
 
     # 1. Scan known miner config entries
     for domain, inferred_type in KNOWN_MINER_DOMAINS.items():
@@ -67,8 +68,12 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                 continue
 
             host_clean = str(host).strip()
-            if host_clean.lower() in already_configured_hosts:
+            is_configured = host_clean.lower() in configured_hosts
+            if is_configured and not include_all:
                 continue
+            if host_clean.lower() in seen_hosts:
+                continue
+            seen_hosts.add(host_clean.lower())
 
             port = data.get("port")
             if not port:
@@ -84,8 +89,8 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                 CONF_COIN: data.get("coin", "BTC"),
                 "password": data.get("password") or data.get("web_password"),
                 "source_integration": domain,
+                "already_configured": is_configured,
             })
-            already_configured_hosts.add(host_clean.lower())
 
     # 2. Scan Device Registry for Bitaxe / ASIC devices with configuration_url
     device_registry = dr.async_get(hass)
@@ -123,17 +128,25 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                         port = int(ip_match.group(2))
                     break
 
-        if host and host.lower() not in already_configured_hosts:
+        if host:
+            host_clean = str(host).strip()
+            is_configured = host_clean.lower() in configured_hosts
+            if is_configured and not include_all:
+                continue
+            if host_clean.lower() in seen_hosts:
+                continue
+            seen_hosts.add(host_clean.lower())
+
             inferred_type = TYPE_BITAXE if is_bitaxe else (TYPE_NERDMINER if is_nerdminer else TYPE_CGMINER_RPC)
             discovered.append({
-                CONF_NAME: name or f"{inferred_type.title()} ({host})",
+                CONF_NAME: name or f"{inferred_type.title()} ({host_clean})",
                 CONF_MINER_TYPE: inferred_type,
-                CONF_HOST: host,
+                CONF_HOST: host_clean,
                 CONF_PORT: port,
                 CONF_COIN: "BTC",
                 "source_integration": "device_registry",
+                "already_configured": is_configured,
             })
-            already_configured_hosts.add(host.lower())
 
     # 3. Scan Entity Registry for entities matching miner patterns
     entity_registry = er.async_get(hass)
@@ -154,17 +167,25 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                 dev = device_registry.async_get(entity.device_id)
                 if dev and dev.configuration_url:
                     parsed = urlparse(dev.configuration_url)
-                    if parsed.hostname and parsed.hostname.lower() not in already_configured_hosts:
+                    if parsed.hostname:
+                        host_clean = str(parsed.hostname).strip()
+                        is_configured = host_clean.lower() in configured_hosts
+                        if is_configured and not include_all:
+                            continue
+                        if host_clean.lower() in seen_hosts:
+                            continue
+                        seen_hosts.add(host_clean.lower())
+
                         dev_name = dev.name or entity.name or "Imported Miner"
                         discovered.append({
                             CONF_NAME: dev_name,
                             CONF_MINER_TYPE: TYPE_BITAXE if "bitaxe" in dev_name.lower() else TYPE_CGMINER_RPC,
-                            CONF_HOST: parsed.hostname,
+                            CONF_HOST: host_clean,
                             CONF_PORT: parsed.port or DEFAULT_PORT_BITAXE,
                             CONF_COIN: "BTC",
                             "source_integration": "entity_registry",
+                            "already_configured": is_configured,
                         })
-                        already_configured_hosts.add(parsed.hostname.lower())
 
     return discovered
 

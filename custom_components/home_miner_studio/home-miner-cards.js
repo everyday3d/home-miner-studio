@@ -16,6 +16,10 @@ class HomeMinerFleetCard extends HTMLElement {
     this._modalMode = 'add';
     this._activeHost = '';
     this._deleteTargetHost = '';
+    this._selectedTimeframe = '24h';
+    this._selectedCoin = 'BTC';
+    this._discoveredMiners = [];
+    this._selectedDiscoveredHosts = new Set();
   }
 
   connectedCallback() {
@@ -64,11 +68,533 @@ class HomeMinerFleetCard extends HTMLElement {
     return defaultName;
   }
 
+
+  _getMinerGraphicSvg(minerType) {
+    const type = (minerType || '').toLowerCase();
+    if (type.includes('bitaxe') || type.includes('axeos')) {
+      return `
+        <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="10" width="104" height="50" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5" />
+          <rect x="36" y="16" width="48" height="38" rx="4" fill="#0f172a" stroke="#34d399" stroke-width="1" />
+          <line x1="44" y1="20" x2="44" y2="50" stroke="#34d399" stroke-width="1.5" />
+          <line x1="52" y1="20" x2="52" y2="50" stroke="#34d399" stroke-width="1.5" />
+          <line x1="60" y1="20" x2="60" y2="50" stroke="#34d399" stroke-width="1.5" />
+          <line x1="68" y1="20" x2="68" y2="50" stroke="#34d399" stroke-width="1.5" />
+          <line x1="76" y1="20" x2="76" y2="50" stroke="#34d399" stroke-width="1.5" />
+          <rect x="52" y="30" width="16" height="10" rx="2" fill="#10b981" />
+          <circle cx="20" cy="22" r="3" fill="#34d399" />
+          <circle cx="20" cy="30" r="3" fill="#fbbf24" />
+          <rect x="14" y="40" width="12" height="12" rx="2" fill="#334155" stroke="#64748b" />
+          <rect x="94" y="24" width="12" height="22" rx="1" fill="#fbbf24" opacity="0.8" />
+        </svg>
+      `;
+    }
+    if (type.includes('avalon')) {
+      return `
+        <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="100" height="50" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5" />
+          <circle cx="40" cy="35" r="18" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5" />
+          <circle cx="40" cy="35" r="6" fill="#f59e0b" />
+          <circle cx="80" cy="35" r="18" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5" />
+          <circle cx="80" cy="35" r="6" fill="#f59e0b" />
+          <path d="M40 21 L40 49 M26 35 L54 35" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" />
+          <path d="M80 21 L80 49 M66 35 L94 35" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" />
+          <line x1="24" y1="14" x2="96" y2="14" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      `;
+    }
+    if (type.includes('nerdminer')) {
+      return `
+        <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="25" y="10" width="70" height="50" rx="8" fill="#1e1e2e" stroke="#c084fc" stroke-width="1.5" />
+          <rect x="34" y="17" width="52" height="36" rx="4" fill="#090d16" stroke="#a855f7" stroke-width="1" />
+          <text x="60" y="40" font-family="monospace" font-size="16" font-weight="bold" fill="#fbbf24" text-anchor="middle">₿</text>
+          <circle cx="77" cy="22" r="2" fill="#34d399" />
+        </svg>
+      `;
+    }
+    return `
+      <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="16" y="8" width="88" height="54" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+        <circle cx="42" cy="35" r="16" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2" />
+        <circle cx="78" cy="35" r="16" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2" />
+        <circle cx="42" cy="35" r="6" fill="#38bdf8" />
+        <circle cx="78" cy="35" r="6" fill="#38bdf8" />
+        <rect x="28" y="4" width="64" height="6" rx="2" fill="#334155" stroke="#64748b" stroke-width="1" />
+      </svg>
+    `;
+  }
+
+  _generateMarketChartSvg(points, timeframe, currentPrice, changePct) {
+    if (!points || points.length === 0) {
+      points = [];
+      const now = Math.floor(Date.now() / 1000);
+      const startP = currentPrice / (1 + (changePct / 100));
+      for (let i = 0; i < 24; i++) {
+        const pct = i / 23;
+        points.push({ t: now - (23 - i) * 3600, p: startP + (currentPrice - startP) * pct });
+      }
+    }
+
+    const width = 800;
+    const height = 180;
+    const padTop = 22;
+    const padBottom = 34;
+    const padLeft = 20;
+    const padRight = 70;
+    const plotW = width - padLeft - padRight;
+    const plotH = height - padTop - padBottom;
+
+    const prices = points.map(p => p.p);
+    let minP = Math.min(...prices);
+    let maxP = Math.max(...prices);
+    if (minP === maxP) {
+      minP *= 0.96;
+      maxP *= 1.04;
+    }
+    const rangeP = maxP - minP;
+
+    const coords = points.map((pt, i) => {
+      const x = padLeft + (i / Math.max(1, points.length - 1)) * plotW;
+      const y = padTop + plotH - ((pt.p - minP) / rangeP) * plotH;
+      return { x, y, p: pt.p, t: pt.t };
+    });
+
+    let dLine = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = coords[Math.max(0, i - 1)];
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      const p3 = coords[Math.min(coords.length - 1, i + 2)];
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      dLine += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+
+    const dArea = dLine + ` L ${coords[coords.length - 1].x.toFixed(1)} ${(padTop + plotH).toFixed(1)} L ${coords[0].x.toFixed(1)} ${(padTop + plotH).toFixed(1)} Z`;
+
+    const isPositive = changePct >= 0;
+    const strokeColor = isPositive ? '#38bdf8' : '#fb7185';
+
+    const fmtPrice = (val) => {
+      if (val >= 1000) return '$' + Math.round(val).toLocaleString();
+      return '$' + val.toFixed(2);
+    };
+
+    const midP = minP + rangeP / 2;
+
+    const formatTimeLabel = (timestamp, tf) => {
+      const date = new Date(timestamp * 1000);
+      if (tf === '24h') {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      } else if (tf === '7d') {
+        return date.toLocaleDateString([], { weekday: 'short' });
+      } else if (tf === '30d') {
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      }
+      return date.toLocaleDateString([], { month: 'short', year: '2-digit' });
+    };
+
+    const timeLabels = [
+      { x: coords[0].x, label: formatTimeLabel(coords[0].t, timeframe) },
+      { x: coords[Math.floor(coords.length * 0.25)].x, label: formatTimeLabel(coords[Math.floor(coords.length * 0.25)].t, timeframe) },
+      { x: coords[Math.floor(coords.length * 0.5)].x, label: formatTimeLabel(coords[Math.floor(coords.length * 0.5)].t, timeframe) },
+      { x: coords[Math.floor(coords.length * 0.75)].x, label: formatTimeLabel(coords[Math.floor(coords.length * 0.75)].t, timeframe) },
+      { x: coords[coords.length - 1].x, label: 'Now' }
+    ];
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" class="chart-svg-root" preserveAspectRatio="none" id="market-chart-svg">
+        <defs>
+          <linearGradient id="chartGradient_${timeframe}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.35"/>
+            <stop offset="85%" stop-color="${strokeColor}" stop-opacity="0.04"/>
+            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="neonGlow_${timeframe}" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="${strokeColor}" flood-opacity="0.75"/>
+          </filter>
+        </defs>
+
+        <line x1="${padLeft}" y1="${padTop}" x2="${width - padRight}" y2="${padTop}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" />
+        <line x1="${padLeft}" y1="${padTop + plotH/2}" x2="${width - padRight}" y2="${padTop + plotH/2}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+        <line x1="${padLeft}" y1="${padTop + plotH}" x2="${width - padRight}" y2="${padTop + plotH}" stroke="rgba(255,255,255,0.08)" />
+
+        <text x="${width - padRight + 8}" y="${padTop + 4}" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600">${fmtPrice(maxP)}</text>
+        <text x="${width - padRight + 8}" y="${padTop + plotH/2 + 3}" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="10">${fmtPrice(midP)}</text>
+        <text x="${width - padRight + 8}" y="${padTop + plotH + 3}" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600">${fmtPrice(minP)}</text>
+
+        <path d="${dArea}" fill="url(#chartGradient_${timeframe})" />
+        <path d="${dLine}" fill="none" stroke="${strokeColor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow_${timeframe})" />
+
+        ${timeLabels.map(tl => `
+          <text x="${tl.x}" y="${height - 12}" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="10" text-anchor="middle">${tl.label}</text>
+        `).join('')}
+
+        <g id="chart-scrubber-group" style="display: none;">
+          <line id="scrubber-line" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" stroke="rgba(255, 255, 255, 0.4)" stroke-dasharray="2,2" stroke-width="1.5" />
+          <circle id="scrubber-dot" cx="0" cy="0" r="5" fill="#ffffff" stroke="${strokeColor}" stroke-width="2.5" filter="drop-shadow(0 0 6px ${strokeColor})" />
+        </g>
+
+        <rect id="chart-hit-area" x="${padLeft}" y="${padTop}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor: crosshair; pointer-events: all;" />
+      </svg>
+    `;
+  }
+
   _ensureDom() {
     if (this._domReady) return;
     this.shadowRoot.innerHTML = `
       <style>
         ${this._getStyles()}
+      
+        /* --- AUTO-IMPORT DISCOVERY MODAL --- */
+        .discovery-header-cluster {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .discovery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 14px;
+          margin: 16px 0;
+        }
+
+        .discovery-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+        }
+
+        .discovery-card:hover {
+          border-color: rgba(56, 189, 248, 0.4);
+          background: rgba(56, 189, 248, 0.04);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.1);
+        }
+
+        .discovery-card.selected {
+          border-color: #38bdf8;
+          background: rgba(56, 189, 248, 0.08);
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .discovery-card.configured {
+          opacity: 0.65;
+          border-style: dashed;
+        }
+
+        .discovery-card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .discovery-graphic-container {
+          width: 100%;
+          height: 90px;
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          padding: 6px;
+        }
+
+        .miner-graphic-svg {
+          width: 100%;
+          height: 100%;
+          max-height: 80px;
+        }
+
+        .discovery-rig-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #f8fafc;
+        }
+
+        .discovery-type-pill {
+          font-size: 10px;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 8px;
+          border-radius: 999px;
+          background: rgba(56, 189, 248, 0.15);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          color: #38bdf8;
+        }
+
+        .discovery-type-pill.bitaxe {
+          background: rgba(16, 185, 129, 0.15);
+          border-color: rgba(16, 185, 129, 0.35);
+          color: #34d399;
+        }
+
+        .discovery-type-pill.avalon {
+          background: rgba(245, 158, 11, 0.15);
+          border-color: rgba(245, 158, 11, 0.35);
+          color: #fbbf24;
+        }
+
+        .discovery-meta-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          flex-wrap: wrap;
+        }
+
+        .discovery-check-wrap {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .discovery-checkbox {
+          width: 18px;
+          height: 18px;
+          accent-color: #38bdf8;
+          cursor: pointer;
+        }
+
+        .radar-scan-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          gap: 16px;
+          text-align: center;
+        }
+
+        .radar-pulse-ring {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          border: 2px solid #38bdf8;
+          box-shadow: 0 0 24px rgba(56, 189, 248, 0.5);
+          animation: radarPulse 1.8s infinite cubic-bezier(0.25, 1, 0.5, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 26px;
+        }
+
+        @keyframes radarPulse {
+          0% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
+          70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 16px rgba(56, 189, 248, 0); }
+          100% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        }
+
+        /* --- PER-RIG COIN PRICE TICKER STRIP --- */
+        .rig-market-ticker-strip {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          padding: 10px 14px;
+          margin-bottom: 14px;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .coin-badge-cluster {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .coin-symbol-circle {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: rgba(245, 158, 11, 0.2);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          color: #fbbf24;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 13px;
+        }
+
+        .coin-name-label {
+          font-size: 13px;
+          font-weight: 700;
+          color: #f1f5f9;
+        }
+
+        .coin-price-hero {
+          font-size: 14px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #38bdf8;
+        }
+
+        .coin-change-pill {
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 8px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .coin-change-pill.pos {
+          background: rgba(16, 185, 129, 0.15);
+          border: 1px solid rgba(16, 185, 129, 0.35);
+          color: #34d399;
+        }
+
+        .coin-change-pill.neg {
+          background: rgba(244, 63, 94, 0.15);
+          border: 1px solid rgba(244, 63, 94, 0.35);
+          color: #fb7185;
+        }
+
+        /* --- FANCY INTERACTIVE MARKET INTELLIGENCE CONSOLE & CHART --- */
+        .market-intelligence-console {
+          margin-bottom: 24px;
+          padding: 20px 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .market-console-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .market-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .timeframe-pill-rack {
+          display: flex;
+          gap: 6px;
+          background: rgba(0, 0, 0, 0.3);
+          padding: 4px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .timeframe-btn {
+          background: transparent;
+          border: 1px solid transparent;
+          color: #94a3b8;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 5px 12px;
+          border-radius: 7px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .timeframe-btn:hover {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .timeframe-btn.active {
+          background: rgba(56, 189, 248, 0.18);
+          border-color: rgba(56, 189, 248, 0.45);
+          color: #38bdf8;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .market-hero-stats-row {
+          display: flex;
+          align-items: baseline;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .market-live-price {
+          font-size: 26px;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: -0.02em;
+          color: #f8fafc;
+        }
+
+        .market-stat-chip {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          background: rgba(255, 255, 255, 0.03);
+          padding: 4px 10px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .chart-stage {
+          position: relative;
+          width: 100%;
+          height: 190px;
+          background: rgba(10, 15, 26, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .chart-svg-root {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+
+        .chart-scrubber-tooltip {
+          position: absolute;
+          top: 12px;
+          right: 14px;
+          background: rgba(15, 23, 42, 0.88);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          border-radius: 8px;
+          padding: 6px 12px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          color: #f1f5f9;
+          pointer-events: none;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
       </style>
       <div id="card-root"></div>
       <div id="modal-root">
@@ -129,6 +655,40 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="modal-footer">
               <button class="glass-btn" id="modal-cancel-btn">Cancel</button>
               <button class="glass-btn primary" id="modal-save-btn">Save Miner</button>
+            </div>
+          </div>
+        </div>
+
+        
+        <!-- HARDWARE AUTO-IMPORT DISCOVERY MODAL -->
+        <div id="discovery-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 680px; width: 95%;">
+            <div class="modal-header">
+              <div class="discovery-header-cluster">
+                <span style="font-size: 22px;">🔍</span>
+                <div>
+                  <span class="modal-title" style="font-size: 17px;" id="discovery-modal-title">Hardware Discovery Console</span>
+                  <div class="mono" style="font-size: 11px; color: #94a3b8;" id="discovery-subtitle">
+                    Discovered ASIC rigs and AxeOS nodes on your local network
+                  </div>
+                </div>
+              </div>
+              <button class="glass-btn" id="discovery-modal-close" style="padding: 4px 8px;">✕</button>
+            </div>
+
+            <div id="discovery-body" style="min-height: 220px; max-height: 460px; overflow-y: auto; padding: 4px 6px;">
+              <!-- Dynamic Cards Rendered Here -->
+            </div>
+
+            <div class="modal-footer" id="discovery-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div id="discovery-select-controls" style="display: flex; gap: 8px;">
+                <button class="glass-btn" id="discovery-select-all" style="font-size: 11px; padding: 5px 10px;">Select All</button>
+                <button class="glass-btn" id="discovery-deselect-all" style="font-size: 11px; padding: 5px 10px;">Deselect All</button>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="glass-btn" id="discovery-cancel-btn">Close</button>
+                <button class="glass-btn primary" id="discovery-import-btn">⚡ Import Selected (0)</button>
+              </div>
             </div>
           </div>
         </div>
@@ -211,6 +771,53 @@ class HomeMinerFleetCard extends HTMLElement {
     const delCancelBtn = this.shadowRoot.querySelector('#delete-cancel-btn');
     if (delCloseBtn) delCloseBtn.addEventListener('click', () => this._closeModals());
     if (delCancelBtn) delCancelBtn.addEventListener('click', () => this._closeModals());
+
+    
+    // --- DISCOVERY MODAL EVENT LISTENERS ---
+    const discModal = this.shadowRoot.querySelector('#discovery-modal');
+    if (discModal) {
+      ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+        discModal.addEventListener(eventType, stopPropagation);
+      });
+
+      discModal.querySelectorAll('.modal-box').forEach(box => {
+        box.addEventListener('click', (e) => e.stopPropagation());
+      });
+
+      discModal.addEventListener('click', (e) => {
+        if (e.target === discModal) {
+          this._closeModals();
+        }
+      });
+
+      const discCloseBtn = this.shadowRoot.querySelector('#discovery-modal-close');
+      const discCancelBtn = this.shadowRoot.querySelector('#discovery-cancel-btn');
+      if (discCloseBtn) discCloseBtn.addEventListener('click', () => this._closeModals());
+      if (discCancelBtn) discCancelBtn.addEventListener('click', () => this._closeModals());
+
+      const selectAllBtn = this.shadowRoot.querySelector('#discovery-select-all');
+      if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+          this._discoveredMiners.forEach(m => {
+            if (!m.already_configured) this._selectedDiscoveredHosts.add(m.host);
+          });
+          this._updateDiscoveryCheckboxes();
+        });
+      }
+
+      const deselectAllBtn = this.shadowRoot.querySelector('#discovery-deselect-all');
+      if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+          this._selectedDiscoveredHosts.clear();
+          this._updateDiscoveryCheckboxes();
+        });
+      }
+
+      const discImportBtn = this.shadowRoot.querySelector('#discovery-import-btn');
+      if (discImportBtn) {
+        discImportBtn.addEventListener('click', () => this._importSelectedMiners());
+      }
+    }
 
     // Auto default port based on miner type
     const modalTypeSelect = this.shadowRoot.querySelector('#modal-type');
@@ -309,6 +916,198 @@ class HomeMinerFleetCard extends HTMLElement {
     const deleteModal = this.shadowRoot.querySelector('#delete-modal');
     if (minerModal) minerModal.style.display = 'none';
     if (deleteModal) deleteModal.style.display = 'none';
+    const discModal = this.shadowRoot.querySelector('#discovery-modal');
+    if (discModal) discModal.style.display = 'none';
+  }
+
+
+  async _openDiscoveryModal() {
+    this._ensureDom();
+    this._modalOpen = true;
+    const discModal = this.shadowRoot.querySelector('#discovery-modal');
+    const discBody = this.shadowRoot.querySelector('#discovery-body');
+    const importBtn = this.shadowRoot.querySelector('#discovery-import-btn');
+
+    if (discModal) discModal.style.display = 'flex';
+    if (importBtn) {
+      importBtn.disabled = true;
+      importBtn.textContent = '⚡ Import Selected (0)';
+    }
+
+    if (discBody) {
+      discBody.innerHTML = `
+        <div class="radar-scan-box">
+          <div class="radar-pulse-ring">⛏</div>
+          <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">Scanning Local Network for Mining Hardware...</div>
+          <p style="font-size: 12px; color: #94a3b8; max-width: 400px; line-height: 1.5;">
+            Detecting active AxeOS nodes, CGMiner RPC endpoints, Avalon Nano chassis, and Home Assistant miner entities.
+          </p>
+        </div>
+      `;
+    }
+
+    try {
+      let data = null;
+      if (this._hass && this._hass.callApi) {
+        try {
+          data = await this._hass.callApi('GET', 'home_miner_studio/discover?include_all=1');
+        } catch (apiErr) {
+          console.warn('callApi discover error, trying fetchWithAuth:', apiErr);
+        }
+      }
+      if (!data && this._hass && this._hass.fetchWithAuth) {
+        const resp = await this._hass.fetchWithAuth('/api/home_miner_studio/discover?include_all=1');
+        data = await resp.json();
+      }
+
+      this._discoveredMiners = (data && data.discovered) || [];
+      this._selectedDiscoveredHosts.clear();
+
+      this._discoveredMiners.forEach(m => {
+        if (!m.already_configured) {
+          this._selectedDiscoveredHosts.add(m.host);
+        }
+      });
+
+      this._renderDiscoveryList();
+    } catch (err) {
+      if (discBody) {
+        discBody.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: #fb7185;">
+            ⚠️ Network discovery error: ${err.message}
+          </div>
+        `;
+      }
+    }
+  }
+
+  _renderDiscoveryList() {
+    const discBody = this.shadowRoot.querySelector('#discovery-body');
+    if (!discBody) return;
+
+    if (!this._discoveredMiners || this._discoveredMiners.length === 0) {
+      discBody.innerHTML = `
+        <div class="radar-scan-box">
+          <span style="font-size: 32px;">🌐</span>
+          <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">No Hardware Found to Import</div>
+          <p style="font-size: 12px; color: #94a3b8; max-width: 420px; line-height: 1.5;">
+            All miners detected on your LAN are either already active in Home Miner Studio, or no AxeOS/CGMiner devices responded. You can add one manually anytime using <b>+ Add Miner</b>.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    discBody.innerHTML = `
+      <div class="discovery-grid">
+        ${this._discoveredMiners.map(m => {
+          const isConfigured = !!m.already_configured;
+          const isSelected = this._selectedDiscoveredHosts.has(m.host);
+          const graphicSvg = this._getMinerGraphicSvg(m.miner_type);
+
+          return `
+            <div class="discovery-card ${isSelected ? 'selected' : ''} ${isConfigured ? 'configured' : ''}" data-host="${m.host}">
+              <div class="discovery-card-top">
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <span class="discovery-rig-name">${m.name}</span>
+                  <span class="discovery-type-pill ${m.miner_type}">${(m.miner_type || 'ASIC').toUpperCase()}</span>
+                </div>
+                <label class="discovery-check-wrap">
+                  <input type="checkbox" class="discovery-checkbox" data-host="${m.host}"
+                         ${isSelected ? 'checked' : ''} ${isConfigured ? 'disabled' : ''} />
+                </label>
+              </div>
+
+              <div class="discovery-graphic-container">
+                ${graphicSvg}
+              </div>
+
+              <div class="discovery-meta-row">
+                <span>🌐 ${m.host}:${m.port || 80}</span>
+                <span>•</span>
+                <span style="color: #fbbf24; font-weight: 700;">🪙 ${m.coin || 'BTC'}</span>
+              </div>
+
+              <div style="font-size: 10px; color: #64748b; display: flex; justify-content: space-between;">
+                <span>Source: ${m.source_integration}</span>
+                ${isConfigured ? '<span style="color: #38bdf8;">● Already Managed</span>' : '<span style="color: #34d399;">★ Ready to Import</span>'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    discBody.querySelectorAll('.discovery-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const host = cb.getAttribute('data-host');
+        if (cb.checked) {
+          this._selectedDiscoveredHosts.add(host);
+        } else {
+          this._selectedDiscoveredHosts.delete(host);
+        }
+        this._updateDiscoveryCheckboxes();
+      });
+    });
+
+    this._updateDiscoveryCheckboxes();
+  }
+
+  _updateDiscoveryCheckboxes() {
+    const discBody = this.shadowRoot.querySelector('#discovery-body');
+    const importBtn = this.shadowRoot.querySelector('#discovery-import-btn');
+    if (!discBody) return;
+
+    discBody.querySelectorAll('.discovery-card').forEach(card => {
+      const host = card.getAttribute('data-host');
+      const cb = card.querySelector('.discovery-checkbox');
+      const isSelected = this._selectedDiscoveredHosts.has(host);
+      if (cb && !cb.disabled) cb.checked = isSelected;
+      if (isSelected) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    });
+
+    const count = this._selectedDiscoveredHosts.size;
+    if (importBtn) {
+      importBtn.textContent = `⚡ Import Selected (${count})`;
+      importBtn.disabled = count === 0;
+    }
+  }
+
+  async _importSelectedMiners() {
+    const importBtn = this.shadowRoot.querySelector('#discovery-import-btn');
+    const selectedHosts = Array.from(this._selectedDiscoveredHosts);
+    if (selectedHosts.length === 0) return;
+
+    if (importBtn) {
+      importBtn.textContent = '⏳ Importing Rigs...';
+      importBtn.disabled = true;
+    }
+
+    let successCount = 0;
+    for (const host of selectedHosts) {
+      const miner = this._discoveredMiners.find(m => m.host === host);
+      if (!miner) continue;
+      try {
+        await this._hass.callService('home_miner_studio', 'add_miner', {
+          host: miner.host,
+          name: miner.name || `Miner (${miner.host})`,
+          miner_type: miner.miner_type || 'bitaxe',
+          port: miner.port || 80,
+          coin: miner.coin || 'BTC'
+        });
+        successCount++;
+      } catch (err) {
+        console.error('Failed to import miner ' + host, err);
+      }
+    }
+
+    this._closeModals();
+    this.render();
+    alert(`✅ Successfully imported ${successCount} cryptocurrency mining rigs into Home Assistant!`);
   }
 
   _openAddModal() {
@@ -1200,6 +1999,73 @@ class HomeMinerFleetCard extends HTMLElement {
     const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
     const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
 
+    
+    // Extract Global & Per-Rig Market Data
+    const defaultMarketPrices = {
+      '24h': [
+        { t: Math.floor(Date.now()/1000) - 86400, p: 81990 },
+        { t: Math.floor(Date.now()/1000) - 64800, p: 82450 },
+        { t: Math.floor(Date.now()/1000) - 43200, p: 82180 },
+        { t: Math.floor(Date.now()/1000) - 21600, p: 83120 },
+        { t: Math.floor(Date.now()/1000), p: 83467 }
+      ],
+      '7d': [
+        { t: Math.floor(Date.now()/1000) - 7*86400, p: 79200 },
+        { t: Math.floor(Date.now()/1000) - 5*86400, p: 80800 },
+        { t: Math.floor(Date.now()/1000) - 3*86400, p: 82100 },
+        { t: Math.floor(Date.now()/1000), p: 83467 }
+      ],
+      '30d': [
+        { t: Math.floor(Date.now()/1000) - 30*86400, p: 76500 },
+        { t: Math.floor(Date.now()/1000) - 20*86400, p: 79400 },
+        { t: Math.floor(Date.now()/1000) - 10*86400, p: 81200 },
+        { t: Math.floor(Date.now()/1000), p: 83467 }
+      ],
+      '1y': [
+        { t: Math.floor(Date.now()/1000) - 365*86400, p: 62000 },
+        { t: Math.floor(Date.now()/1000) - 270*86400, p: 67500 },
+        { t: Math.floor(Date.now()/1000) - 180*86400, p: 71200 },
+        { t: Math.floor(Date.now()/1000) - 90*86400, p: 78500 },
+        { t: Math.floor(Date.now()/1000), p: 83467 }
+      ]
+    };
+
+    let activeCoinPrice = 83467.0;
+    let activeChange24h = 1.64;
+    let activeCoinSymbol = 'BTC';
+    let activeCoinName = 'Bitcoin';
+    let activeCoinSign = '₿';
+    let activeHistory = defaultMarketPrices;
+    let activeStats = {
+      '24h': { high: 84120, low: 81990, change_pct: 1.64 },
+      '7d': { high: 84120, low: 78900, change_pct: 5.38 },
+      '30d': { high: 84120, low: 75800, change_pct: 9.12 },
+      '1y': { high: 84120, low: 58200, change_pct: 34.6 }
+    };
+
+    Object.keys(states).forEach(eid => {
+      if ((eid.endsWith('_coin_price_usd') || eid.endsWith('_bitcoin_price')) && states[eid]?.state) {
+        const p = parseFloat(states[eid].state);
+        if (!isNaN(p) && p > 0) activeCoinPrice = p;
+        const attrs = states[eid].attributes || {};
+        if (attrs.coin) activeCoinSymbol = attrs.coin;
+        if (attrs.coin_name) activeCoinName = attrs.coin_name;
+        if (attrs.coin_sign) activeCoinSign = attrs.coin_sign;
+        if (attrs.change_24h_pct !== undefined) activeChange24h = parseFloat(attrs.change_24h_pct);
+        if (attrs.history_24h && attrs.history_24h.length) activeHistory['24h'] = attrs.history_24h;
+        if (attrs.history_7d && attrs.history_7d.length) activeHistory['7d'] = attrs.history_7d;
+        if (attrs.history_30d && attrs.history_30d.length) activeHistory['30d'] = attrs.history_30d;
+        if (attrs.history_1y && attrs.history_1y.length) activeHistory['1y'] = attrs.history_1y;
+        if (attrs.market_stats && attrs.market_stats['24h']) activeStats = attrs.market_stats;
+      }
+    });
+
+    const activeTf = this._selectedTimeframe || '24h';
+    const tfPoints = activeHistory[activeTf] || activeHistory['24h'];
+    this._currentTfPoints = tfPoints;
+    const currentStats = activeStats[activeTf] || activeStats['24h'] || { high: activeCoinPrice * 1.02, low: activeCoinPrice * 0.98, change_pct: activeChange24h };
+    const chartSvgHtml = this._generateMarketChartSvg(tfPoints, activeTf, activeCoinPrice, currentStats.change_pct);
+
     // Aggregate Mining Pool Telemetry across Fleet
     let totalPoolWorkers = 0;
     let totalUnpaidBtc = 0;
@@ -1442,6 +2308,24 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
               </div>
 
+              
+              <!-- Per-Rig Active Coin Valuation Bar -->
+              <div class="rig-market-ticker-strip">
+                <div class="coin-badge-cluster">
+                  <div class="coin-symbol-circle">${activeCoinSign}</div>
+                  <div>
+                    <div class="coin-name-label">${activeCoinName} (${miner.coin || activeCoinSymbol})</div>
+                    <div class="mono" style="font-size: 10px; color: #94a3b8;">Active Mined Currency</div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="coin-price-hero">$${Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                  <div class="coin-change-pill ${activeChange24h >= 0 ? 'pos' : 'neg'}">
+                    ${activeChange24h >= 0 ? '▲ +' : '▼ '}${activeChange24h}% 24h
+                  </div>
+                </div>
+              </div>
+
               <!-- 4 Visual Telemetry Tiles -->
               <div class="telemetry-tile-row">
                 <div class="tile-glass-box">
@@ -1584,18 +2468,11 @@ class HomeMinerFleetCard extends HTMLElement {
 
   _attachCardEventHandlers() {
     
-    // 1-Click Miner Discovery Button
+    // 1-Click Miner Discovery Button (Interactive Modal)
     const importBtn = this.shadowRoot.querySelector('#import-btn');
     if (importBtn) {
-      importBtn.addEventListener('click', async () => {
-        importBtn.textContent = '⏳ Scanning...';
-        try {
-          await this._hass.callService('home_miner_studio', 'import_existing_miners', {});
-          importBtn.textContent = '✅ Discovery Triggered';
-          setTimeout(() => { importBtn.textContent = '⚡ 1-Click Discovery'; }, 3000);
-        } catch (err) {
-          importBtn.textContent = '❌ Failed: ' + err.message;
-        }
+      importBtn.addEventListener('click', () => {
+        this._openDiscoveryModal();
       });
     }
 
@@ -1655,6 +2532,65 @@ class HomeMinerFleetCard extends HTMLElement {
         }
       });
     });
+
+    
+    // Timeframe selector buttons (Day, Week, Month, Year)
+    const tfBtns = this.shadowRoot.querySelectorAll('.timeframe-btn[data-tf]');
+    tfBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tf = btn.getAttribute('data-tf');
+        if (tf && tf !== this._selectedTimeframe) {
+          this._selectedTimeframe = tf;
+          this.render();
+        }
+      });
+    });
+
+    // Interactive Chart Scrubber
+    const hitArea = this.shadowRoot.querySelector('#chart-hit-area');
+    const scrubberGroup = this.shadowRoot.querySelector('#chart-scrubber-group');
+    const scrubberLine = this.shadowRoot.querySelector('#scrubber-line');
+    const scrubberDot = this.shadowRoot.querySelector('#scrubber-dot');
+    const tooltip = this.shadowRoot.querySelector('#chart-tooltip');
+    const tooltipPrice = this.shadowRoot.querySelector('#tooltip-price');
+    const tooltipTime = this.shadowRoot.querySelector('#tooltip-time');
+
+    if (hitArea && scrubberGroup && tooltip) {
+      hitArea.addEventListener('mousemove', (e) => {
+        const rect = hitArea.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, mouseX / rect.width));
+
+        const pts = this._currentTfPoints;
+        if (!pts || pts.length === 0) return;
+
+        const idx = Math.min(Math.floor(pct * pts.length), pts.length - 1);
+        const pt = pts[idx];
+        if (!pt) return;
+
+        const plotX = 20 + pct * (800 - 20 - 70);
+        const minP = Math.min(...pts.map(p => p.p));
+        const maxP = Math.max(...pts.map(p => p.p));
+        const rangeP = Math.max(1, maxP - minP);
+        const plotY = 22 + (180 - 22 - 34) - ((pt.p - minP) / rangeP) * (180 - 22 - 34);
+
+        scrubberGroup.style.display = 'inline';
+        scrubberLine.setAttribute('x1', plotX);
+        scrubberLine.setAttribute('x2', plotX);
+        scrubberDot.setAttribute('cx', plotX);
+        scrubberDot.setAttribute('cy', plotY);
+
+        tooltip.style.display = 'flex';
+        tooltipPrice.textContent = '$' + Number(pt.p).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const d = new Date(pt.t * 1000);
+        tooltipTime.textContent = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      });
+
+      hitArea.addEventListener('mouseleave', () => {
+        scrubberGroup.style.display = 'none';
+        tooltip.style.display = 'none';
+      });
+    }
 
     // Action Buttons (Reboot, Restart)
     const actionBtns = this.shadowRoot.querySelectorAll('button[data-action]');

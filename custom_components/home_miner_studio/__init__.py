@@ -290,6 +290,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.http.register_view(HomeMinerDiscoverView)
     hass.http.register_view(HomeMinerImportView)
     hass.http.register_view(HomeMinerManagerView)
+    hass.http.register_view(HomeMinerMarketView)
 
     return True
 
@@ -316,6 +317,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
+class HomeMinerMarketView(HomeAssistantView):
+    """View to return market telemetry and historical price series for any coin."""
+
+    url = "/api/home_miner_studio/market"
+    name = "api:home_miner_studio:market"
+    requires_auth = True
+
+    async def get(self, request: web.Request) -> web.Response:
+        """Return coin price and historical timeseries."""
+        from .market import async_get_coin_market_data
+        hass: HomeAssistant = request.app["hass"]
+        coin = request.query.get("coin", "BTC")
+        data = await async_get_coin_market_data(hass, coin)
+        return self.json(data)
+
+
 class HomeMinerDiscoverView(HomeAssistantView):
     """View to list unimported miners discovered in Home Assistant."""
 
@@ -326,7 +343,8 @@ class HomeMinerDiscoverView(HomeAssistantView):
     async def get(self, request: web.Request) -> web.Response:
         """Return discovered miners JSON."""
         hass: HomeAssistant = request.app["hass"]
-        miners = await async_discover_existing_miners(hass)
+        include_all = request.query.get("include_all", "0").lower() in ("1", "true", "yes")
+        miners = await async_discover_existing_miners(hass, include_all=include_all)
         return self.json({"discovered": miners, "count": len(miners)})
 
 

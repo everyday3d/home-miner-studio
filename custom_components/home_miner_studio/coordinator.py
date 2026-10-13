@@ -15,6 +15,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .market import async_get_coin_market_data
 from .const import (
     BITAXE_PROFILE_CONFIGS,
     CONF_COIN,
@@ -123,17 +124,28 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._total_energy_kwh += (pwr / 1000.0) * elapsed_hours
             miner_data["total_energy_kwh"] = round(self._total_energy_kwh, 4)
 
-            # Fetch live Bitcoin price and calculate profitability
-            btc_price = await self._fetch_btc_price()
+            # Fetch live market data (coin price, 24h change, multi-timeframe series)
+            market_data = await async_get_coin_market_data(self.hass, self.coin)
+            coin_price = market_data.get("price_usd", 68000.0)
             hashrate_ths = float(miner_data.get("hashrate_ths", 0.0))
             daily_power_cost = float(miner_data.get("daily_power_cost", 0.0))
 
             # Standard theoretical yield: ~0.00000057 BTC / TH/s / day at current network difficulty
-            daily_btc_est = hashrate_ths * 0.00000057
-            daily_gross_rev = daily_btc_est * btc_price
+            daily_coin_est = hashrate_ths * 0.00000057
+            daily_gross_rev = daily_coin_est * coin_price
             daily_net_profit = daily_gross_rev - daily_power_cost
 
-            miner_data["btc_price_usd"] = round(btc_price, 2)
+            miner_data["coin_price_usd"] = coin_price
+            miner_data["btc_price_usd"] = coin_price if self.coin.upper() in ("BTC", "XBT") else miner_data.get("btc_price_usd", coin_price)
+            miner_data["coin_symbol"] = self.coin.upper()
+            miner_data["coin_name"] = market_data.get("coin_name", self.coin)
+            miner_data["coin_sign"] = market_data.get("coin_sign", "₿")
+            miner_data["coin_change_24h_pct"] = market_data.get("change_24h_pct", 0.0)
+            miner_data["history_24h"] = market_data.get("history_24h", [])
+            miner_data["history_7d"] = market_data.get("history_7d", [])
+            miner_data["history_30d"] = market_data.get("history_30d", [])
+            miner_data["history_1y"] = market_data.get("history_1y", [])
+            miner_data["market_stats"] = market_data.get("stats", {})
             miner_data["daily_est_revenue"] = round(daily_gross_rev, 2)
             miner_data["daily_net_profit"] = round(daily_net_profit, 2)
 
@@ -142,42 +154,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Error communicating with miner at {self.host}: {err}") from err
 
     async def _fetch_btc_price(self) -> float:
-        """Fetch current Bitcoin USD price with 300s cache."""
-        now = time.time()
-        if now - self._last_price_fetch < 300.0:
-            return self._cached_btc_price
-
-        try:
-            url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=8)) as session:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        price = float(data.get("bitcoin", {}).get("usd", 0.0))
-                        if price > 0:
-                            self._cached_btc_price = price
-                            self._last_price_fetch = now
-                            return price
-        except Exception as err:
-            _LOGGER.debug("CoinGecko price fetch failed: %s, trying Kraken fallback", err)
-
-        try:
-            url = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=8)) as session:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        result = data.get("result", {})
-                        xbt = result.get("XXBTZUSD", result.get("XBTUSD", {}))
-                        price = float(xbt.get("c", [0.0])[0])
-                        if price > 0:
-                            self._cached_btc_price = price
-                            self._last_price_fetch = now
-                            return price
-        except Exception as err:
-            _LOGGER.debug("Kraken price fallback failed: %s", err)
-
-        return self._cached_btc_price
+        """Fetch current Bitcoin USD price."""
+        data = await async_get_coin_market_data(self.hass, "BTC")
+        return data.get("price_usd", 68000.0)
 
     async def _fetch_bitaxe_data(self) -> dict[str, Any]:
         """Fetch complete telemetry from Bitaxe / AxeOS REST API."""
