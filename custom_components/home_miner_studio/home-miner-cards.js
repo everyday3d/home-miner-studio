@@ -42,6 +42,24 @@ class HomeMinerFleetCard extends HTMLElement {
              lower.includes('p1_');
     };
 
+    // Strict Celsius conversion helper
+    const toCelsius = (stateObj) => {
+      if (!stateObj || stateObj.state === undefined || stateObj.state === 'unknown' || stateObj.state === 'unavailable') return null;
+      const val = parseFloat(stateObj.state);
+      if (isNaN(val)) return null;
+      const unit = stateObj.attributes?.unit_of_measurement;
+      if (unit === '°F' || unit === 'F') {
+        return (val - 32) * (5 / 9);
+      }
+      if (unit === '°C' || unit === 'C') {
+        return val;
+      }
+      if (val > 65) {
+        return (val - 32) * (5 / 9);
+      }
+      return val;
+    };
+
     // 1. Bitaxe Miner Detection & Aggregation
     const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
     if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
@@ -49,8 +67,8 @@ class HomeMinerFleetCard extends HTMLElement {
                   (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
       const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
       const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.my_bitaxe_efficiency']?.state || '0.0');
-      const temp = parseFloat(states['sensor.my_bitaxe_chip_temperature']?.state || 0);
-      const vrTemp = parseFloat(states['sensor.my_bitaxe_vr_temperature']?.state || 0);
+      const temp = toCelsius(states['sensor.my_bitaxe_chip_temperature']) ?? 0;
+      const vrTemp = toCelsius(states['sensor.my_bitaxe_vr_temperature']) ?? 0;
       const fan = parseInt(states['sensor.my_bitaxe_fan_speed']?.state || 0);
       const freq = states['number.my_bitaxe_target_frequency']?.state || states['sensor.my_bitaxe_core_frequency']?.state || '675';
       const volt = states['number.my_bitaxe_target_core_voltage']?.state || '1170';
@@ -97,8 +115,9 @@ class HomeMinerFleetCard extends HTMLElement {
       const watts = parseFloat(states['sensor.192_168_1_154_power_draw']?.state || 0) ||
                     parseFloat(states['sensor.avalon_nano_3s_power']?.state || 0);
       const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.192_168_1_154_efficiency']?.state || '0.0');
-      const temp = parseFloat(states['sensor.192_168_1_154_chip_temperature']?.state || 0) ||
-                   parseFloat(states['sensor.avalon_nano_3s_miner_temp_avg']?.state || 0);
+      const temp = toCelsius(states['sensor.192_168_1_154_chip_temperature']) ??
+                   toCelsius(states['sensor.avalon_nano_3s_miner_temp_avg']) ??
+                   toCelsius(states['sensor.avalon_nano_3s_asic_temp_avg']) ?? 0;
       const fan = parseInt(states['sensor.192_168_1_154_fan_speed']?.state || 0) ||
                   parseInt(states['sensor.avalon_nano_3s_fan_1']?.state || 0);
       const freq = states['sensor.192_168_1_154_core_frequency']?.state || 
@@ -649,7 +668,7 @@ class HomeMinerFleetCard extends HTMLElement {
         <div class="acrylic-panel kpi-card">
           <div class="kpi-label">Average ASIC Temp</div>
           <div class="kpi-val" style="color: #cbd5e1;">
-            ${avgTemp} <span class="kpi-unit">°F</span>
+            ${avgTemp} <span class="kpi-unit">°C</span>
           </div>
           <div class="kpi-subtext">Thermal core equilibrium</div>
         </div>
@@ -729,14 +748,14 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
                 <div class="mini-metric-cell">
                   <div class="mini-metric-label">Chip Temp</div>
-                  <div class="mini-metric-val" style="color: ${chipTemp > 150 ? '#ef4444' : chipTemp > 135 ? '#f59e0b' : '#10b981'};">
-                    ${chipTemp > 0 ? chipTemp.toFixed(1) + '°F' : '--'}
+                  <div class="mini-metric-val" style="color: ${chipTemp > 68 ? '#ef4444' : chipTemp > 60 ? '#f59e0b' : '#10b981'};">
+                    ${chipTemp > 0 ? chipTemp.toFixed(1) + '°C' : '--'}
                   </div>
                 </div>
                 <div class="mini-metric-cell">
                   <div class="mini-metric-label">${isBitaxe ? 'VR Temp' : 'Core Freq'}</div>
                   <div class="mini-metric-val">
-                    ${isBitaxe ? (miner.vrTemp > 0 ? miner.vrTemp.toFixed(1) + '°F' : '--') : miner.freq + ' MHz'}
+                    ${isBitaxe ? (miner.vrTemp > 0 ? miner.vrTemp.toFixed(1) + '°C' : '--') : miner.freq + ' MHz'}
                   </div>
                 </div>
                 <div class="mini-metric-cell">
