@@ -7,16 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Modal Render Freeze & Dynamic Miner Name Resolution** ([#4](https://github.com/everyday3d/home-miner-studio/issues/4)):
+  - Added `_modalOpen` guard to prevent background Home Assistant sensor ticks from re-rendering the card and unexpectedly closing the Add/Edit dialog while typing.
+  - Implemented `getMinerName()` dynamic resolver with browser `localStorage` caching and Home Assistant `device_registry` synchronization so renamed miners persist immediately and survive reloads.
+  - Added backdrop click dismissal listeners to cleanly close modals and release the render lock.
+
 ### Added
-- **Full Miner Lifecycle Management (Add, Edit, Delete)**:
+- **Full Miner Lifecycle Management (Add, Edit, Delete)** ([#5](https://github.com/everyday3d/home-miner-studio/issues/5)):
   - Interactive Glass Modal in `home-miner-cards.js` enabling 1-click miner addition (`+ Add Miner`), editing (`⚙️ Edit`), and deletion (`🗑️ Delete` with confirmation modal).
   - Implemented Home Assistant Options Flow (`HomeMinerStudioOptionsFlow`) and `async_step_reconfigure` in `config_flow.py` for full native UI configuration.
   - Added REST API endpoint `/api/home_miner_studio/miners` supporting `GET` (list), `POST` (create), `PATCH` (edit), and `DELETE` (remove).
   - Registered Home Assistant services `home_miner_studio.add_miner`, `home_miner_studio.edit_miner`, and `home_miner_studio.delete_miner` with complete schema validation in `services.yaml`.
-- **Helios Pool Support & Solo CKPool Telemetry**:
+- **Helios Pool Support & Solo CKPool Telemetry** ([#6](https://github.com/everyday3d/home-miner-studio/issues/6)):
   - Direct integration with Helios Pool (`stats-btc.heliospool.com/users/<wallet>`) pulling live worker counts, `hashrate1m`/`hashrate5m` scale parsing (P/T/G/M), and best share difficulty (`pool_best_share`).
   - Added Helios Pool to `config_flow.py` and constants list.
-- **Solar Curtailment & Power Automation Services**:
+- **Solar Curtailment & Power Automation Services** ([#6](https://github.com/everyday3d/home-miner-studio/issues/6)):
   - Registered Home Assistant service `home_miner_studio.apply_solar_curtailment` with `eco`, `standard`, `turbo`, and `pause` operational modes.
   - Native HA Energy Dashboard cumulative tracker (`total_energy_kwh`) with `device_class: energy` and `state_class: total_increasing`.
   - Tuning & control services: `home_miner_studio.set_axeos_tuning`, `home_miner_studio.set_axeos_profile`, `home_miner_studio.reboot_miner`, and `home_miner_studio.restart_mining`.
