@@ -375,6 +375,112 @@ class HomeMinerFleetCard extends HTMLElement {
           box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
         }
 
+        .glass-btn.danger {
+          background: rgba(251, 113, 133, 0.12);
+          border-color: rgba(251, 113, 133, 0.35);
+          color: #fb7185;
+        }
+
+        .glass-btn.danger:hover {
+          background: rgba(251, 113, 133, 0.25);
+          border-color: #fb7185;
+          box-shadow: 0 0 14px rgba(251, 113, 133, 0.35);
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 16px;
+        }
+
+        .modal-box {
+          background: rgba(18, 26, 43, 0.95);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: 18px;
+          width: 100%;
+          max-width: 500px;
+          padding: 24px;
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.15);
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          color: #f1f5f9;
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+          font-size: 16px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #38bdf8;
+        }
+
+        .modal-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .modal-field {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .modal-field.full {
+          grid-column: span 2;
+        }
+
+        .modal-label {
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          text-transform: uppercase;
+        }
+
+        .modal-input, .modal-select {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 8px;
+          padding: 8px 12px;
+          color: #ffffff;
+          font-size: 12px;
+          font-family: 'JetBrains Mono', monospace;
+          outline: none;
+        }
+
+        .modal-input:focus, .modal-select:focus {
+          border-color: #38bdf8;
+          box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          margin-top: 6px;
+        }
+
         /* 3 Visual Hero Ring Gauges */
         .hero-orbit-grid {
           display: grid;
@@ -751,7 +857,8 @@ class HomeMinerFleetCard extends HTMLElement {
         </div>
 
         <div class="top-actions">
-          <button class="glass-btn primary" id="import-btn">⚡ 1-Click Discovery</button>
+          <button class="glass-btn primary" id="add-miner-btn">➕ Add Miner</button>
+          <button class="glass-btn" id="import-btn">⚡ 1-Click Discovery</button>
           <button class="glass-btn" id="reload-btn">🔄 Refresh Fleet</button>
         </div>
       </div>
@@ -861,7 +968,9 @@ class HomeMinerFleetCard extends HTMLElement {
                   </div>
                 </div>
 
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}">⚙️ Edit</button>
+                  <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">🗑️ Delete</button>
                   ${isBitaxe ? `
                     <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart Proc</button>
                     <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot</button>
@@ -1008,6 +1117,82 @@ class HomeMinerFleetCard extends HTMLElement {
           `;
         }).join('')}
       </div>
+
+      <!-- ADD / EDIT MINER GLASS MODAL -->
+      <div id="miner-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+          <div class="modal-header">
+            <span class="modal-title" id="modal-title">➕ Add Cryptocurrency Miner</span>
+            <button class="glass-btn" id="modal-close-btn" style="padding: 4px 8px;">✕</button>
+          </div>
+          <div class="modal-grid">
+            <div class="modal-field full">
+              <label class="modal-label">Friendly Name</label>
+              <input type="text" id="modal-name" class="modal-input" placeholder="e.g. My Bitaxe Supra" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Miner Hardware Type</label>
+              <select id="modal-type" class="modal-select">
+                <option value="bitaxe">Bitaxe / AxeOS</option>
+                <option value="cgminer_rpc">Canaan Avalon / CGMiner</option>
+                <option value="whatsminer">MicroBT Whatsminer</option>
+                <option value="antminer">Antminer / Braiins OS</option>
+                <option value="nerdminer">ESP32 NerdMiner</option>
+                <option value="hiveos">HiveOS Rig Farm</option>
+                <option value="generic_rest">Generic REST API</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Coin</label>
+              <input type="text" id="modal-coin" class="modal-input" value="BTC" placeholder="BTC" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">IP Address / Host</label>
+              <input type="text" id="modal-host" class="modal-input" placeholder="e.g. 192.168.1.91" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Port</label>
+              <input type="number" id="modal-port" class="modal-input" value="80" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Mining Pool</label>
+              <select id="modal-pool" class="modal-select">
+                <option value="none">None (Hardware Only)</option>
+                <option value="helios">Helios Pool (Solo CKPool)</option>
+                <option value="mining_dutch">Mining Dutch</option>
+                <option value="public_pool">Public Pool (Solo)</option>
+                <option value="2miners">2Miners</option>
+                <option value="braiins">Braiins Pool</option>
+              </select>
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Pool Wallet / Worker</label>
+              <input type="text" id="modal-wallet" class="modal-input" placeholder="e.g. bc1q...worker1" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="glass-btn" id="modal-cancel-btn">Cancel</button>
+            <button class="glass-btn primary" id="modal-save-btn">Save Miner</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE CONFIRMATION GLASS MODAL -->
+      <div id="delete-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box" style="max-width: 420px;">
+          <div class="modal-header">
+            <span class="modal-title" style="color: #fb7185;">🗑️ Remove Miner</span>
+            <button class="glass-btn" id="delete-modal-close" style="padding: 4px 8px;">✕</button>
+          </div>
+          <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5;" id="delete-modal-text">
+            Are you sure you want to remove this miner from Home Assistant? All associated sensors will be unloaded.
+          </p>
+          <div class="modal-footer">
+            <button class="glass-btn" id="delete-cancel-btn">Cancel</button>
+            <button class="glass-btn danger" id="delete-confirm-btn">Confirm Delete</button>
+          </div>
+        </div>
+      </div>
     `;
 
     this._attachEventHandlers();
@@ -1104,6 +1289,157 @@ class HomeMinerFleetCard extends HTMLElement {
           }
         }
       });
+    });
+
+    // --- MODAL CRUD EVENT HANDLERS ---
+    const minerModal = this.shadowRoot.querySelector('#miner-modal');
+    const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+    let modalMode = 'add';
+    let activeHost = '';
+
+    // Add Miner Button
+    const addMinerBtn = this.shadowRoot.querySelector('#add-miner-btn');
+    if (addMinerBtn) {
+      addMinerBtn.addEventListener('click', () => {
+        modalMode = 'add';
+        activeHost = '';
+        this.shadowRoot.querySelector('#modal-title').textContent = '➕ Add Cryptocurrency Miner';
+        this.shadowRoot.querySelector('#modal-name').value = '';
+        this.shadowRoot.querySelector('#modal-host').value = '';
+        this.shadowRoot.querySelector('#modal-host').disabled = false;
+        this.shadowRoot.querySelector('#modal-port').value = 80;
+        this.shadowRoot.querySelector('#modal-coin').value = 'BTC';
+        this.shadowRoot.querySelector('#modal-type').value = 'bitaxe';
+        this.shadowRoot.querySelector('#modal-pool').value = 'helios';
+        this.shadowRoot.querySelector('#modal-wallet').value = '';
+        minerModal.style.display = 'flex';
+      });
+    }
+
+    // Auto default port based on miner type
+    const modalTypeSelect = this.shadowRoot.querySelector('#modal-type');
+    const modalPortInput = this.shadowRoot.querySelector('#modal-port');
+    if (modalTypeSelect && modalPortInput) {
+      modalTypeSelect.addEventListener('change', () => {
+        if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
+          modalPortInput.value = 80;
+        } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
+          modalPortInput.value = 4028;
+        }
+      });
+    }
+
+    // Edit Miner Buttons
+    const editBtns = this.shadowRoot.querySelectorAll('.edit-miner-btn');
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modalMode = 'edit';
+        activeHost = btn.getAttribute('data-host');
+        const name = btn.getAttribute('data-name');
+        const type = btn.getAttribute('data-type');
+        this.shadowRoot.querySelector('#modal-title').textContent = `⚙️ Edit Miner (${activeHost})`;
+        this.shadowRoot.querySelector('#modal-name').value = name || '';
+        this.shadowRoot.querySelector('#modal-host').value = activeHost;
+        this.shadowRoot.querySelector('#modal-host').disabled = true;
+        this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
+        minerModal.style.display = 'flex';
+      });
+    });
+
+    // Save Miner Button (Add or Edit)
+    const modalSaveBtn = this.shadowRoot.querySelector('#modal-save-btn');
+    if (modalSaveBtn) {
+      modalSaveBtn.addEventListener('click', async () => {
+        const host = this.shadowRoot.querySelector('#modal-host').value.trim();
+        const name = this.shadowRoot.querySelector('#modal-name').value.trim();
+        const minerType = this.shadowRoot.querySelector('#modal-type').value;
+        const port = parseInt(this.shadowRoot.querySelector('#modal-port').value, 10) || 80;
+        const coin = this.shadowRoot.querySelector('#modal-coin').value.trim() || 'BTC';
+        const poolProvider = this.shadowRoot.querySelector('#modal-pool').value;
+        const poolWallet = this.shadowRoot.querySelector('#modal-wallet').value.trim();
+
+        if (!host) {
+          alert('Host / IP address is required.');
+          return;
+        }
+
+        modalSaveBtn.textContent = 'Saving...';
+        try {
+          if (modalMode === 'add') {
+            await this._hass.callService('home_miner_studio', 'add_miner', {
+              host,
+              name: name || `Miner (${host})`,
+              miner_type: minerType,
+              port,
+              coin,
+              pool_provider: poolProvider,
+              pool_wallet: poolWallet
+            });
+          } else {
+            await this._hass.callService('home_miner_studio', 'edit_miner', {
+              host: activeHost,
+              name: name || undefined,
+              pool_provider: poolProvider,
+              pool_wallet: poolWallet
+            });
+          }
+          minerModal.style.display = 'none';
+          modalSaveBtn.textContent = 'Save Miner';
+          this.render();
+        } catch (err) {
+          modalSaveBtn.textContent = 'Save Miner';
+          alert('Error saving miner: ' + err.message);
+        }
+      });
+    }
+
+    // Modal Close / Cancel
+    const closeBtns = [
+      this.shadowRoot.querySelector('#modal-close-btn'),
+      this.shadowRoot.querySelector('#modal-cancel-btn')
+    ];
+    closeBtns.forEach(b => {
+      if (b) b.addEventListener('click', () => { minerModal.style.display = 'none'; });
+    });
+
+    // Delete Miner Buttons
+    let deleteTargetHost = '';
+    const deleteBtns = this.shadowRoot.querySelectorAll('.delete-miner-btn');
+    deleteBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteTargetHost = btn.getAttribute('data-host');
+        const name = btn.getAttribute('data-name');
+        this.shadowRoot.querySelector('#delete-modal-text').textContent =
+          `Are you sure you want to permanently delete "${name}" (${deleteTargetHost}) from Home Assistant? All associated sensors will be removed.`;
+        deleteModal.style.display = 'flex';
+      });
+    });
+
+    // Confirm Delete Button
+    const confirmDeleteBtn = this.shadowRoot.querySelector('#delete-confirm-btn');
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', async () => {
+        if (!deleteTargetHost) return;
+        confirmDeleteBtn.textContent = 'Removing...';
+        try {
+          await this._hass.callService('home_miner_studio', 'delete_miner', { host: deleteTargetHost });
+          deleteModal.style.display = 'none';
+          confirmDeleteBtn.textContent = 'Confirm Delete';
+          this.render();
+        } catch (err) {
+          confirmDeleteBtn.textContent = 'Confirm Delete';
+          alert('Error deleting miner: ' + err.message);
+        }
+      });
+    }
+
+    // Delete Modal Close / Cancel
+    const closeDelBtns = [
+      this.shadowRoot.querySelector('#delete-modal-close'),
+      this.shadowRoot.querySelector('#delete-cancel-btn')
+    ];
+    closeDelBtns.forEach(b => {
+      if (b) b.addEventListener('click', () => { deleteModal.style.display = 'none'; });
     });
   }
 }

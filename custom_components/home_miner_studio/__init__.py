@@ -15,14 +15,30 @@ import voluptuous as vol
 from .const import (
     CARD_FILE,
     CARD_URL,
+    CONF_COIN,
+    CONF_ELECTRICITY_RATE_SENSOR,
+    CONF_HOST,
+    CONF_MINER_TYPE,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_POOL_PROVIDER,
+    CONF_POOL_TOKEN,
+    CONF_POOL_WALLET,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_PORT_BITAXE,
     DOMAIN,
     PLATFORMS,
+    SERVICE_ADD_MINER,
     SERVICE_APPLY_SOLAR_CURTAILMENT,
+    SERVICE_DELETE_MINER,
+    SERVICE_EDIT_MINER,
     SERVICE_IMPORT_EXISTING,
     SERVICE_REBOOT_MINER,
     SERVICE_RESTART_MINING,
     SERVICE_SET_AXEOS_PROFILE,
     SERVICE_SET_AXEOS_TUNING,
+    TYPE_BITAXE,
 )
 from .coordinator import MinerDataUpdateCoordinator
 from .discovery import async_auto_import_miners, async_discover_existing_miners
@@ -44,10 +60,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             _LOGGER.info("Registered Home Miner Studio card at %s", CARD_URL)
         except Exception as err:
             _LOGGER.warning("Could not register static path for cards: %s", err)
-
-    # Register HTTP views for discovering and importing miners
-    hass.http.register_view(HomeMinerDiscoverView)
-    hass.http.register_view(HomeMinerImportView)
 
     def _get_target_coordinators(call: ServiceCall) -> list[MinerDataUpdateCoordinator]:
         coordinators = [
@@ -141,14 +153,98 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
+    async def handle_add_miner_service(call: ServiceCall) -> None:
+        """Handle adding a new miner programmatically."""
+        data = dict(call.data)
+        from homeassistant import config_entries
+        await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_IMPORT},
+            data=data,
+        )
+
+    async def handle_edit_miner_service(call: ServiceCall) -> None:
+        """Handle editing an existing miner programmatically."""
+        host = call.data.get(CONF_HOST)
+        entry_id = call.data.get("entry_id")
+        target = None
+        for e in hass.config_entries.async_entries(DOMAIN):
+            if (entry_id and e.entry_id == entry_id) or (host and e.data.get(CONF_HOST) == host):
+                target = e
+                break
+        if target:
+            new_data = {**target.data, **call.data}
+            hass.config_entries.async_update_entry(
+                target,
+                title=call.data.get(CONF_NAME, target.title),
+                data=new_data,
+            )
+            await hass.config_entries.async_reload(target.entry_id)
+
+    async def handle_delete_miner_service(call: ServiceCall) -> None:
+        """Handle deleting a miner programmatically."""
+        host = call.data.get(CONF_HOST)
+        entry_id = call.data.get("entry_id")
+        target = None
+        for e in hass.config_entries.async_entries(DOMAIN):
+            if (entry_id and e.entry_id == entry_id) or (host and e.data.get(CONF_HOST) == host):
+                target = e
+                break
+        if target:
+            await hass.config_entries.async_remove(target.entry_id)
+
     hass.services.async_register(
         DOMAIN,
-        SERVICE_RESTART_MINING,
-        handle_restart_mining_service,
+        SERVICE_ADD_MINER,
+        handle_add_miner_service,
         schema=vol.Schema({
-            vol.Optional("host"): cv.string,
+            vol.Required(CONF_HOST): cv.string,
+            vol.Optional(CONF_NAME): cv.string,
+            vol.Optional(CONF_MINER_TYPE, default=TYPE_BITAXE): cv.string,
+            vol.Optional(CONF_PORT, default=DEFAULT_PORT_BITAXE): cv.port,
+            vol.Optional(CONF_PASSWORD): cv.string,
+            vol.Optional(CONF_COIN, default="BTC"): cv.string,
+            vol.Optional(CONF_POOL_PROVIDER, default="none"): cv.string,
+            vol.Optional(CONF_POOL_WALLET): cv.string,
+            vol.Optional(CONF_POOL_TOKEN): cv.string,
+            vol.Optional(CONF_ELECTRICITY_RATE_SENSOR): cv.string,
+            vol.Optional(CONF_SCAN_INTERVAL, default=30): cv.positive_int,
         }),
     )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_EDIT_MINER,
+        handle_edit_miner_service,
+        schema=vol.Schema({
+            vol.Optional(CONF_HOST): cv.string,
+            vol.Optional("entry_id"): cv.string,
+            vol.Optional(CONF_NAME): cv.string,
+            vol.Optional(CONF_PORT): cv.port,
+            vol.Optional(CONF_PASSWORD): cv.string,
+            vol.Optional(CONF_COIN): cv.string,
+            vol.Optional(CONF_POOL_PROVIDER): cv.string,
+            vol.Optional(CONF_POOL_WALLET): cv.string,
+            vol.Optional(CONF_POOL_TOKEN): cv.string,
+            vol.Optional(CONF_ELECTRICITY_RATE_SENSOR): cv.string,
+            vol.Optional(CONF_SCAN_INTERVAL): cv.positive_int,
+        }),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_MINER,
+        handle_delete_miner_service,
+        schema=vol.Schema({
+            vol.Optional(CONF_HOST): cv.string,
+            vol.Optional("entry_id"): cv.string,
+        }),
+    )
+
+    # Register HTTP views for discovering, importing, and managing miners
+    hass.http.register_view(HomeMinerDiscoverView)
+    hass.http.register_view(HomeMinerImportView)
+    hass.http.register_view(HomeMinerManagerView)
 
     return True
 
@@ -201,3 +297,148 @@ class HomeMinerImportView(HomeAssistantView):
         hass: HomeAssistant = request.app["hass"]
         imported = await async_auto_import_miners(hass)
         return self.json({"imported": imported, "count": len(imported)})
+
+
+class HomeMinerManagerView(HomeAssistantView):
+    """View to list, add, edit, and delete miners."""
+
+    url = "/api/home_miner_studio/miners"
+    name = "api:home_miner_studio:miners"
+    requires_auth = True
+
+    async def get(self, request: web.Request) -> web.Response:
+        """Return list of all configured miners."""
+        hass: HomeAssistant = request.app["hass"]
+        entries = hass.config_entries.async_entries(DOMAIN)
+        miners = []
+        for e in entries:
+            miners.append({
+                "entry_id": e.entry_id,
+                "name": e.title or e.data.get(CONF_NAME, "Miner"),
+                "miner_type": e.data.get(CONF_MINER_TYPE, TYPE_BITAXE),
+                "host": e.data.get(CONF_HOST, ""),
+                "port": e.data.get(CONF_PORT, 80),
+                "coin": e.data.get(CONF_COIN, "BTC"),
+                "pool_provider": e.data.get(CONF_POOL_PROVIDER, "none"),
+                "pool_wallet": e.data.get(CONF_POOL_WALLET, ""),
+                "pool_token": e.data.get(CONF_POOL_TOKEN, ""),
+                "electricity_rate_sensor": e.data.get(CONF_ELECTRICITY_RATE_SENSOR, ""),
+                "scan_interval": e.data.get(CONF_SCAN_INTERVAL, 30),
+            })
+        return self.json({"miners": miners, "count": len(miners)})
+
+    async def post(self, request: web.Request) -> web.Response:
+        """Add a new miner configuration entry."""
+        hass: HomeAssistant = request.app["hass"]
+        try:
+            payload = await request.json()
+        except Exception:
+            return self.json({"error": "Invalid JSON body"}, status=400)
+
+        host = payload.get(CONF_HOST)
+        if not host:
+            return self.json({"error": "Host / IP address is required"}, status=400)
+
+        miner_type = payload.get(CONF_MINER_TYPE, TYPE_BITAXE)
+        port = int(payload.get(CONF_PORT, DEFAULT_PORT_BITAXE))
+        name = payload.get(CONF_NAME, f"{miner_type.title()} ({host})")
+
+        # Check existing entries
+        for e in hass.config_entries.async_entries(DOMAIN):
+            if e.data.get(CONF_HOST) == host and e.data.get(CONF_PORT) == port:
+                return self.json({"error": f"Miner at {host}:{port} already exists"}, status=409)
+
+        data = {
+            CONF_NAME: name,
+            CONF_MINER_TYPE: miner_type,
+            CONF_HOST: host,
+            CONF_PORT: port,
+            CONF_PASSWORD: payload.get(CONF_PASSWORD, ""),
+            CONF_COIN: payload.get(CONF_COIN, "BTC"),
+            CONF_POOL_PROVIDER: payload.get(CONF_POOL_PROVIDER, "none"),
+            CONF_POOL_WALLET: payload.get(CONF_POOL_WALLET, ""),
+            CONF_POOL_TOKEN: payload.get(CONF_POOL_TOKEN, ""),
+            CONF_ELECTRICITY_RATE_SENSOR: payload.get(CONF_ELECTRICITY_RATE_SENSOR, ""),
+            CONF_SCAN_INTERVAL: int(payload.get(CONF_SCAN_INTERVAL, 30)),
+        }
+
+        from homeassistant import config_entries
+        flow_result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_IMPORT},
+            data=data,
+        )
+
+        return self.json({"success": True, "result": flow_result})
+
+    async def patch(self, request: web.Request) -> web.Response:
+        """Edit / update an existing miner configuration entry."""
+        hass: HomeAssistant = request.app["hass"]
+        try:
+            payload = await request.json()
+        except Exception:
+            return self.json({"error": "Invalid JSON body"}, status=400)
+
+        entry_id = payload.get("entry_id")
+        host = payload.get(CONF_HOST)
+
+        target_entry = None
+        for e in hass.config_entries.async_entries(DOMAIN):
+            if (entry_id and e.entry_id == entry_id) or (host and e.data.get(CONF_HOST) == host):
+                target_entry = e
+                break
+
+        if not target_entry:
+            return self.json({"error": "Miner entry not found"}, status=404)
+
+        updated_data = {**target_entry.data}
+        for k in (
+            CONF_NAME,
+            CONF_HOST,
+            CONF_PORT,
+            CONF_PASSWORD,
+            CONF_COIN,
+            CONF_POOL_PROVIDER,
+            CONF_POOL_WALLET,
+            CONF_POOL_TOKEN,
+            CONF_ELECTRICITY_RATE_SENSOR,
+            CONF_SCAN_INTERVAL,
+        ):
+            if k in payload:
+                updated_data[k] = payload[k]
+
+        new_title = payload.get(CONF_NAME, target_entry.title)
+        hass.config_entries.async_update_entry(
+            target_entry,
+            title=new_title,
+            data=updated_data,
+        )
+        await hass.config_entries.async_reload(target_entry.entry_id)
+
+        return self.json({"success": True, "entry_id": target_entry.entry_id})
+
+    async def delete(self, request: web.Request) -> web.Response:
+        """Delete / remove a miner configuration entry."""
+        hass: HomeAssistant = request.app["hass"]
+        entry_id = request.query.get("entry_id")
+        host = request.query.get("host")
+
+        if not entry_id and not host:
+            try:
+                body = await request.json()
+                entry_id = body.get("entry_id")
+                host = body.get("host")
+            except Exception:
+                pass
+
+        target_entry = None
+        for e in hass.config_entries.async_entries(DOMAIN):
+            if (entry_id and e.entry_id == entry_id) or (host and e.data.get(CONF_HOST) == host):
+                target_entry = e
+                break
+
+        if not target_entry:
+            return self.json({"error": "Miner entry not found"}, status=404)
+
+        removed = await hass.config_entries.async_remove(target_entry.entry_id)
+        return self.json({"success": removed, "entry_id": target_entry.entry_id})

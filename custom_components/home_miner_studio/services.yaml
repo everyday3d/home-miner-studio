@@ -104,3 +104,113 @@ restart_mining:
       example: 192.168.1.91
       selector:
         text:
+
+add_miner:
+  name: Add Miner
+  description: Register and configure a new cryptocurrency miner in Home Assistant.
+  fields:
+    host:
+      name: Host / IP Address
+      description: IP address or hostname of the miner.
+      required: true
+      example: 192.168.1.95
+      selector:
+        text:
+    name:
+      name: Friendly Name
+      description: Name of the miner.
+      required: false
+      example: Living Room Bitaxe
+      selector:
+        text:
+    miner_type:
+      name: Miner Type
+      description: Hardware type (bitaxe, cgminer_rpc, whatsminer, antminer, nerdminer, hiveos).
+      required: false
+      default: bitaxe
+      selector:
+        select:
+          options:
+            - bitaxe
+            - cgminer_rpc
+            - whatsminer
+            - antminer
+            - nerdminer
+            - hiveos
+    port:
+      name: Port
+      description: Management port (80 for Bitaxe/Nerdminer, 4028 for CGMiner/ASICs).
+      required: false
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 65535
+    pool_provider:
+      name: Mining Pool Provider
+      description: Optional pool for worker telemetry tracking.
+      required: false
+      selector:
+        select:
+          options:
+            - none
+            - helios
+            - mining_dutch
+            - public_pool
+            - 2miners
+            - braiins
+    pool_wallet:
+      name: Pool Wallet / Worker
+      description: Pool wallet address or username.
+      required: false
+      selector:
+        text:
+
+edit_miner:
+  name: Edit Miner
+  description: Update configuration parameters for an existing miner.
+  fields:
+    host:
+      name: Miner Host
+      description: IP address or hostname of the target miner.
+      required: true
+      example: 192.168.1.91
+      selector:
+        text:
+    name:
+      name: Friendly Name
+      description: Updated friendly name.
+      required: false
+      selector:
+        text:
+    pool_provider:
+      name: Mining Pool Provider
+      description: Updated pool provider.
+      required: false
+      selector:
+        select:
+          options:
+            - none
+            - helios
+            - mining_dutch
+            - public_pool
+            - 2miners
+            - braiins
+    pool_wallet:
+      name: Pool Wallet / Worker
+      description: Updated pool wallet address.
+      required: false
+      selector:
+        text:
+
+delete_miner:
+  name: Delete Miner
+  description: Remove a miner and its entities completely from Home Assistant.
+  fields:
+    host:
+      name: Miner Host
+      description: IP address or hostname of the miner to remove.
+      required: true
+      example: 192.168.1.91
+      selector:
+        text:

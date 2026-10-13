@@ -7,6 +7,7 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import (
@@ -171,4 +172,94 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=import_data.get(CONF_NAME, f"{miner_type.title()} ({host})"),
             data=import_data,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Handle reconfiguring an existing miner connection."""
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        if not entry:
+            return self.async_abort(reason="entry_not_found")
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            return self.async_update_reload_and_abort(
+                entry,
+                data={**entry.data, **user_input},
+                reason="reconfigure_successful",
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema({
+                vol.Required(CONF_NAME, default=entry.data.get(CONF_NAME, "")): str,
+                vol.Required(CONF_HOST, default=entry.data.get(CONF_HOST, "")): str,
+                vol.Required(CONF_PORT, default=entry.data.get(CONF_PORT, 80)): int,
+                vol.Optional(CONF_PASSWORD, default=entry.data.get(CONF_PASSWORD, "")): str,
+            }),
+            errors=errors,
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return HomeMinerStudioOptionsFlow(config_entry)
+
+
+class HomeMinerStudioOptionsFlow(config_entries.OptionsFlow):
+    """Handle options flow for editing an existing miner."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Manage miner options and parameters."""
+        if user_input is not None:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                title=user_input.get(CONF_NAME, self.config_entry.title),
+                data={**self.config_entry.data, **user_input},
+            )
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+            return self.async_create_entry(title="", data={})
+
+        current = self.config_entry.data
+        options_schema = vol.Schema({
+            vol.Required(CONF_NAME, default=current.get(CONF_NAME, "My Miner")): str,
+            vol.Required(CONF_HOST, default=current.get(CONF_HOST, "")): str,
+            vol.Required(CONF_PORT, default=current.get(CONF_PORT, 80)): int,
+            vol.Optional(CONF_PASSWORD, default=current.get(CONF_PASSWORD, "")): str,
+            vol.Optional(CONF_COIN, default=current.get(CONF_COIN, "BTC")): str,
+            vol.Optional(CONF_POOL_PROVIDER, default=current.get(CONF_POOL_PROVIDER, "none")): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": p, "label": "None" if p == "none" else p.replace("_", " ").title()}
+                        for p in POOL_PROVIDERS
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional(CONF_POOL_WALLET, default=current.get(CONF_POOL_WALLET, "")): str,
+            vol.Optional(CONF_POOL_TOKEN, default=current.get(CONF_POOL_TOKEN, "")): str,
+            vol.Optional(
+                CONF_ELECTRICITY_RATE_SENSOR,
+                description={"suggested_value": current.get(CONF_ELECTRICITY_RATE_SENSOR)},
+            ): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="sensor")
+            ),
+            vol.Optional(CONF_SCAN_INTERVAL, default=current.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)): selector.NumberSelector(
+                selector.NumberSelectorConfig(min=10, max=300, step=5, unit_of_measurement="s")
+            ),
+        })
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=options_schema,
         )
