@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Complete Mining Pool Coverage & Telemetry Rack** ([#9](https://github.com/everyday3d/home-miner-studio/issues/9)):
+  - Exhaustively documented and surfaced all 7 supported mining pool providers: **Helios Pool**, **Mining-Dutch**, **Public-Pool**, **2Miners**, **Braiins Pool**, **ViaBTC**, and **F2Pool**.
+  - Added dedicated **Supported Mining Pool Providers** telemetry rack to `home-miner-cards.js` displaying active pool worker count, pool reported hashrate, total unpaid balances, and fleet best share.
+  - Added **ViaBTC** and **F2Pool** options to `#modal-pool` dropdown and `services.yaml` for `add_miner` and `edit_miner`.
+  - Added `extra_state_attributes` (`pool_provider`, `pool_wallet`, `pool_url`, `pool_user`) to `pool_status` sensor in `sensor.py`.
+  - Implemented ViaBTC observer API and F2Pool account API handlers in `coordinator.py`.
+  - Added Stratum pool telemetry strip (pool URL, worker, pool status, accepted/rejected shares, best share) to all miner cards including Bitaxe.
+  - Automatically populated `modal-pool` and `modal-wallet` fields when opening the edit miner modal.
+
 ## [0.5.0] - 2026-10-13
 
 ### Fixed

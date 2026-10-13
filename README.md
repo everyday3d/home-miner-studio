@@ -21,9 +21,15 @@
   * **Bitaxe / AxeOS Tuning**: Interactive sliders for Target Frequency (`MHz`) and Target Core Voltage (`mV`), plus 1-click Power Profiles (`Eco`, `Standard`, `Turbo`) to underclock/overclock on the fly.
   * **ASIC Rigs**: Antminer, Whatsminer, Innosilicon, Braiins OS via standard CGMiner/BMM raw TCP socket API (`summary`, `stats`, `pools`) with multi-hashboard chain temperature, fan speed, and chip status parsing.
   * **GPU / Rig OS**: HiveOS, NiceHash, and local rig endpoints (Rigel, GMiner, T-Rex, XMRig).
-* 🏊 **Mining Pool Telemetry**:
-  * Built-in support for **2Miners**, **Braiins Pool**, and **ViaBTC**.
-  * Tracks unpaid wallet balances, 24-hour estimated revenue, active workers, and pool-reported hashrate.
+* 🏊 **Mining Pool Telemetry (7 Integrated Providers)**:
+  * **Helios Pool (`helios`)**: Solo CKPool architecture tracking, 1m/5m live worker hashrates, session & lifetime difficulty best share (`pool_best_share`), and solo block lottery bounty tracking.
+  * **Mining-Dutch (`mining_dutch`)**: Multi-algo auto-exchange telemetry, confirmed & unconfirmed BTC wallet balances, 24-hour estimated revenues, and worker status.
+  * **Public-Pool (`public_pool`)**: Open-source solo Bitcoin mining pool API, real-time worker count, individual rig hashrates, and best difficulty share.
+  * **2Miners (`2miners`)**: PPLNS & SOLO multi-coin pool API, real-time unpaid balance, 24h reward estimates, active workers, and pool-side hashrate.
+  * **Braiins Pool (`braiins`)**: SlushPool / Braiins scoring hash rate, unconfirmed rewards, 24h estimated revenue, and worker connectivity.
+  * **ViaBTC (`viabtc`)**: PPS+ / PPLNS multi-coin pool API, observer token telemetry, active worker count, and unpaid profit tracking.
+  * **F2Pool (`f2pool`)**: Global multi-coin pool API, real-time hashrate, 24h reward estimates (`value_today`), and worker counts.
+  * **Telemetry Sensors**: Automatically exposes `pool_unpaid_balance`, `pool_24h_revenue`, `pool_active_workers`, `pool_reported_hashrate`, `pool_best_share`, and `pool_status` entities for every configured miner.
 * ⚡ **Home Assistant Energy Dashboard Integration**:
   * Exposes native `device_class: power` (W) and `device_class: energy` (kWh) entities.
   * Directly links power draw to utility rates and solar production for dynamic cost calculations.

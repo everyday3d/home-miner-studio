@@ -159,6 +159,8 @@ add_miner:
             - public_pool
             - 2miners
             - braiins
+            - viabtc
+            - f2pool
     pool_wallet:
       name: Pool Wallet / Worker
       description: Pool wallet address or username.
@@ -196,6 +198,8 @@ edit_miner:
             - public_pool
             - 2miners
             - braiins
+            - viabtc
+            - f2pool
     pool_wallet:
       name: Pool Wallet / Worker
       description: Updated pool wallet address.

@@ -96,6 +96,18 @@ class HomeMinerFleetCard extends HTMLElement {
       const inAmps = parseFloat(states['sensor.my_bitaxe_current_draw']?.state || 0).toFixed(2);
       const profile = states['select.my_bitaxe_power_profile']?.state || 'Custom';
 
+      const bitaxeAccepted = parseInt(states['sensor.my_bitaxe_shares_accepted']?.state || 0);
+      const bitaxeRejected = parseInt(states['sensor.my_bitaxe_shares_rejected']?.state || 0);
+      const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
+      const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
+      const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
+      const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
+      const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
+      const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'public-pool.io:21496';
+      const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'bc1q...bitaxe';
+      const bitaxePoolProvider = bitaxePoolStatusObj?.attributes?.pool_provider || 'public_pool';
+      const bitaxePoolWallet = bitaxePoolStatusObj?.attributes?.pool_wallet || '';
+
       miners.push({
         id: 'bitaxe',
         name: bitaxeName,
@@ -115,6 +127,16 @@ class HomeMinerFleetCard extends HTMLElement {
         inVolt,
         inAmps,
         profile,
+        accepted: bitaxeAccepted.toLocaleString(),
+        rejected: bitaxeRejected.toLocaleString(),
+        hwErrors: bitaxeHw,
+        bestShareStr: bitaxeBestStr,
+        blocksFound: '--',
+        poolUrl: bitaxePoolUrl,
+        poolUser: bitaxePoolUser,
+        poolStatus: bitaxePoolStatus,
+        poolProvider: bitaxePoolProvider,
+        poolWallet: bitaxePoolWallet,
         rebootEntity: 'button.my_bitaxe_reboot_miner',
         restartEntity: 'button.my_bitaxe_restart_mining_process',
         freqEntity: 'number.my_bitaxe_target_frequency',
@@ -153,8 +175,11 @@ class HomeMinerFleetCard extends HTMLElement {
       const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
       const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
       const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
-      const poolStatus = states['sensor.192_168_1_154_pool_connection_status']?.state ||
+      const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
+      const poolStatus = avalonPoolStatusObj?.state ||
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
+      const avalonPoolProvider = avalonPoolStatusObj?.attributes?.pool_provider || 'mining_dutch';
+      const avalonPoolWallet = avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
       const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
 
       const avalonName = getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', 'sensor.192_168_1_154_hashrate_th_s');
@@ -180,6 +205,8 @@ class HomeMinerFleetCard extends HTMLElement {
         poolUrl: cleanPoolUrl,
         poolUser,
         poolStatus,
+        poolProvider: avalonPoolProvider,
+        poolWallet: avalonPoolWallet,
         rebootEntity: 'button.192_168_1_154_reboot_miner'
       });
     }
@@ -202,6 +229,41 @@ class HomeMinerFleetCard extends HTMLElement {
     const fleetEfficiency = totalHashThs > 0 ? (totalWatts / totalHashThs).toFixed(1) : '0.0';
     const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
     const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
+
+    // Aggregate Mining Pool Telemetry across Fleet
+    let totalPoolWorkers = 0;
+    let totalUnpaidBtc = 0;
+    let total24hRevBtc = 0;
+    let poolHashGhs = 0;
+    let maxBestDiff = 0;
+
+    Object.keys(states).forEach(eid => {
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_reported_hashrate')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) poolHashGhs += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_unpaid_balance')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) totalUnpaidBtc += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_24h_revenue')) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) total24hRevBtc += v;
+      }
+      if (eid.startsWith('sensor.') && eid.endsWith('_pool_active_workers')) {
+        const v = parseInt(states[eid]?.state || 0);
+        if (!isNaN(v) && v > 0) totalPoolWorkers += v;
+      }
+      if (eid.startsWith('sensor.') && (eid.endsWith('_pool_best_share') || eid.endsWith('_best_difficulty'))) {
+        const v = parseFloat(states[eid]?.state || 0);
+        if (!isNaN(v) && v > maxBestDiff) maxBestDiff = v;
+      }
+    });
+
+    const poolReportedHrStr = poolHashGhs > 0 
+      ? (poolHashGhs >= 1000 ? (poolHashGhs / 1000).toFixed(2) + ' TH/s' : poolHashGhs.toFixed(1) + ' GH/s')
+      : totalHashThs.toFixed(2) + ' TH/s';
+    const bestShareDisplay = maxBestDiff >= 1e9 ? (maxBestDiff / 1e9).toFixed(2) + ' G' : (maxBestDiff >= 1e6 ? (maxBestDiff / 1e6).toFixed(2) + ' M' : (maxBestDiff > 0 ? maxBestDiff.toLocaleString() : '--'));
 
     // SVG Radial Arc Metrics
     // Circumference = 2 * PI * 42 = 263.89
@@ -951,6 +1013,55 @@ class HomeMinerFleetCard extends HTMLElement {
 
       </div>
 
+      <!-- MINING POOL TELEMETRY RACK -->
+      <div class="glass-card cyan-glow" style="margin-bottom: 24px; padding: 18px 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">🏊</span>
+            <span style="font-size: 13px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;">Supported Mining Pool Providers</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);">Helios Pool</span>
+            <span class="badge-glass-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">Mining-Dutch</span>
+            <span class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.35);">Public-Pool</span>
+            <span class="badge-glass-pill" style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.35);">2Miners</span>
+            <span class="badge-glass-pill" style="color: #f472b6; border-color: rgba(244, 114, 182, 0.35);">Braiins</span>
+            <span class="badge-glass-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">ViaBTC</span>
+            <span class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.35);">F2Pool</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+          <div class="tile-glass-box">
+            <span class="tile-label">Pool Workers</span>
+            <div class="tile-val-row">
+              <span class="tile-num" style="color: #38bdf8;">${totalPoolWorkers || miners.length}</span>
+              <span class="tile-unit">online</span>
+            </div>
+          </div>
+          <div class="tile-glass-box">
+            <span class="tile-label">Reported Hashrate</span>
+            <div class="tile-val-row">
+              <span class="tile-num" style="color: #34d399;">${poolReportedHrStr}</span>
+            </div>
+          </div>
+          <div class="tile-glass-box">
+            <span class="tile-label">Unpaid Balance</span>
+            <div class="tile-val-row">
+              <span class="tile-num" style="color: #fbbf24; font-size: 15px;">${totalUnpaidBtc.toFixed(8)}</span>
+              <span class="tile-unit">BTC</span>
+            </div>
+          </div>
+          <div class="tile-glass-box">
+            <span class="tile-label">Fleet Best Share</span>
+            <div class="tile-val-row">
+              <span class="tile-num" style="color: #a78bfa;">${bestShareDisplay}</span>
+              <span class="tile-unit">diff</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- HARDWARE SECTION -->
       <div class="hardware-section-title">Hardware Workstations</div>
 
@@ -990,7 +1101,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
 
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}">⚙️ Edit</button>
+                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}">⚙️ Edit</button>
                   <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">🗑️ Delete</button>
                   ${isBitaxe ? `
                     <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart Proc</button>
@@ -1094,8 +1205,9 @@ class HomeMinerFleetCard extends HTMLElement {
                     </div>
                   </div>
                 </div>
-              ` : `
-                <div class="stratum-card-strip">
+              ` : ''}
+
+              <div class="stratum-card-strip" style="${isBitaxe ? 'margin-top: 14px;' : ''}">
                   <div class="stratum-chips-row">
                     <div class="stratum-host-pill">
                       <span style="color: #94a3b8;">Stratum Pool:</span>
@@ -1133,7 +1245,6 @@ class HomeMinerFleetCard extends HTMLElement {
                     ` : ''}
                   </div>
                 </div>
-              `}
             </div>
           `;
         }).join('')}
@@ -1184,6 +1295,8 @@ class HomeMinerFleetCard extends HTMLElement {
                 <option value="public_pool">Public Pool (Solo)</option>
                 <option value="2miners">2Miners</option>
                 <option value="braiins">Braiins Pool</option>
+                <option value="viabtc">ViaBTC</option>
+                <option value="f2pool">F2Pool</option>
               </select>
             </div>
             <div class="modal-field">
@@ -1360,11 +1473,15 @@ class HomeMinerFleetCard extends HTMLElement {
         activeHost = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
         const type = btn.getAttribute('data-type');
+        const pool = btn.getAttribute('data-pool') || 'none';
+        const wallet = btn.getAttribute('data-wallet') || '';
         this.shadowRoot.querySelector('#modal-title').textContent = `⚙️ Edit Miner (${activeHost})`;
         this.shadowRoot.querySelector('#modal-name').value = name || '';
         this.shadowRoot.querySelector('#modal-host').value = activeHost;
         this.shadowRoot.querySelector('#modal-host').disabled = true;
         this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
+        this.shadowRoot.querySelector('#modal-pool').value = pool;
+        this.shadowRoot.querySelector('#modal-wallet').value = wallet;
         minerModal.style.display = 'flex';
       });
     });

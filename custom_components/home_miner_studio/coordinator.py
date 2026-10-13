@@ -30,6 +30,7 @@ from .const import (
     DOMAIN,
     POOL_2MINERS,
     POOL_BRAIINS,
+    POOL_F2POOL,
     POOL_HELIOS,
     POOL_MINING_DUTCH,
     POOL_PUBLIC_POOL,
@@ -214,6 +215,13 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         electricity_rate = self._get_electricity_rate()
         daily_power_cost = daily_kwh * electricity_rate if electricity_rate else 0.0
 
+        stratum_url = raw.get("stratumURL", "")
+        stratum_port = raw.get("stratumPort", "")
+        pool_url = f"{stratum_url}:{stratum_port}".strip(":") if stratum_url else ""
+        pool_user = raw.get("stratumUser", "")
+        stratum_conn = raw.get("isStratumConnected", raw.get("stratumConnected", True))
+        pool_status = "Alive" if stratum_conn else "Offline"
+
         self._infer_bitaxe_profile(frequency, core_voltage)
 
         return {
@@ -239,6 +247,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "daily_kwh": round(daily_kwh, 3),
             "daily_power_cost": round(daily_power_cost, 2),
             "electricity_rate": electricity_rate,
+            "pool_status": pool_status,
+            "pool_url": pool_url,
+            "pool_user": pool_user,
             "raw": raw,
         }
 
@@ -525,6 +536,49 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_active_workers": worker_count,
                                 "pool_reported_hashrate": round(hr_ghs, 2),
                                 "pool_best_share": float(data.get("bestshare", 0.0)),
+                            }
+            elif self.pool_provider == POOL_VIABTC and (self.pool_token or self.pool_wallet):
+                coin_sub = self.coin.lower() if self.coin else "btc"
+                token_to_use = self.pool_token or self.pool_wallet
+                url = f"https://www.viabtc.com/res/observer/hashrate?observer_token={token_to_use}&coin={coin_sub}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status == 200:
+                            data = await resp.json(content_type=None)
+                            res_data = data.get("data", {}) if isinstance(data, dict) else {}
+                            raw_hr = res_data.get("hashrate", 0.0)
+                            try:
+                                hr_ghs = float(raw_hr) / 1e9 if float(raw_hr) > 1e6 else float(raw_hr)
+                            except (ValueError, TypeError):
+                                hr_ghs = 0.0
+                            active_workers = int(res_data.get("active_workers", res_data.get("workers", 0)))
+                            profit_24h = float(res_data.get("profit_24h", res_data.get("total_profit", 0.0)))
+                            self._cached_pool_data = {
+                                "pool_unpaid_balance": float(res_data.get("unpaid_profit", 0.0)),
+                                "pool_24h_revenue": profit_24h,
+                                "pool_active_workers": active_workers,
+                                "pool_reported_hashrate": round(hr_ghs, 2),
+                            }
+            elif self.pool_provider == POOL_F2POOL and (self.pool_wallet or self.pool_token):
+                coin_sub = "bitcoin" if (not self.coin or self.coin.upper() == "BTC") else self.coin.lower()
+                account = self.pool_wallet or self.pool_token
+                url = f"https://api.f2pool.com/{coin_sub}/{account}"
+                headers = {}
+                if self.pool_token:
+                    headers["F2P-API-SECRET"] = self.pool_token
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status == 200:
+                            data = await resp.json(content_type=None)
+                            raw_hr = float(data.get("hashrate", 0.0))
+                            hr_ghs = raw_hr / 1e9 if raw_hr > 0 else 0.0
+                            workers = data.get("workers", [])
+                            worker_count = int(data.get("worker_length", len(workers)))
+                            self._cached_pool_data = {
+                                "pool_unpaid_balance": float(data.get("balance", 0.0)),
+                                "pool_24h_revenue": float(data.get("value_today", data.get("value_yesterday", 0.0))),
+                                "pool_active_workers": worker_count,
+                                "pool_reported_hashrate": round(hr_ghs, 2),
                             }
             self._last_pool_fetch = now
         except Exception as err:

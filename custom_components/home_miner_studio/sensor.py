@@ -274,3 +274,15 @@ class HomeMinerSensor(CoordinatorEntity[MinerDataUpdateCoordinator], SensorEntit
         if not self.coordinator.data:
             return None
         return self.coordinator.data.get(self.entity_description.key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return sensor state attributes."""
+        if self.entity_description.key == "pool_status":
+            return {
+                "pool_provider": self.coordinator.pool_provider,
+                "pool_wallet": self.coordinator.pool_wallet,
+                "pool_url": self.coordinator.data.get("pool_url") if self.coordinator.data else None,
+                "pool_user": self.coordinator.data.get("pool_user") if self.coordinator.data else None,
+            }
+        return None
