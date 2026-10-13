@@ -30,21 +30,27 @@ from .const import (
     DOMAIN,
     POOL_2MINERS,
     POOL_BRAIINS,
+    POOL_HELIOS,
+    POOL_MINING_DUTCH,
+    POOL_PUBLIC_POOL,
     POOL_VIABTC,
     PROFILE_CUSTOM,
     PROFILE_ECO,
     PROFILE_STANDARD,
     PROFILE_TURBO,
+    TYPE_ANTMINER,
     TYPE_BITAXE,
     TYPE_CGMINER_RPC,
+    TYPE_HIVEOS,
     TYPE_NERDMINER,
+    TYPE_WHATSMINER,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Class to manage fetching miner and pool data."""
+    """Class to manage fetching miner, pool, and profitability data."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the miner coordinator."""
@@ -66,11 +72,19 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Cached pool metrics (updated every 60s to avoid rate limits)
         self._last_pool_fetch = 0.0
         self._cached_pool_data: dict[str, Any] = {
-            "unpaid_balance": 0.0,
-            "reward_24h": 0.0,
-            "active_workers": 0,
-            "reported_hashrate": 0.0,
+            "pool_unpaid_balance": 0.0,
+            "pool_24h_revenue": 0.0,
+            "pool_active_workers": 0,
+            "pool_reported_hashrate": 0.0,
         }
+
+        # Cached Bitcoin price (updated every 300s)
+        self._last_price_fetch = 0.0
+        self._cached_btc_price = 68000.0
+
+        # Cumulative energy tracking
+        self._total_energy_kwh = 0.0
+        self._last_energy_calc = time.time()
 
         scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         super().__init__(
@@ -81,15 +95,17 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from hardware and pool APIs."""
+        """Fetch data from hardware, pool, and market APIs."""
         try:
             miner_data: dict[str, Any] = {}
             if self.miner_type == TYPE_BITAXE:
                 miner_data = await self._fetch_bitaxe_data()
-            elif self.miner_type == TYPE_CGMINER_RPC:
+            elif self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):
                 miner_data = await self._fetch_cgminer_data()
             elif self.miner_type == TYPE_NERDMINER:
                 miner_data = await self._fetch_nerdminer_data()
+            elif self.miner_type == TYPE_HIVEOS:
+                miner_data = await self._fetch_hiveos_data()
             else:
                 miner_data = await self._fetch_bitaxe_data()
 
@@ -97,9 +113,70 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             pool_data = await self._fetch_pool_data()
             miner_data.update(pool_data)
 
+            # Cumulative energy update
+            now = time.time()
+            elapsed_hours = max(0.0, (now - self._last_energy_calc) / 3600.0)
+            self._last_energy_calc = now
+            pwr = float(miner_data.get("power_w", 0.0))
+            if pwr > 0 and elapsed_hours > 0:
+                self._total_energy_kwh += (pwr / 1000.0) * elapsed_hours
+            miner_data["total_energy_kwh"] = round(self._total_energy_kwh, 4)
+
+            # Fetch live Bitcoin price and calculate profitability
+            btc_price = await self._fetch_btc_price()
+            hashrate_ths = float(miner_data.get("hashrate_ths", 0.0))
+            daily_power_cost = float(miner_data.get("daily_power_cost", 0.0))
+
+            # Standard theoretical yield: ~0.00000057 BTC / TH/s / day at current network difficulty
+            daily_btc_est = hashrate_ths * 0.00000057
+            daily_gross_rev = daily_btc_est * btc_price
+            daily_net_profit = daily_gross_rev - daily_power_cost
+
+            miner_data["btc_price_usd"] = round(btc_price, 2)
+            miner_data["daily_est_revenue"] = round(daily_gross_rev, 2)
+            miner_data["daily_net_profit"] = round(daily_net_profit, 2)
+
             return miner_data
         except Exception as err:
             raise UpdateFailed(f"Error communicating with miner at {self.host}: {err}") from err
+
+    async def _fetch_btc_price(self) -> float:
+        """Fetch current Bitcoin USD price with 300s cache."""
+        now = time.time()
+        if now - self._last_price_fetch < 300.0:
+            return self._cached_btc_price
+
+        try:
+            url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=8)) as session:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        price = float(data.get("bitcoin", {}).get("usd", 0.0))
+                        if price > 0:
+                            self._cached_btc_price = price
+                            self._last_price_fetch = now
+                            return price
+        except Exception as err:
+            _LOGGER.debug("CoinGecko price fetch failed: %s, trying Kraken fallback", err)
+
+        try:
+            url = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=8)) as session:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        result = data.get("result", {})
+                        xbt = result.get("XXBTZUSD", result.get("XBTUSD", {}))
+                        price = float(xbt.get("c", [0.0])[0])
+                        if price > 0:
+                            self._cached_btc_price = price
+                            self._last_price_fetch = now
+                            return price
+        except Exception as err:
+            _LOGGER.debug("Kraken price fallback failed: %s", err)
+
+        return self._cached_btc_price
 
     async def _fetch_bitaxe_data(self) -> dict[str, Any]:
         """Fetch complete telemetry from Bitaxe / AxeOS REST API."""
@@ -132,15 +209,11 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         best_diff = raw.get("bestDiff", 0)
         best_session_diff = raw.get("bestSessionDiff", 0)
 
-        # Efficiency (J/TH = W / TH/s)
         efficiency_j_th = (power_w / hashrate_ths) if hashrate_ths > 0 else 0.0
-
-        # Cost tracking
         daily_kwh = (power_w / 1000.0) * 24.0
         electricity_rate = self._get_electricity_rate()
         daily_power_cost = daily_kwh * electricity_rate if electricity_rate else 0.0
 
-        # Infer profile
         self._infer_bitaxe_profile(frequency, core_voltage)
 
         return {
@@ -170,7 +243,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
     async def _fetch_cgminer_data(self) -> dict[str, Any]:
-        """Fetch telemetry from raw CGMiner / BMM TCP RPC socket across chains."""
+        """Fetch telemetry from raw CGMiner / BMM / Whatsminer TCP RPC socket."""
         summary_raw = await self._query_cgminer_socket("summary")
         stats_raw = await self._query_cgminer_socket("stats")
         pools_raw = await self._query_cgminer_socket("pools")
@@ -211,7 +284,6 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 elif k.startswith("chain_acn") and isinstance(v, (int, float)):
                     chain_acn[k] = int(v)
                 elif k.startswith("MM ID") and isinstance(v, str):
-                    # Parse Canaan Avalon Nano bracket notation
                     mm_dict = dict(re.findall(r"(\w+)\[([^\]]*)\]", v))
                     if "TAvg" in mm_dict:
                         try:
@@ -248,19 +320,16 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         hashrate_ths = ghs_5s / 1000.0
 
-        # Efficiency & energy metrics if power known
         efficiency_j_th = (power_w / hashrate_ths) if (hashrate_ths > 0 and power_w > 0) else 0.0
         daily_kwh = (power_w / 1000.0) * 24.0 if power_w > 0 else 0.0
         electricity_rate = self._get_electricity_rate()
         daily_power_cost = daily_kwh * electricity_rate if (electricity_rate and daily_kwh > 0) else 0.0
 
-        # Primary chip temp is highest chip temp or average
         primary_temp = max(chain_temps_chip.values()) if chain_temps_chip else (
             max(chain_temps_pcb.values()) if chain_temps_pcb else 0.0
         )
         primary_fan = max(fan_speeds.values()) if fan_speeds else 0
 
-        # Parse pool status
         pools = pools_raw.get("POOLS", [])
         active_pool = pools[0] if pools else {}
         pool_status = active_pool.get("Status", "Unknown")
@@ -326,7 +395,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return {
             "online": True,
-            "hashrate_ghs": round(hashrate_ghs, 6),
+            "hashrate_ghs": round(hashrate_ghs, 4),
             "hashrate_ths": round(hashrate_ghs / 1000.0, 9),
             "power_w": 1.5,
             "efficiency_j_th": 0.0,
@@ -337,6 +406,29 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "uptime_seconds": uptime,
             "raw": raw,
         }
+
+    async def _fetch_hiveos_data(self) -> dict[str, Any]:
+        """Fetch GPU / ASIC farm telemetry from HiveOS API."""
+        if not self.pool_token or not self.host:
+            return {"online": False}
+
+        url = f"https://api2.hiveos.farm/api/v2/farms/{self.host}/workers"
+        headers = {"Authorization": f"Bearer {self.pool_token}"}
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    return {"online": False}
+                data = await resp.json(content_type=None)
+                workers = data.get("data", [])
+                total_hash = sum(float(w.get("hashrate", 0.0)) for w in workers)
+                total_pwr = sum(float(w.get("power", 0.0)) for w in workers)
+                return {
+                    "online": True,
+                    "hashrate_ghs": round(total_hash / 1000.0, 2),
+                    "hashrate_ths": round(total_hash / 1_000_000.0, 4),
+                    "power_w": round(total_pwr, 1),
+                    "workers_count": len(workers),
+                }
 
     async def _fetch_pool_data(self) -> dict[str, Any]:
         """Fetch remote mining pool metrics with 60s throttling."""
@@ -375,6 +467,64 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_24h_revenue": float(btc.get("estimated_reward", 0.0)),
                                 "pool_active_workers": 1,
                                 "pool_reported_hashrate": 0.0,
+                            }
+            elif self.pool_provider == POOL_MINING_DUTCH and self.pool_token:
+                url = f"https://www.mining-dutch.nl/api/v1/user?api_key={self.pool_token}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status == 200:
+                            data = await resp.json(content_type=None)
+                            balances = data.get("balances", {})
+                            btc_bal = float(balances.get("BTC", {}).get("confirmed", 0.0))
+                            self._cached_pool_data = {
+                                "pool_unpaid_balance": btc_bal,
+                                "pool_24h_revenue": float(data.get("24h_estimate", 0.0)),
+                                "pool_active_workers": int(data.get("active_workers", 1)),
+                                "pool_reported_hashrate": float(data.get("total_hashrate", 0.0)),
+                            }
+            elif self.pool_provider == POOL_PUBLIC_POOL and self.pool_wallet:
+                url = f"https://public-pool.io:40557/api/client/{self.pool_wallet}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status == 200:
+                            data = await resp.json(content_type=None)
+                            workers = data.get("workers", [])
+                            self._cached_pool_data = {
+                                "pool_unpaid_balance": 0.0,
+                                "pool_24h_revenue": 0.0,
+                                "pool_active_workers": len(workers),
+                                "pool_reported_hashrate": float(data.get("hashRate", 0.0)),
+                            }
+            elif self.pool_provider == POOL_HELIOS and self.pool_wallet:
+                url = f"https://stats-btc.heliospool.com/users/{self.pool_wallet}"
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status == 200:
+                            data = await resp.json(content_type=None)
+                            raw_hr = str(data.get("hashrate1m", data.get("hashrate5m", "0"))).strip()
+                            hr_ghs = 0.0
+                            if raw_hr.endswith("P"):
+                                hr_ghs = float(raw_hr[:-1]) * 1_000_000.0
+                            elif raw_hr.endswith("T"):
+                                hr_ghs = float(raw_hr[:-1]) * 1000.0
+                            elif raw_hr.endswith("G"):
+                                hr_ghs = float(raw_hr[:-1])
+                            elif raw_hr.endswith("M"):
+                                hr_ghs = float(raw_hr[:-1]) / 1000.0
+                            else:
+                                try:
+                                    hr_ghs = float(raw_hr)
+                                except ValueError:
+                                    hr_ghs = 0.0
+
+                            workers = data.get("worker", [])
+                            worker_count = int(data.get("workers", len(workers)))
+                            self._cached_pool_data = {
+                                "pool_unpaid_balance": 0.0,
+                                "pool_24h_revenue": 0.0,
+                                "pool_active_workers": worker_count,
+                                "pool_reported_hashrate": round(hr_ghs, 2),
+                                "pool_best_share": float(data.get("bestshare", 0.0)),
                             }
             self._last_pool_fetch = now
         except Exception as err:
@@ -427,6 +577,53 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.current_profile = profile
             self.async_set_updated_data({**self.data, "profile": profile})
         return success
+
+    async def async_apply_solar_curtailment(self, mode: str) -> bool:
+        """Apply solar curtailment mode (eco, standard, turbo, pause)."""
+        mode_lower = mode.lower()
+        if mode_lower == "eco":
+            if self.miner_type == TYPE_BITAXE:
+                return await self.async_set_bitaxe_profile(PROFILE_ECO)
+        elif mode_lower == "turbo":
+            if self.miner_type == TYPE_BITAXE:
+                return await self.async_set_bitaxe_profile(PROFILE_TURBO)
+        elif mode_lower == "standard":
+            if self.miner_type == TYPE_BITAXE:
+                return await self.async_set_bitaxe_profile(PROFILE_STANDARD)
+        elif mode_lower == "pause":
+            # Call pause via socket or REST
+            if self.miner_type == TYPE_BITAXE:
+                return await self.async_set_bitaxe_tuning(frequency=300, core_voltage=1000)
+            return await self._query_cgminer_socket("pause") is not None
+        return False
+
+    async def async_reboot_miner(self) -> bool:
+        """Send reboot command to miner."""
+        if self.miner_type == TYPE_BITAXE:
+            url = f"http://{self.host}:{self.port}/api/system/restart"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                        return resp.status in (200, 204)
+            except Exception as err:
+                _LOGGER.error("Bitaxe reboot failed: %s", err)
+                return False
+        else:
+            res = await self._query_cgminer_socket("restart")
+            return bool(res)
+
+    async def async_restart_mining(self) -> bool:
+        """Restart mining process without hardware reboot."""
+        if self.miner_type == TYPE_BITAXE:
+            url = f"http://{self.host}:{self.port}/api/system/restart"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                        return resp.status in (200, 204)
+            except Exception as err:
+                _LOGGER.error("Bitaxe process restart failed: %s", err)
+                return False
+        return False
 
     def _get_electricity_rate(self) -> float | None:
         """Fetch electricity price ($/kWh) from Home Assistant entity."""

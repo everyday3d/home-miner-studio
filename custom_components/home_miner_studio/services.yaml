@@ -1,3 +1,106 @@
 import_existing_miners:
   name: Import Existing Miners
   description: Automatically discover and import miners configured in other Home Assistant integrations or found on LAN.
+
+apply_solar_curtailment:
+  name: Apply Solar Curtailment
+  description: Adjust miner profile or power state based on solar availability (eco, standard, turbo, pause).
+  fields:
+    mode:
+      name: Curtailment Mode
+      description: Curtailment profile to apply (eco, standard, turbo, pause).
+      required: true
+      example: eco
+      selector:
+        select:
+          options:
+            - eco
+            - standard
+            - turbo
+            - pause
+    host:
+      name: Miner Host
+      description: Optional IP or hostname of target miner (applies to all if omitted).
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:
+
+set_axeos_tuning:
+  name: Set AxeOS Tuning
+  description: Adjust Bitaxe / AxeOS clock frequency and core voltage.
+  fields:
+    frequency:
+      name: Frequency (MHz)
+      description: ASIC core frequency in MHz.
+      required: true
+      example: 500
+      selector:
+        number:
+          min: 200
+          max: 800
+          unit_of_measurement: MHz
+    core_voltage:
+      name: Core Voltage (mV)
+      description: ASIC core voltage in millivolts.
+      required: true
+      example: 1150
+      selector:
+        number:
+          min: 900
+          max: 1400
+          unit_of_measurement: mV
+    host:
+      name: Miner Host
+      description: Optional IP or hostname of target miner.
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:
+
+set_axeos_profile:
+  name: Set AxeOS Profile
+  description: Apply a preset performance profile to AxeOS miner.
+  fields:
+    profile:
+      name: Profile
+      description: Preset profile name (Eco, Standard, Turbo).
+      required: true
+      example: Eco
+      selector:
+        select:
+          options:
+            - Eco
+            - Standard
+            - Turbo
+    host:
+      name: Miner Host
+      description: Optional IP or hostname of target miner.
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:
+
+reboot_miner:
+  name: Reboot Miner
+  description: Reboot miner hardware controller.
+  fields:
+    host:
+      name: Miner Host
+      description: Optional IP or hostname of target miner (reboots all if omitted).
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:
+
+restart_mining:
+  name: Restart Mining
+  description: Restart the miner hashing software process.
+  fields:
+    host:
+      name: Miner Host
+      description: Optional IP or hostname of target miner.
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:

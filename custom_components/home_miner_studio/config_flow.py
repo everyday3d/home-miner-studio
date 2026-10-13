@@ -137,7 +137,7 @@ class HomeMinerStudioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional(CONF_POOL_PROVIDER, default="none"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=[
-                        {"value": p, "label": "None" if p == "none" else p.title()}
+                        {"value": p, "label": "None" if p == "none" else p.replace("_", " ").title()}
                         for p in POOL_PROVIDERS
                     ],
                     mode=selector.SelectSelectorMode.DROPDOWN,

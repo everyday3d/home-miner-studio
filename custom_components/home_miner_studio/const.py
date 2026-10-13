@@ -20,6 +20,8 @@ CONF_SCAN_INTERVAL = "scan_interval"
 # Miner Types
 TYPE_BITAXE = "bitaxe"
 TYPE_CGMINER_RPC = "cgminer_rpc"
+TYPE_WHATSMINER = "whatsminer"
+TYPE_ANTMINER = "antminer"
 TYPE_HIVEOS = "hiveos"
 TYPE_NERDMINER = "nerdminer"
 TYPE_GENERIC_REST = "generic_rest"
@@ -27,6 +29,8 @@ TYPE_GENERIC_REST = "generic_rest"
 MINER_TYPES = [
     TYPE_BITAXE,
     TYPE_CGMINER_RPC,
+    TYPE_WHATSMINER,
+    TYPE_ANTMINER,
     TYPE_HIVEOS,
     TYPE_NERDMINER,
     TYPE_GENERIC_REST,
@@ -34,6 +38,9 @@ MINER_TYPES = [
 
 # Mining Pools
 POOL_NONE = "none"
+POOL_HELIOS = "helios"
+POOL_MINING_DUTCH = "mining_dutch"
+POOL_PUBLIC_POOL = "public_pool"
 POOL_2MINERS = "2miners"
 POOL_BRAIINS = "braiins"
 POOL_VIABTC = "viabtc"
@@ -41,6 +48,9 @@ POOL_F2POOL = "f2pool"
 
 POOL_PROVIDERS = [
     POOL_NONE,
+    POOL_HELIOS,
+    POOL_MINING_DUTCH,
+    POOL_PUBLIC_POOL,
     POOL_2MINERS,
     POOL_BRAIINS,
     POOL_VIABTC,
@@ -69,6 +79,8 @@ BITAXE_PROFILE_CONFIGS = {
 # Default Ports
 DEFAULT_PORT_BITAXE = 80
 DEFAULT_PORT_CGMINER = 4028
+DEFAULT_PORT_WHATSMINER = 4028
+DEFAULT_PORT_ANTMINER = 4028
 DEFAULT_PORT_NERDMINER = 80
 
 # Default Intervals
@@ -77,3 +89,11 @@ DEFAULT_SCAN_INTERVAL = 30  # seconds
 # Custom Card URL & JS
 CARD_URL = "/home_miner_studio/home-miner-cards.js"
 CARD_FILE = "home-miner-cards.js"
+
+# Services
+SERVICE_APPLY_SOLAR_CURTAILMENT = "apply_solar_curtailment"
+SERVICE_SET_AXEOS_TUNING = "set_axeos_tuning"
+SERVICE_SET_AXEOS_PROFILE = "set_axeos_profile"
+SERVICE_REBOOT_MINER = "reboot_miner"
+SERVICE_RESTART_MINING = "restart_mining"
+SERVICE_IMPORT_EXISTING = "import_existing_miners"
