@@ -5,6 +5,7 @@
         "title": "Add Cryptocurrency Miner",
         "description": "Select your miner hardware or software platform.",
         "data": {
+          "discovered_device": "Discovered Miner (Auto-Import)",
           "miner_type": "Miner Type",
           "name": "Miner Friendly Name",
           "host": "IP Address or Hostname",

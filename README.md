@@ -10,6 +10,10 @@
 
 ## 🌟 Key Features
 
+* 🔍 **Zero-Config Auto-Import**:
+  * Automatically scans your existing Home Assistant integrations (`bitaxe`, `ha_bitaxe`, `axeos`, `antminer`, `whatsminer`, `braiins`, `hiveos`, `nicehash`, `nerdminer`).
+  * Inspects Device & Entity Registries to auto-extract miner host IPs and models.
+  * 1-click import directly from the Lovelace card or dropdown selection in the config flow.
 * ⛏️ **Multi-Hardware Support**:
   * **Micro-miners & Open Hardware**: Bitaxe (Ultra, Supra, Gamma), NerdMiner, Avalon Nano via local HTTP/REST API.
   * **Bitaxe / AxeOS Tuning**: Interactive sliders for Target Frequency (`MHz`) and Target Core Voltage (`mV`), plus 1-click Power Profiles (`Eco`, `Standard`, `Turbo`) to underclock/overclock on the fly.
@@ -27,7 +31,7 @@
 * 📊 **Standalone Lovelace Card (`home-miner-fleet-card`)**:
   * Fleet overview with aggregate hashrate, efficiency ($J/\text{TH}$), and net power cost per day.
   * Per-miner telemetry tiles with chip temperature health thresholds (<65°C green, 65–75°C amber, >75°C red).
-  * 1-click power profile buttons and quick reboot triggers.
+  * 1-click power profile buttons, auto-import action, and quick reboot triggers.
 
 ---
 
@@ -42,6 +46,7 @@ home-miner-studio/
 │       ├── config_flow.py       # Discovery & UI configuration flow
 │       ├── const.py             # Constants & API schemas
 │       ├── coordinator.py       # DataUpdateCoordinator for miners & pools
+│       ├── discovery.py         # Auto-import scanner for existing integrations
 │       ├── sensor.py            # Hashrate, power, temp, earnings, pool sensors
 │       ├── binary_sensor.py     # Health, overheat, pool alive status
 │       ├── switch.py            # Mining pause / resume & power toggles

@@ -269,6 +269,21 @@ class HomeMinerFleetCard extends HTMLElement {
         .action-btn:hover {
           background: rgba(239, 68, 68, 0.2);
         }
+        .import-action-btn {
+          background: #f7931a;
+          color: #000;
+          font-weight: 700;
+          border: none;
+          border-radius: 8px;
+          padding: 10px 18px;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .import-action-btn:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
         .empty-state {
           text-align: center;
           padding: 30px;
@@ -313,7 +328,14 @@ class HomeMinerFleetCard extends HTMLElement {
 
         ${miners.length === 0 ? `
           <div class="empty-state">
-            No active mining devices found. Configure a miner in Settings > Devices & Services.
+            <div style="font-size:1.1rem; font-weight:700; margin-bottom:8px; color:#fff;">No Active Miners Configured</div>
+            <div style="margin-bottom:18px; color:#8b949e; max-width:400px; margin-left:auto; margin-right:auto; line-height:1.4;">
+              Auto-detect Bitaxe, Antminer, NerdMiner, or HiveOS devices from your existing Home Assistant integrations.
+            </div>
+            <button id="import-btn" class="import-action-btn">
+              ⚡ 1-Click Auto-Import from Home Assistant
+            </button>
+            <div id="import-status" style="margin-top:10px; font-size:0.8rem; color:#f7931a; display:none;"></div>
           </div>
         ` : `
           <div class="miners-list">
@@ -410,6 +432,29 @@ class HomeMinerFleetCard extends HTMLElement {
         }
       });
     });
+
+    const importBtn = this.shadowRoot.querySelector('#import-btn');
+    if (importBtn) {
+      importBtn.addEventListener('click', async () => {
+        const statusEl = this.shadowRoot.querySelector('#import-status');
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Scanning existing integrations and importing...';
+        }
+        if (this._hass) {
+          try {
+            await this._hass.callService('home_miner_studio', 'import_existing_miners', {});
+            if (statusEl) {
+              statusEl.textContent = 'Import triggered! Waiting for device sync...';
+            }
+          } catch (err) {
+            if (statusEl) {
+              statusEl.textContent = 'Import service call failed: ' + err.message;
+            }
+          }
+        }
+      });
+    }
   }
 }
 
