@@ -1,9 +1,9 @@
 /**
  * Home Miner Studio — Lovelace Custom Cards
  * Unified Crypto Mining Dashboard for Home Assistant
- * Designed in Stitch: Obsidian Telemetry Cyber-Industrial Architecture
+ * Designed in Stitch: Glassmorphism / Luminous Aero-Glass Architecture
  * 
- * Clean production telemetry: 100% real entity data, zero fake mockups, zero printer/beacon leakage.
+ * Production Telemetry: 100% real entity data, Celsius-only units, frosted glassmorphism layers, SVG radial ring gauges.
  */
 
 class HomeMinerFleetCard extends HTMLElement {
@@ -83,7 +83,7 @@ class HomeMinerFleetCard extends HTMLElement {
         type: 'bitaxe',
         host: '192.168.1.91',
         asic: 'BM1370 ASIC',
-        os: 'AxeOS',
+        os: 'AxeOS v2.13.0',
         ths,
         watts,
         eff,
@@ -179,10 +179,22 @@ class HomeMinerFleetCard extends HTMLElement {
     });
 
     const fleetEfficiency = totalHashThs > 0 ? (totalWatts / totalHashThs).toFixed(1) : '0.0';
-    const avgTemp = tempCount > 0 ? (tempSum / tempCount).toFixed(1) : '--';
+    const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
+    const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
 
-    const now = new Date();
-    const clockStr = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
+    // SVG Radial Arc Metrics
+    // Circumference = 2 * PI * 42 = 263.89
+    const hashTarget = 7.0;
+    const hashOffset = Math.max(0, 264 - Math.min(1, totalHashThs / hashTarget) * 264);
+    const hashPct = Math.round((totalHashThs / hashTarget) * 100);
+
+    const pwrTarget = 150.0;
+    const pwrOffset = Math.max(0, 264 - Math.min(1, totalWatts / pwrTarget) * 264);
+
+    const tempTarget = 80.0;
+    const tempOffset = Math.max(0, 264 - Math.min(1, avgTempNum / tempTarget) * 264);
+    const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
+    const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -191,397 +203,462 @@ class HomeMinerFleetCard extends HTMLElement {
         :host {
           display: block;
           font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-          color: #e0e2ea;
-          background: #0a0e13;
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #f1f5f9;
+          background: #090d16;
+          background-image: 
+            radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
+            radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.08) 0px, transparent 60%),
+            radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.14) 0px, transparent 50%);
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           padding: 24px;
           box-sizing: border-box;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
         * {
           box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
 
         .mono {
           font-family: 'JetBrains Mono', monospace;
         }
 
-        .acrylic-panel {
-          background: rgba(18, 24, 32, 0.82);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 12px;
+        /* Glass Surfaces */
+        .glass-base {
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(28px) saturate(160%);
+          -webkit-backdrop-filter: blur(28px) saturate(160%);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 16px;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18);
         }
 
-        .acrylic-glow-cyan {
-          background: rgba(18, 24, 32, 0.85);
-          border: 1px solid rgba(76, 215, 246, 0.22);
-          box-shadow: inset 0 1px 0 rgba(76, 215, 246, 0.15), 0 0 20px -6px rgba(6, 182, 212, 0.15);
-          border-radius: 12px;
+        .glass-card {
+          background: rgba(18, 26, 43, 0.55);
+          backdrop-filter: blur(24px) saturate(150%);
+          -webkit-backdrop-filter: blur(24px) saturate(150%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 18px;
+          padding: 22px;
+          box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+          position: relative;
+          overflow: hidden;
+          margin-bottom: 20px;
         }
 
-        .acrylic-glow-amber {
-          background: rgba(18, 24, 32, 0.85);
-          border: 1px solid rgba(245, 158, 11, 0.25);
-          box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.15), 0 0 20px -6px rgba(245, 158, 11, 0.15);
-          border-radius: 12px;
+        .glass-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
         }
 
-        /* Header Bar */
-        .header-bar {
+        .glass-card.amber-glow {
+          border-color: rgba(245, 158, 11, 0.28);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 
+                      0 0 30px -8px rgba(245, 158, 11, 0.12),
+                      inset 0 1px 0 rgba(245, 158, 11, 0.3);
+        }
+
+        .glass-card.cyan-glow {
+          border-color: rgba(56, 189, 248, 0.28);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 
+                      0 0 30px -8px rgba(56, 189, 248, 0.12),
+                      inset 0 1px 0 rgba(56, 189, 248, 0.3);
+        }
+
+        /* Top Command Bar */
+        .top-bar {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          padding: 14px 20px;
+          margin-bottom: 22px;
           flex-wrap: wrap;
-          gap: 16px;
-          padding-bottom: 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          margin-bottom: 24px;
+          gap: 12px;
         }
 
-        .brand-group {
+        .brand-cluster {
           display: flex;
           align-items: center;
           gap: 12px;
         }
 
-        .logo-icon {
-          width: 38px;
-          height: 38px;
+        .brand-icon-box {
+          width: 40px;
+          height: 40px;
           border-radius: 10px;
-          background: rgba(245, 158, 11, 0.12);
-          border: 1px solid rgba(245, 158, 11, 0.4);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(56, 189, 248, 0.2));
+          border: 1px solid rgba(255, 255, 255, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffc174;
           font-size: 20px;
           box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
         }
 
         .brand-title {
-          font-size: 20px;
-          font-weight: 700;
-          color: #ffc174;
+          font-size: 19px;
+          font-weight: 800;
           letter-spacing: -0.02em;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          background: linear-gradient(90deg, #ffffff, #cbd5e1);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
-        .badge-ha {
-          font-size: 10px;
-          font-family: 'JetBrains Mono', monospace;
-          background: #1c2025;
-          color: #4cd7f6;
-          border: 1px solid rgba(76, 215, 246, 0.3);
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-weight: 600;
-        }
-
-        .sub-bar-info {
+        .badge-glass-pill {
           font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
-          display: flex;
+          font-weight: 600;
+          padding: 3px 9px;
+          border-radius: 999px;
+          background: rgba(56, 189, 248, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          color: #38bdf8;
+          display: inline-flex;
           align-items: center;
-          gap: 8px;
-          margin-top: 2px;
+          gap: 6px;
         }
 
-        .live-dot {
+        .status-orb {
           width: 7px;
           height: 7px;
           border-radius: 50%;
           background: #10b981;
-          display: inline-block;
           box-shadow: 0 0 8px #10b981;
+          display: inline-block;
         }
 
-        .header-actions {
+        .top-actions {
           display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
+          gap: 8px;
         }
 
-        .btn-action {
-          padding: 6px 14px;
+        .glass-btn {
+          padding: 7px 15px;
           border-radius: 8px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          color: #f1f5f9;
           font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
           font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
           cursor: pointer;
-          transition: all 0.15s ease;
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: #181c21;
-          color: #e0e2ea;
           text-decoration: none;
+          transition: all 0.2s ease;
         }
 
-        .btn-action:hover {
-          background: #262a30;
-          border-color: rgba(255, 255, 255, 0.2);
+        .glass-btn:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.25);
+          transform: translateY(-1px);
         }
 
-        .btn-action.btn-import {
-          border-color: rgba(76, 215, 246, 0.4);
-          background: rgba(76, 215, 246, 0.1);
-          color: #4cd7f6;
+        .glass-btn.primary {
+          background: rgba(56, 189, 248, 0.15);
+          border-color: rgba(56, 189, 248, 0.4);
+          color: #38bdf8;
         }
 
-        .btn-action.btn-import:hover {
-          background: rgba(76, 215, 246, 0.2);
-          box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+        .glass-btn.primary:hover {
+          background: rgba(56, 189, 248, 0.25);
+          box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
         }
 
-        /* 4 Clean Hero KPI Cards */
-        .kpi-grid {
+        /* 3 Visual Hero Ring Gauges */
+        .hero-orbit-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 14px;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 16px;
           margin-bottom: 24px;
         }
 
-        .kpi-card {
-          padding: 16px;
+        .gauge-card {
+          padding: 20px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          margin-bottom: 0;
+        }
+
+        .gauge-wrapper {
+          position: relative;
+          width: 130px;
+          height: 130px;
+          margin: 10px 0 14px 0;
+        }
+
+        .gauge-svg {
+          transform: rotate(-90deg);
+          width: 100%;
+          height: 100%;
+        }
+
+        .gauge-bg-ring {
+          fill: none;
+          stroke: rgba(255, 255, 255, 0.08);
+          stroke-width: 9;
+        }
+
+        .gauge-prog-ring {
+          fill: none;
+          stroke-width: 9;
+          stroke-linecap: round;
+          transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .gauge-inner-content {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .gauge-main-val {
+          font-size: 24px;
+          font-weight: 800;
+          line-height: 1;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .gauge-sub-unit {
+          font-size: 10px;
+          font-weight: 600;
+          color: #94a3b8;
+          margin-top: 3px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .gauge-header-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #94a3b8;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .gauge-footer-pill {
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #cbd5e1;
+        }
+
+        /* Hardware Pod Grid */
+        .hardware-section-title {
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #94a3b8;
+          margin-bottom: 12px;
+          margin-left: 4px;
+        }
+
+        .pod-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          margin-bottom: 16px;
+        }
+
+        .pod-identity {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .pod-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+        }
+
+        .pod-name {
+          font-size: 17px;
+          font-weight: 700;
+          color: #f8fafc;
+        }
+
+        .pod-meta-strip {
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 2px;
+        }
+
+        /* Telemetry Tiles */
+        .telemetry-tile-row {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        .tile-glass-box {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 12px;
+          padding: 12px 14px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
         }
 
-        .kpi-label {
-          font-size: 11px;
+        .tile-label {
+          font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
           color: #94a3b8;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          margin-bottom: 6px;
         }
 
-        .kpi-val {
-          font-size: 26px;
-          font-family: 'JetBrains Mono', monospace;
+        .tile-val-row {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+          margin-top: 4px;
+        }
+
+        .tile-num {
+          font-size: 20px;
           font-weight: 700;
-          line-height: 1.1;
-        }
-
-        .kpi-unit {
-          font-size: 13px;
-          font-weight: 500;
-          color: #94a3b8;
-          margin-left: 2px;
-        }
-
-        .kpi-subtext {
-          font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tile-unit {
+          font-size: 10px;
           color: #64748b;
-          margin-top: 6px;
+          font-weight: 500;
         }
 
-        /* Hardware Grid */
-        .hardware-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
+        .tile-prog-bar {
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.08);
+          margin-top: 8px;
+          overflow: hidden;
         }
 
-        .miner-card {
-          padding: 20px;
+        .tile-prog-fill {
+          height: 100%;
+          border-radius: 999px;
+        }
+
+        /* Tactile Bay */
+        .tactile-bay {
+          background: rgba(10, 15, 26, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.07);
           border-radius: 14px;
+          padding: 16px 18px;
         }
 
-        .miner-header {
+        .bay-header-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          margin-bottom: 12px;
           flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 16px;
-          padding-bottom: 14px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          gap: 8px;
         }
 
-        .miner-title-group {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .miner-icon-box {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.05);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-        }
-
-        .miner-name {
-          font-size: 16px;
+        .bay-title {
+          font-size: 12px;
           font-weight: 700;
-          color: #f1f5f9;
-        }
-
-        .pill-badge {
-          font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
-          font-weight: 600;
-          padding: 2px 7px;
-          border-radius: 4px;
-        }
-
-        .badge-cyan {
-          background: rgba(76, 215, 246, 0.12);
-          color: #4cd7f6;
-          border: 1px solid rgba(76, 215, 246, 0.3);
-        }
-
-        .badge-amber {
-          background: rgba(245, 158, 11, 0.12);
-          color: #ffc174;
-          border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .badge-green {
-          background: rgba(16, 185, 129, 0.12);
-          color: #10b981;
-          border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .miner-meta {
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
+          letter-spacing: 0.03em;
+          color: #fbbf24;
           display: flex;
           align-items: center;
           gap: 6px;
-          margin-top: 2px;
         }
 
-        /* 6 Mini Metrics */
-        .mini-metrics-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-
-        .mini-metric-cell {
-          background: rgba(10, 14, 19, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 8px;
-          padding: 10px 12px;
-        }
-
-        .mini-metric-label {
-          font-size: 10px;
-          font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
-          text-transform: uppercase;
-        }
-
-        .mini-metric-val {
-          font-size: 16px;
-          font-family: 'JetBrains Mono', monospace;
-          font-weight: 700;
-          margin-top: 2px;
-        }
-
-        .spec-strip {
-          background: rgba(10, 14, 19, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-          border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-bottom: 14px;
-        }
-
-        /* AxeOS Tuning Console */
-        .tuning-console {
-          background: rgba(10, 14, 19, 0.75);
-          border: 1px solid rgba(245, 158, 11, 0.2);
-          border-radius: 10px;
-          padding: 14px;
-          margin-top: 10px;
-        }
-
-        .tuning-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          color: #ffc174;
-          font-weight: 700;
-          margin-bottom: 10px;
-        }
-
-        .profile-pills {
+        .profile-pill-rack {
           display: flex;
           gap: 8px;
           flex-wrap: wrap;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
         }
 
-        .profile-btn {
-          background: #181c21;
+        .pill-btn {
+          padding: 6px 14px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
-          padding: 5px 12px;
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
           color: #94a3b8;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s ease;
         }
 
-        .profile-btn:hover {
-          background: #262a30;
-          color: #f1f5f9;
+        .pill-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: #ffffff;
         }
 
-        .profile-btn.active {
-          background: #f59e0b;
-          color: #0b0f14;
+        .pill-btn.active {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.15));
+          border-color: #fbbf24;
+          color: #fef08a;
+          box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
           font-weight: 700;
-          border-color: #ffc174;
-          box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
         }
 
-        .sliders-grid {
+        .slider-dual-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 16px;
         }
 
         @media (max-width: 600px) {
-          .sliders-grid { grid-template-columns: 1fr; }
+          .slider-dual-grid { grid-template-columns: 1fr; }
         }
 
-        .slider-group {
+        .slider-unit-box {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 5px;
         }
 
-        .slider-label-row {
+        .slider-meta-head {
           display: flex;
           justify-content: space-between;
-          font-size: 10px;
+          font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
           color: #94a3b8;
         }
@@ -589,93 +666,167 @@ class HomeMinerFleetCard extends HTMLElement {
         input[type="range"] {
           -webkit-appearance: none;
           width: 100%;
-          height: 5px;
-          background: #262a30;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 999px;
           outline: none;
           cursor: pointer;
+          margin: 6px 0;
         }
 
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
-          background: #f59e0b;
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+          background: #ffffff;
+          border: 3px solid #fbbf24;
+          box-shadow: 0 0 10px #fbbf24;
+          cursor: pointer;
+        }
+
+        input[type="range"].cyan-thumb::-webkit-slider-thumb {
+          border-color: #38bdf8;
+          box-shadow: 0 0 10px #38bdf8;
+        }
+
+        /* Stratum Strip */
+        .stratum-card-strip {
+          background: rgba(10, 15, 26, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          padding: 14px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .stratum-chips-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .stratum-host-pill {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #cbd5e1;
+        }
+
+        .shares-metric-rack {
+          display: flex;
+          gap: 10px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          flex-wrap: wrap;
+        }
+
+        .share-tag {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 8px;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
         }
       </style>
 
       <!-- TOP COMMAND BAR -->
-      <div class="header-bar">
-        <div class="brand-group">
-          <div class="logo-icon">⛏</div>
+      <div class="glass-base top-bar">
+        <div class="brand-cluster">
+          <div class="brand-icon-box">⛏</div>
           <div>
-            <div class="brand-title">
-              Home Miner Studio
-              <span class="badge-ha">HA INTEGRATION</span>
-            </div>
-            <div class="sub-bar-info">
-              <span class="live-dot"></span>
-              <span style="color: #10b981;">${miners.length} Miners Online</span>
-              <span style="color: rgba(255,255,255,0.2);">|</span>
-              <span id="live-clock" style="color: #cbd5e1;">${clockStr}</span>
+            <div class="brand-title">Home Miner Studio</div>
+            <div class="badge-glass-pill" style="margin-top: 2px;">
+              <span class="status-orb"></span>
+              ${miners.length} Active ASIC Blades
             </div>
           </div>
         </div>
 
-        <div class="header-actions">
-          <button class="btn-action btn-import" id="import-btn">
-            ⚡ 1-Click Miner Discovery
-          </button>
-          <button class="btn-action" id="reload-btn">
-            🔄 Refresh
-          </button>
+        <div class="top-actions">
+          <button class="glass-btn primary" id="import-btn">⚡ 1-Click Discovery</button>
+          <button class="glass-btn" id="reload-btn">🔄 Refresh Fleet</button>
         </div>
       </div>
 
-      <!-- 4 REAL HERO KPI CARDS -->
-      <div class="kpi-grid">
+      <!-- 3 VISUAL HERO RING GAUGES -->
+      <div class="hero-orbit-grid">
+        
         <!-- 1: Fleet Hashrate -->
-        <div class="acrylic-glow-cyan kpi-card">
-          <div class="kpi-label">Total Fleet Hashrate</div>
-          <div class="kpi-val" style="color: #4cd7f6;">
-            ${totalHashThs.toFixed(2)} <span class="kpi-unit">TH/s</span>
+        <div class="glass-card cyan-glow gauge-card">
+          <div class="gauge-header-label">Fleet Hashrate</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
+              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
+                      stroke="#38bdf8"
+                      stroke-dasharray="264"
+                      stroke-dashoffset="${hashOffset}"
+                      style="filter: drop-shadow(0 0 6px #38bdf8);"/>
+            </svg>
+            <div class="gauge-inner-content">
+              <div class="gauge-main-val" style="color: #38bdf8;">${totalHashThs.toFixed(2)}</div>
+              <div class="gauge-sub-unit">TH/s</div>
+            </div>
           </div>
-          <div class="kpi-subtext">${miners.length} active ASIC blades</div>
+          <div class="gauge-footer-pill">Rated: ${hashTarget.toFixed(1)} TH/s Target (${hashPct}%)</div>
         </div>
 
-        <!-- 2: Total Power Draw -->
-        <div class="acrylic-panel kpi-card">
-          <div class="kpi-label">Power Draw</div>
-          <div class="kpi-val" style="color: #ffc174;">
-            ${totalWatts.toFixed(1)} <span class="kpi-unit">W</span>
+        <!-- 2: Total Electrical Load -->
+        <div class="glass-card amber-glow gauge-card">
+          <div class="gauge-header-label">Total Electrical Load</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
+              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
+                      stroke="#fbbf24"
+                      stroke-dasharray="264"
+                      stroke-dashoffset="${pwrOffset}"
+                      style="filter: drop-shadow(0 0 6px #fbbf24);"/>
+            </svg>
+            <div class="gauge-inner-content">
+              <div class="gauge-main-val" style="color: #fbbf24;">${totalWatts.toFixed(1)}</div>
+              <div class="gauge-sub-unit">Watts</div>
+            </div>
           </div>
-          <div class="kpi-subtext">Live combined electrical load</div>
+          <div class="gauge-footer-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
+            ⚡ ${fleetEfficiency} J/TH Efficiency
+          </div>
         </div>
 
-        <!-- 3: Fleet Efficiency -->
-        <div class="acrylic-panel kpi-card">
-          <div class="kpi-label">Fleet Efficiency</div>
-          <div class="kpi-val" style="color: #10b981;">
-            ${fleetEfficiency} <span class="kpi-unit">J/TH</span>
+        <!-- 3: Average ASIC Temperature -->
+        <div class="glass-card gauge-card" style="border-color: rgba(52, 211, 153, 0.28); box-shadow: 0 16px 40px -10px rgba(0,0,0,0.5), 0 0 30px -8px rgba(52, 211, 153, 0.12);">
+          <div class="gauge-header-label">Average Thermal Core</div>
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
+              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
+                      stroke="${tempStrokeColor}"
+                      stroke-dasharray="264"
+                      stroke-dashoffset="${tempOffset}"
+                      style="filter: drop-shadow(0 0 6px ${tempStrokeColor});"/>
+            </svg>
+            <div class="gauge-inner-content">
+              <div class="gauge-main-val" style="color: ${tempStrokeColor};">${avgTempStr}</div>
+              <div class="gauge-sub-unit">°C Core</div>
+            </div>
           </div>
-          <div class="kpi-subtext">Weighted energy ratio</div>
+          <div class="gauge-footer-pill" style="color: ${tempStrokeColor};">${tempStatusLabel}</div>
         </div>
 
-        <!-- 4: Fleet Average Temperature -->
-        <div class="acrylic-panel kpi-card">
-          <div class="kpi-label">Average ASIC Temp</div>
-          <div class="kpi-val" style="color: #cbd5e1;">
-            ${avgTemp} <span class="kpi-unit">°C</span>
-          </div>
-          <div class="kpi-subtext">Thermal core equilibrium</div>
-        </div>
       </div>
 
-      <!-- CONNECTED HARDWARE WORKSTATIONS -->
-      <div class="hardware-grid">
+      <!-- HARDWARE SECTION -->
+      <div class="hardware-section-title">Hardware Workstations</div>
+
+      <div>
         ${miners.map(miner => {
           const isBitaxe = miner.type === 'bitaxe';
           const chipTemp = miner.temp;
@@ -684,109 +835,104 @@ class HomeMinerFleetCard extends HTMLElement {
           const powerW = miner.watts.toFixed(1);
           const efficiency = miner.eff;
 
+          // Bar percentages
+          const hashBar = Math.min(100, Math.round((miner.ths / (isBitaxe ? 2.0 : 6.0)) * 100));
+          const pwrBar = Math.min(100, Math.round((miner.watts / (isBitaxe ? 30.0 : 140.0)) * 100));
+          const tempBar = Math.min(100, Math.round((chipTemp / 80.0) * 100));
+          const fanBar = Math.min(100, Math.round((fanRpm / (isBitaxe ? 8000 : 5000)) * 100));
+
           return `
-            <div class="acrylic-panel miner-card ${isBitaxe ? 'acrylic-glow-amber' : 'acrylic-glow-cyan'}">
-              <!-- Miner Header -->
-              <div class="miner-header">
-                <div class="miner-title-group">
-                  <div class="miner-icon-box" style="color: ${isBitaxe ? '#f59e0b' : '#4cd7f6'};">
+            <div class="glass-card ${isBitaxe ? 'amber-glow' : 'cyan-glow'}">
+              <div class="pod-header-row">
+                <div class="pod-identity">
+                  <div class="pod-icon" style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'}; border-color: ${isBitaxe ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}; background: ${isBitaxe ? 'rgba(245, 158, 11, 0.1)' : 'rgba(56, 189, 248, 0.1)'};">
                     ${isBitaxe ? '⚡' : '🖥️'}
                   </div>
                   <div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span class="miner-name">${miner.name}</span>
-                      <span class="pill-badge ${isBitaxe ? 'badge-amber' : 'badge-cyan'}">
-                        ${miner.asic}
-                      </span>
-                    </div>
-                    <div class="miner-meta">
-                      <span class="live-dot" style="background: ${isBitaxe ? '#10b981' : '#4cd7f6'};"></span>
-                      <span style="color: #cbd5e1;">Active Mining</span>
+                    <div class="pod-name">${miner.name}</div>
+                    <div class="pod-meta-strip">
+                      <span class="status-orb" style="background: #34d399;"></span>
+                      <span style="color: #cbd5e1;">${miner.host}</span>
                       <span>•</span>
-                      <span style="color: #4cd7f6;">${miner.host}</span>
+                      <span>${miner.asic}</span>
                       <span>•</span>
-                      <span>${miner.os}</span>
+                      <span style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'};">${miner.os}</span>
                     </div>
                   </div>
                 </div>
 
-                <div style="display: flex; gap: 6px;">
+                <div style="display: flex; gap: 8px;">
                   ${isBitaxe ? `
-                    <button class="btn-action" data-action="restart-proc" data-entity="${miner.restartEntity}">
-                      Restart
-                    </button>
-                    <button class="btn-action" data-action="reboot-miner" data-entity="${miner.rebootEntity}">
-                      Reboot
-                    </button>
-                    <a class="btn-action" href="http://${miner.host}" target="_blank">
-                      Web UI ↗
-                    </a>
+                    <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart Proc</button>
+                    <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot</button>
+                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ↗</a>
                   ` : `
-                    <button class="btn-action" data-action="reboot-miner" data-entity="${miner.rebootEntity}">
-                      Reboot ASIC
-                    </button>
-                    <a class="btn-action" href="http://${miner.host}" target="_blank">
-                      Web UI ↗
-                    </a>
+                    <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot ASIC</button>
+                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ↗</a>
                   `}
                 </div>
               </div>
 
-              <!-- 6-Metric Mini Grid -->
-              <div class="mini-metrics-grid">
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">Hashrate</div>
-                  <div class="mini-metric-val" style="color: #4cd7f6;">${hashrateThs} <span style="font-size: 10px;">TH/s</span></div>
-                </div>
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">Power</div>
-                  <div class="mini-metric-val" style="color: #f59e0b;">${powerW} <span style="font-size: 10px;">W</span></div>
-                </div>
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">Efficiency</div>
-                  <div class="mini-metric-val" style="color: #10b981;">${efficiency} <span style="font-size: 10px;">J/TH</span></div>
-                </div>
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">Chip Temp</div>
-                  <div class="mini-metric-val" style="color: ${chipTemp > 68 ? '#ef4444' : chipTemp > 60 ? '#f59e0b' : '#10b981'};">
-                    ${chipTemp > 0 ? chipTemp.toFixed(1) + '°C' : '--'}
+              <!-- 4 Visual Telemetry Tiles -->
+              <div class="telemetry-tile-row">
+                <div class="tile-glass-box">
+                  <div class="tile-label">Hashrate</div>
+                  <div class="tile-val-row">
+                    <span class="tile-num" style="color: #38bdf8;">${hashrateThs}</span>
+                    <span class="tile-unit">TH/s</span>
+                  </div>
+                  <div class="tile-prog-bar">
+                    <div class="tile-prog-fill" style="width: ${hashBar}%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></div>
                   </div>
                 </div>
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">${isBitaxe ? 'VR Temp' : 'Core Freq'}</div>
-                  <div class="mini-metric-val">
-                    ${isBitaxe ? (miner.vrTemp > 0 ? miner.vrTemp.toFixed(1) + '°C' : '--') : miner.freq + ' MHz'}
+
+                <div class="tile-glass-box">
+                  <div class="tile-label">Power Load</div>
+                  <div class="tile-val-row">
+                    <span class="tile-num" style="color: #fbbf24;">${powerW}</span>
+                    <span class="tile-unit">Watts</span>
+                  </div>
+                  <div class="tile-prog-bar">
+                    <div class="tile-prog-fill" style="width: ${pwrBar}%; background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></div>
                   </div>
                 </div>
-                <div class="mini-metric-cell">
-                  <div class="mini-metric-label">Fan Speed</div>
-                  <div class="mini-metric-val" style="color: #4cd7f6;">${fanRpm > 0 ? fanRpm + ' RPM' : '--'}</div>
+
+                <div class="tile-glass-box">
+                  <div class="tile-label">Chip Temp</div>
+                  <div class="tile-val-row">
+                    <span class="tile-num" style="color: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#34d399'};">
+                      ${chipTemp > 0 ? chipTemp.toFixed(1) : '--'}
+                    </span>
+                    <span class="tile-unit">°C</span>
+                  </div>
+                  <div class="tile-prog-bar">
+                    <div class="tile-prog-fill" style="width: ${tempBar}%; background: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#34d399'};"></div>
+                  </div>
+                </div>
+
+                <div class="tile-glass-box">
+                  <div class="tile-label">Fan Speed</div>
+                  <div class="tile-val-row">
+                    <span class="tile-num" style="color: #38bdf8;">${fanRpm > 0 ? fanRpm.toLocaleString() : '--'}</span>
+                    <span class="tile-unit">RPM</span>
+                  </div>
+                  <div class="tile-prog-bar">
+                    <div class="tile-prog-fill" style="width: ${fanBar}%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Real Spec Strip & Controls -->
+              <!-- Controls / Strips -->
               ${isBitaxe ? `
-                <div class="spec-strip">
-                  <span style="color: #94a3b8;">Electrical Bus:</span>
-                  <span style="color: #ffc174;">${miner.inVolt} V Input</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #4cd7f6;">${miner.inAmps} A Draw</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #10b981;">${miner.actVolt} mV Core</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #cbd5e1;">${miner.freq} MHz Clock</span>
-                </div>
-
-                <!-- AxeOS Tuning Console -->
-                <div class="tuning-console">
-                  <div class="tuning-header">
-                    <span>⚡ AxeOS Tuning Console</span>
-                    <span class="pill-badge badge-amber">Profile: ${miner.profile}</span>
+                <div class="tactile-bay">
+                  <div class="bay-header-row">
+                    <span class="bay-title">⚡ Interactive AxeOS Overclocking Console</span>
+                    <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt}V Input | ${miner.inAmps}A Draw</span>
                   </div>
 
-                  <div class="profile-pills">
+                  <div class="profile-pill-rack">
                     ${['Eco', 'Standard', 'Turbo', 'Custom'].map(prof => `
-                      <button class="profile-btn ${miner.profile === prof ? 'active' : ''}" 
+                      <button class="pill-btn ${miner.profile === prof ? 'active' : ''}" 
                               data-profile="${prof}"
                               data-entity="${miner.profileEntity}">
                         ${prof === 'Eco' ? '🌱 Eco' : prof === 'Standard' ? '⚡ Standard' : prof === 'Turbo' ? '🔥 Turbo' : '★ Custom'}
@@ -794,21 +940,22 @@ class HomeMinerFleetCard extends HTMLElement {
                     `).join('')}
                   </div>
 
-                  <div class="sliders-grid">
-                    <div class="slider-group">
-                      <div class="slider-label-row">
-                        <span>Target Frequency</span>
-                        <span style="color: #4cd7f6; font-weight: 700;" id="freq-disp-bitaxe">${miner.freq} MHz</span>
+                  <div class="slider-dual-grid">
+                    <div class="slider-unit-box">
+                      <div class="slider-meta-head">
+                        <span>Core Frequency</span>
+                        <span class="mono" style="color: #38bdf8; font-weight: 700;" id="freq-disp-bitaxe">${miner.freq} MHz</span>
                       </div>
-                      <input type="range" min="450" max="800" step="5" value="${miner.freq}"
+                      <input type="range" min="450" max="800" step="5" value="${miner.freq}" class="cyan-thumb"
                              data-action="freq-slider"
                              data-entity="${miner.freqEntity}"
                              data-disp="freq-disp-bitaxe">
                     </div>
-                    <div class="slider-group">
-                      <div class="slider-label-row">
-                        <span>Target Core Voltage</span>
-                        <span style="color: #f59e0b; font-weight: 700;" id="volt-disp-bitaxe">${miner.volt} mV</span>
+
+                    <div class="slider-unit-box">
+                      <div class="slider-meta-head">
+                        <span>Core Voltage</span>
+                        <span class="mono" style="color: #fbbf24; font-weight: 700;" id="volt-disp-bitaxe">${miner.volt} mV</span>
                       </div>
                       <input type="range" min="1000" max="1300" step="10" value="${miner.volt}"
                              data-action="volt-slider"
@@ -818,29 +965,43 @@ class HomeMinerFleetCard extends HTMLElement {
                   </div>
                 </div>
               ` : `
-                <!-- Avalon Nano 3S Real Share Audit Strip -->
-                <div class="spec-strip">
-                  <span style="color: #94a3b8;">Share Audit:</span>
-                  <span style="color: #10b981;">${miner.accepted} Accepted</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #ef4444;">${miner.rejected} Rejected</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #ffc174;">${miner.hwErrors} HW Errors</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #4cd7f6;">Best Share: ${miner.bestShareStr}</span>
-                  ${miner.blocksFound !== '--' ? `
-                    <span style="color: rgba(255,255,255,0.2);">|</span>
-                    <span style="color: #10b981;">Found Blocks: ${miner.blocksFound}</span>
-                  ` : ''}
-                </div>
+                <div class="stratum-card-strip">
+                  <div class="stratum-chips-row">
+                    <div class="stratum-host-pill">
+                      <span style="color: #94a3b8;">Stratum Pool:</span>
+                      <span style="color: #38bdf8; font-weight: 600;">${miner.poolUrl}</span>
+                      <span style="color: rgba(255,255,255,0.2);">|</span>
+                      <span style="color: #fbbf24;">Worker: ${miner.poolUser}</span>
+                    </div>
+                    <div class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.1);">
+                      ● Pool: ${miner.poolStatus}
+                    </div>
+                  </div>
 
-                <div class="spec-strip" style="margin-top: -6px;">
-                  <span style="color: #94a3b8;">Stratum Pool:</span>
-                  <span style="color: #cbd5e1;">${miner.poolUrl}</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #f59e0b;">Worker: ${miner.poolUser}</span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
-                  <span style="color: #10b981;">Status: ${miner.poolStatus}</span>
+                  <div class="shares-metric-rack">
+                    <div class="share-tag">
+                      <span style="color: #94a3b8;">Accepted:</span>
+                      <span style="color: #34d399; font-weight: 700;">${miner.accepted}</span>
+                    </div>
+                    <div class="share-tag">
+                      <span style="color: #94a3b8;">Rejected:</span>
+                      <span style="color: #fb7185; font-weight: 700;">${miner.rejected}</span>
+                    </div>
+                    <div class="share-tag">
+                      <span style="color: #94a3b8;">HW Errors:</span>
+                      <span style="color: #fbbf24; font-weight: 700;">${miner.hwErrors}</span>
+                    </div>
+                    <div class="share-tag">
+                      <span style="color: #94a3b8;">Best Share:</span>
+                      <span style="color: #38bdf8; font-weight: 700;">${miner.bestShareStr}</span>
+                    </div>
+                    ${miner.blocksFound !== '--' ? `
+                      <div class="share-tag">
+                        <span style="color: #94a3b8;">Found Blocks:</span>
+                        <span style="color: #34d399; font-weight: 700;">${miner.blocksFound}</span>
+                      </div>
+                    ` : ''}
+                  </div>
                 </div>
               `}
             </div>
@@ -861,7 +1022,7 @@ class HomeMinerFleetCard extends HTMLElement {
         try {
           await this._hass.callService('home_miner_studio', 'import_existing_miners', {});
           importBtn.textContent = '✅ Discovery Triggered';
-          setTimeout(() => { importBtn.textContent = '⚡ 1-Click Miner Discovery'; }, 3000);
+          setTimeout(() => { importBtn.textContent = '⚡ 1-Click Discovery'; }, 3000);
         } catch (err) {
           importBtn.textContent = '❌ Failed: ' + err.message;
         }
@@ -877,7 +1038,7 @@ class HomeMinerFleetCard extends HTMLElement {
     }
 
     // Power Profile Buttons
-    const profileBtns = this.shadowRoot.querySelectorAll('.profile-btn');
+    const profileBtns = this.shadowRoot.querySelectorAll('.pill-btn[data-profile]');
     profileBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         const profile = btn.getAttribute('data-profile');
@@ -952,6 +1113,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'home-miner-fleet-card',
   name: 'Home Miner Fleet Studio Card',
-  description: 'Clean Obsidian Telemetry crypto mining dashboard with live Bitaxe AxeOS overclocking and Canaan Avalon Nano telemetry.',
+  description: 'Luminous Glassmorphism crypto mining dashboard with real-time Bitaxe AxeOS overclocking and Canaan Avalon Nano telemetry.',
   preview: true,
 });
