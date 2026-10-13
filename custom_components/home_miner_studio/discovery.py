@@ -32,6 +32,8 @@ KNOWN_MINER_DOMAINS = {
     "bitaxe": TYPE_BITAXE,
     "ha_bitaxe": TYPE_BITAXE,
     "axeos": TYPE_BITAXE,
+    "avalon_nano3s": TYPE_CGMINER_RPC,
+    "avalon_nano_3s": TYPE_CGMINER_RPC,
     "antminer": TYPE_CGMINER_RPC,
     "whatsminer": TYPE_CGMINER_RPC,
     "braiins": TYPE_CGMINER_RPC,
@@ -72,7 +74,7 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
             if not port:
                 port = DEFAULT_PORT_BITAXE if inferred_type == TYPE_BITAXE else DEFAULT_PORT_CGMINER
 
-            name = data.get("name") or entry.title or f"{inferred_type.title()} ({host_clean})"
+            name = data.get("name") or data.get("device_name") or entry.title or f"{inferred_type.title()} ({host_clean})"
 
             discovered.append({
                 CONF_NAME: name,
@@ -80,6 +82,7 @@ async def async_discover_existing_miners(hass: HomeAssistant) -> list[dict[str, 
                 CONF_HOST: host_clean,
                 CONF_PORT: int(port),
                 CONF_COIN: data.get("coin", "BTC"),
+                "password": data.get("password") or data.get("web_password"),
                 "source_integration": domain,
             })
             already_configured_hosts.add(host_clean.lower())
