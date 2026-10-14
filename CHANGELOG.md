@@ -29,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **RPG XP Gain Rebalancing & Sustainable Progression Curve** ([#27](https://github.com/everyday3d/home-miner-studio/issues/27)):
   - Significantly reduced XP gain velocity across all mining activities to establish a realistic, long-term progression path up to Level 500.
   - Rebalanced share reward from 15 XP per share down to 1 XP per verified accepted share (15x reduction).
-  - Replaced linear difficulty divisor (`diff / 50000`) with a log-scaled bonus (`Math.floor(Math.log10(diff) * 8)`), rewarding rare high-difficulty share submissions (20-80 XP) without allowing a single lucky lottery share to instantly skip hundreds of levels.
-  - Rebalanced level progression formula to `Math.floor(25 * Math.pow(lvl - 1, 1.5))`, aligning Level 10 unlock with ~675 shares, Level 100 with ~24,600 shares, and Level 500 with ~278,600 shares.
+  - Replaced linear difficulty divisor (`diff / 50000`) with a log-scaled bonus (`Math.floor(Math.log10(diff) * 5)`), rewarding rare high-difficulty share submissions (up to 50 XP) without allowing a single lucky lottery share to skip progression.
+  - Rebalanced level progression formula to `Math.floor(75 * Math.pow(lvl - 1, 1.85))` ([#28](https://github.com/everyday3d/home-miner-studio/issues/28)), scaling progression so Level 10 unlock requires ~4,370 shares, Level 25 requires ~26,800 shares, Level 100 Theme Engine requires ~368,900 shares, and Level 500 Apex Cap requires ~7,354,400 shares.
   - Updated Hero Banner telemetry chips and individual workstation cards to reflect rebalanced XP formulas.
 - **Collapsible Live Stratum Particle Pipeline & Visual Block Assembly Module** ([#26](https://github.com/everyday3d/home-miner-studio/issues/26)):
   - Built real-time 4-stage visual pipeline (`.pipeline-card`) rendering the continuous flow of cryptographic operations:

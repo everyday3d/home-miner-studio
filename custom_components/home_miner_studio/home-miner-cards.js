@@ -563,7 +563,7 @@ const CHRONICLE_CHAPTERS = [
 
 function xpForRpgLevel(l) {
   if (l <= 1) return 0;
-  return Math.floor(25 * Math.pow(l - 1, 1.5));
+  return Math.floor(75 * Math.pow(l - 1, 1.85));
 }
 
 function rpgLevelForXp(xp) {
@@ -5844,7 +5844,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
     // --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap) ---
     // Rebalanced XP: 1 XP per verified accepted share + log-scaled difficulty bonus
-    const diffBonus = fleetBestDiff > 1000 ? Math.floor(Math.log10(fleetBestDiff) * 8) : 0;
+    const diffBonus = fleetBestDiff > 1000 ? Math.floor(Math.log10(fleetBestDiff) * 5) : 0;
     const totalFleetXp = totalFleetAccepted + diffBonus;
     const fleetLevel = rpgLevelForXp(totalFleetXp);
     const fleetTitle = getRpgTitle(fleetLevel);
@@ -6826,7 +6826,7 @@ class HomeMinerFleetCard extends HTMLElement {
           // Workstation RPG Tier
           const minerAccepted = miner.acceptedRaw || 0;
           const minerBestDiff = miner.bestDiffNum || 0;
-          const minerDiffBonus = minerBestDiff > 1000 ? Math.floor(Math.log10(minerBestDiff) * 8) : 0;
+          const minerDiffBonus = minerBestDiff > 1000 ? Math.floor(Math.log10(minerBestDiff) * 5) : 0;
           const minerXp = minerAccepted + minerDiffBonus;
           const minerLvl = rpgLevelForXp(minerXp);
           const minerRank = getRpgTitle(minerLvl);
