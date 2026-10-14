@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Designed interactive Luminous Market Intelligence Console with responsive cubic Bezier spline SVG chart, neon gradient fill, timeframe pills (`24H`, `7D`, `30D`, `1Y`), and hover scrubber with price/time tooltip.
 
 ### Fixed
+- **Bitaxe Public-Pool Reversion Fix & WOJAK Market Integration** ([#13](https://github.com/everyday3d/home-miner-studio/issues/13)):
+  - Removed hardcoded `public-pool.io:21496` fallbacks in `home-miner-cards.js` that forcibly defaulted Bitaxe cards to Public-Pool before stratum discovery completed.
+  - Added full WOJAK (WJK) cryptocurrency support to `market.py` and CoinGecko telemetry with mask badge (`🎭`), 24h change, and multi-timeframe historical price charts.
+  - Added sub-cent dynamic floating precision (`formatCoinPrice`) to gracefully format micro-penny tokens like Wojak ($0.00002513) without collapsing to $0.00.
+  - Linked active coin selector `#modal-coin` to `edit_miner` service call and per-host client cache (`miner_coin_${host}`), keeping configured coins synced.
+  - Mapped WOJAK / WJK to `wojakcoin.php` for Mining-Dutch pool API dashboard queries.
 - **Active Pool Telemetry & High-Contrast Modal Dropdowns** ([#12](https://github.com/everyday3d/home-miner-studio/issues/12)):
   - Fixed white-on-white dropdown rendering across browser select popups by applying explicit dark high-contrast styling (`background-color: #0f172a !important; color: #f8fafc !important;`) and inline styles to all `<select>` and `<option>` elements.
   - Enabled active pool telemetry for Mining-Dutch and Braiins by accepting credentials from either `pool_token` or `pool_wallet` and querying authenticated endpoints (`pools/{coin_slug}.php?page=api&action=getdashboarddata&api_key=...`).

@@ -22,6 +22,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._selectedDiscoveredHosts = new Set();
     this._minerPools = {};
     this._minerWallets = {};
+    this._minerCoins = {};
   }
 
   connectedCallback() {
@@ -889,9 +890,14 @@ class HomeMinerFleetCard extends HTMLElement {
               this._minerWallets[targetHost] = poolWallet;
               try { localStorage.setItem('miner_wallet_' + targetHost, poolWallet); } catch (e) {}
             }
+            if (coin) {
+              this._minerCoins[targetHost] = coin.toUpperCase();
+              try { localStorage.setItem('miner_coin_' + targetHost, coin.toUpperCase()); } catch (e) {}
+            }
             await this._hass.callService('home_miner_studio', 'edit_miner', {
               host: targetHost,
               name: name || undefined,
+              coin: coin.toUpperCase(),
               pool_provider: poolProvider,
               pool_wallet: poolWallet
             });
@@ -1146,7 +1152,7 @@ class HomeMinerFleetCard extends HTMLElement {
     if (minerModal) minerModal.style.display = 'flex';
   }
 
-  _openEditModal(host, name, type, pool, wallet) {
+  _openEditModal(host, name, type, pool, wallet, coin) {
     this._ensureDom();
     this._modalOpen = true;
     this._modalMode = 'edit';
@@ -1159,8 +1165,10 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
     const activePool = this._minerPools[host] || localStorage.getItem('miner_pool_' + host) || pool || 'none';
     const activeWallet = this._minerWallets[host] || localStorage.getItem('miner_wallet_' + host) || wallet || '';
+    const activeCoin = this._minerCoins[host] || localStorage.getItem('miner_coin_' + host) || coin || 'BTC';
     this.shadowRoot.querySelector('#modal-pool').value = activePool;
     this.shadowRoot.querySelector('#modal-wallet').value = activeWallet;
+    this.shadowRoot.querySelector('#modal-coin').value = activeCoin;
     if (minerModal) minerModal.style.display = 'flex';
   }
 
@@ -1927,20 +1935,27 @@ class HomeMinerFleetCard extends HTMLElement {
       const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
       const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
       const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
+      // Clean any legacy public_pool cache for Bitaxe
+      if (localStorage.getItem('miner_pool_192.168.1.91') === 'public_pool') {
+        try { localStorage.setItem('miner_pool_192.168.1.91', 'mining_dutch'); } catch (e) {}
+      }
       const bitaxeSavedPool = this._minerPools['192.168.1.91'] || localStorage.getItem('miner_pool_192.168.1.91');
       const bitaxeSavedWallet = this._minerWallets['192.168.1.91'] || localStorage.getItem('miner_wallet_192.168.1.91');
+      const bitaxeSavedCoin = this._minerCoins['192.168.1.91'] || localStorage.getItem('miner_coin_192.168.1.91');
       const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
       const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
-      const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'public-pool.io:21496';
-      const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'bc1q...bitaxe';
-      const bitaxePoolProvider = bitaxeSavedPool || bitaxePoolStatusObj?.attributes?.pool_provider || (bitaxePoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'public_pool');
-      const bitaxePoolWallet = bitaxeSavedWallet || bitaxePoolStatusObj?.attributes?.pool_wallet || '';
+      const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'americas.mining-dutch.nl:9995';
+      const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'Boxerdawg.worker1';
+      const bitaxePoolProvider = bitaxeSavedPool || bitaxePoolStatusObj?.attributes?.pool_provider || (bitaxePoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
+      const bitaxePoolWallet = bitaxeSavedWallet || bitaxePoolStatusObj?.attributes?.pool_wallet || bitaxePoolUser;
+      const bitaxeCoin = bitaxeSavedCoin || bitaxePoolStatusObj?.attributes?.coin || states['sensor.my_bitaxe_coin_price_usd']?.attributes?.coin || 'WOJAK';
 
       miners.push({
         id: 'bitaxe',
         name: bitaxeName,
         type: 'bitaxe',
         host: '192.168.1.91',
+        coin: bitaxeCoin,
         asic: 'BM1370 ASIC',
         os: 'AxeOS v2.13.0',
         ths,
@@ -2005,6 +2020,8 @@ class HomeMinerFleetCard extends HTMLElement {
       const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
       const avalonSavedPool = this._minerPools['192.168.1.154'] || localStorage.getItem('miner_pool_192.168.1.154');
       const avalonSavedWallet = this._minerWallets['192.168.1.154'] || localStorage.getItem('miner_wallet_192.168.1.154');
+      const avalonSavedCoin = this._minerCoins['192.168.1.154'] || localStorage.getItem('miner_coin_192.168.1.154');
+      const avalonCoin = avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
       const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
       const poolStatus = avalonPoolStatusObj?.state ||
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
@@ -2019,6 +2036,7 @@ class HomeMinerFleetCard extends HTMLElement {
         name: avalonName,
         type: 'avalon',
         host: '192.168.1.154',
+        coin: avalonCoin,
         asic: 'A3197S ASIC',
         os: 'CGMiner ' + cgminerVer,
         ths,
@@ -2392,7 +2410,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
 
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}">⚙️ Edit</button>
+                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}" data-coin="${miner.coin || 'BTC'}">⚙️ Edit</button>
                   <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">🗑️ Delete</button>
                   ${isBitaxe ? `
                     <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart Proc</button>
@@ -2407,21 +2425,61 @@ class HomeMinerFleetCard extends HTMLElement {
 
               
               <!-- Per-Rig Active Coin Valuation Bar -->
-              <div class="rig-market-ticker-strip">
-                <div class="coin-badge-cluster">
-                  <div class="coin-symbol-circle">${activeCoinSign}</div>
-                  <div>
-                    <div class="coin-name-label">${activeCoinName} (${miner.coin || activeCoinSymbol})</div>
-                    <div class="mono" style="font-size: 10px; color: #94a3b8;">Active Mined Currency</div>
+              ${(() => {
+                const rigCoin = (miner.coin || 'BTC').toUpperCase();
+                let rigPrice = activeCoinPrice;
+                let rigChange = activeChange24h;
+                let rigSign = activeCoinSign;
+                let rigName = activeCoinName;
+
+                if (rigCoin === 'WOJAK' || rigCoin === 'WJK') {
+                  rigSign = '🎭';
+                  rigName = 'Wojak';
+                  rigPrice = 0.00002513;
+                  rigChange = 2.39;
+                  // Look up live Wojak sensor if present in HA
+                  Object.keys(states).forEach(eid => {
+                    if (eid.includes('wojak') && eid.endsWith('_coin_price_usd')) {
+                      const p = parseFloat(states[eid]?.state);
+                      if (!isNaN(p) && p > 0) rigPrice = p;
+                      if (states[eid]?.attributes?.change_24h_pct !== undefined) {
+                        rigChange = parseFloat(states[eid].attributes.change_24h_pct);
+                      }
+                    }
+                  });
+                } else if (rigCoin === 'BTC') {
+                  rigSign = '₿';
+                  rigName = 'Bitcoin';
+                  rigPrice = activeCoinPrice;
+                  rigChange = activeChange24h;
+                }
+
+                const formatCoinPrice = (p) => {
+                  const num = Number(p || 0);
+                  if (num >= 100) return '$' + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                  if (num >= 1) return '$' + num.toFixed(3);
+                  if (num >= 0.0001) return '$' + num.toFixed(6);
+                  return '$' + num.toFixed(8);
+                };
+
+                return `
+                  <div class="rig-market-ticker-strip">
+                    <div class="coin-badge-cluster">
+                      <div class="coin-symbol-circle">${rigSign}</div>
+                      <div>
+                        <div class="coin-name-label">${rigName} (${rigCoin})</div>
+                        <div class="mono" style="font-size: 10px; color: #94a3b8;">Active Mined Currency</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="coin-price-hero">${formatCoinPrice(rigPrice)}</div>
+                      <div class="coin-change-pill ${rigChange >= 0 ? 'pos' : 'neg'}">
+                        ${rigChange >= 0 ? '▲ +' : '▼ '}${rigChange.toFixed(2)}% 24h
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div class="coin-price-hero">$${Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                  <div class="coin-change-pill ${activeChange24h >= 0 ? 'pos' : 'neg'}">
-                    ${activeChange24h >= 0 ? '▲ +' : '▼ '}${activeChange24h}% 24h
-                  </div>
-                </div>
-              </div>
+                `;
+              })()}
 
               <!-- 4 Visual Telemetry Tiles -->
               <div class="telemetry-tile-row">
@@ -2746,7 +2804,8 @@ class HomeMinerFleetCard extends HTMLElement {
         const type = btn.getAttribute('data-type');
         const pool = btn.getAttribute('data-pool') || 'none';
         const wallet = btn.getAttribute('data-wallet') || '';
-        this._openEditModal(host, name, type, pool, wallet);
+        const coin = btn.getAttribute('data-coin') || 'BTC';
+        this._openEditModal(host, name, type, pool, wallet, coin);
       });
     });
 

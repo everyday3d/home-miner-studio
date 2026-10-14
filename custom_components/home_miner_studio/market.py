@@ -23,6 +23,8 @@ COIN_DEFINITIONS: dict[str, dict[str, str]] = {
     "ALPH": {"id": "alephium", "name": "Alephium", "sign": "ℵ"},
     "BELLS": {"id": "bellcoin", "name": "Bellcoin", "sign": "🔔"},
     "DGB": {"id": "digibyte", "name": "DigiByte", "sign": "Ɗ"},
+    "WOJAK": {"id": "wojak", "name": "Wojak", "sign": "🎭"},
+    "WJK": {"id": "wojak", "name": "Wojak", "sign": "🎭"},
 }
 
 # 15-minute cache TTL (900 seconds)
@@ -107,7 +109,7 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
         if now - cached.get("last_updated", 0) < PRICE_CACHE_TTL:
             return cached
 
-    coin_def = COIN_DEFINITIONS.get(coin_clean, {"id": "bitcoin", "name": coin_clean, "sign": "₿"})
+    coin_def = COIN_DEFINITIONS.get(coin_clean, {"id": coin_clean.lower(), "name": coin_clean, "sign": "🪙"})
     coin_id = coin_def["id"]
 
     headers = {"User-Agent": "HomeMinerStudio/0.5.0"}

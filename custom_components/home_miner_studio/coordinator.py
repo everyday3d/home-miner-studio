@@ -483,7 +483,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "LTC": "litecoin",
                     "DOGE": "dogecoin",
                     "BELLS": "bells",
-                }.get(self.coin.upper(), "bitcoin")
+                    "WOJAK": "wojakcoin",
+                    "WJK": "wojakcoin",
+                }.get(self.coin.upper(), self.coin.lower())
                 url = f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&action=getdashboarddata&api_key={token}"
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
