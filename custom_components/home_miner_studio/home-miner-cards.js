@@ -58,9 +58,512 @@ const RPG_TITLES = [
   { level: 1,   title: 'Novice Breadboarder', badge: '🌱' }
 ];
 
+const CHRONICLE_CHAPTERS = [
+  {
+    level: 10,
+    era: '1993',
+    tag: 'Origins',
+    title: 'Proof of Work Genesis',
+    readTime: '1 min',
+    teaser: 'How two cryptographers invented computational proof to defeat junk email spam.',
+    content: 'In 1993, Cynthia Dwork and Moni Naor proposed a radical concept to stop spam: make the sender compute a moderately hard mathematical riddle before sending an email. The riddle took a normal computer a few seconds to solve, but made sending millions of bulk spam messages prohibitively expensive. This introduced the foundational premise of Proof of Work: using tangible computing cost as an unforgeable ticket of legitimacy.',
+    takeaway: 'Proof of Work was not invented for money, but as digital friction to make spam and resource abuse economically impossible.'
+  },
+  {
+    level: 20,
+    era: '1997',
+    tag: 'Protocols',
+    title: 'Hashcash & Adam Back',
+    readTime: '1 min',
+    teaser: 'The partial hash collision puzzle that directly powered Satoshi’s mining engine.',
+    content: 'British cryptographer Dr. Adam Back created Hashcash in 1997. Hashcash required senders to hash an email header until the resulting SHA-1 hash started with a specific number of leading zero bits. Because cryptographic hashes are unpredictable, the only way to find those leading zeroes was brute-force trial and error. Satoshi Nakamoto directly credited Hashcash in the Bitcoin whitepaper as the engine for Bitcoin’s consensus mechanism.',
+    takeaway: 'Hashcash proved that searching for leading zero hashes requires genuine physical work that anyone can verify instantly.'
+  },
+  {
+    level: 30,
+    era: '1998',
+    tag: 'Scarcity',
+    title: 'B-Money & Bit Gold',
+    readTime: '1 min',
+    teaser: 'Early Cypherpunk dreams of purely digital, unforgeable gold.',
+    content: 'In 1998, Wei Dai published B-Money and Nick Szabo designed Bit Gold. Both recognized that central banks inflate fiat currency at will. Szabo observed that physical gold owes its value to unforgeable costliness—it requires physical labor and energy to extract from the earth. Bit Gold sought to replicate this digital costliness using computational puzzles, though it lacked a dynamic difficulty adjuster and consensus solution.',
+    takeaway: 'Bit Gold and B-Money proved digital money needed energy backing to resist arbitrary political inflation.'
+  },
+  {
+    level: 40,
+    era: '2004',
+    tag: 'Tokens',
+    title: 'Hal Finney & RPOW',
+    readTime: '1 min',
+    teaser: 'The first reusable proof of work tokens and the legendary cypherpunk.',
+    content: 'Legendary programmer Hal Finney invented Reusable Proof of Work (RPOW) in 2004. Unlike Hashcash tokens which were spent once and discarded, RPOW allowed computational proof-tokens to be transferred peer-to-peer between people without being double-spent, validated by a tamper-proof cryptographic server. Hal’s breakthrough bridged the gap between pure computational riddles and transferable currency.',
+    takeaway: 'Hal Finney proved computational work could be transformed into a transferable, tradeable digital asset.'
+  },
+  {
+    level: 50,
+    era: '2008',
+    tag: 'Consensus',
+    title: 'The Satoshi Whitepaper',
+    readTime: '1 min',
+    teaser: 'The immaculate synthesis: chaining blocks with dynamic difficulty adjustment.',
+    content: 'On October 31, 2008, Satoshi Nakamoto released the Bitcoin Whitepaper on the Cypherpunk mailing list. Satoshi solved the legendary Byzantine Generals Problem by combining Proof of Work with a dynamic difficulty adjustment rule and the longest-chain rule. By linking each block’s hash to the previous block, modifying past transaction history required redoing all accumulated Proof of Work—making the ledger computationally immutable.',
+    takeaway: 'Satoshi’s genius was linking Proof of Work into an unbreakable chain where the most cumulative work defines truth.'
+  },
+  {
+    level: 60,
+    era: '2009',
+    tag: 'Genesis',
+    title: 'The Genesis Block & Block #1',
+    readTime: '1 min',
+    teaser: 'The Chancellor headline, Hal Finney’s node, and the birth of a decentralized network.',
+    content: 'On January 3, 2009, Satoshi mined Block 0 (the Genesis Block), permanently embedding the famous Times headline: "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks". Six days later, Block 1 was mined. On January 12, Hal Finney tweeted "Running bitcoin", mined on his PC, and received 10 BTC from Satoshi in the world’s first Bitcoin transaction.',
+    takeaway: 'Bitcoin was born in response to financial crisis bailouts, anchored by open-source code and individual desktop miners.'
+  },
+  {
+    level: 70,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'What is a Nonce?',
+    readTime: '1 min',
+    teaser: 'The 32-bit integer at the center of every cryptographic hash race.',
+    content: 'Nonce stands for "Number used ONCE". In Bitcoin mining, an ASIC takes an 80-byte block header (timestamp, previous block hash, Merkle root) and appends a 32-bit number called the nonce. The miner hashes this header with SHA-256d. If the resulting hash is larger than the network target, the miner increments the nonce by 1 (e.g. 0x00000001, 0x00000002) and hashes again. Your miner repeats this trial billions of times every single second.',
+    takeaway: 'Mining is simply cycling through numbers in search of a golden nonce that yields a winning hash below the difficulty target.'
+  },
+  {
+    level: 80,
+    era: '2010',
+    tag: 'Hardware',
+    title: 'Pizza Day & The GPU Revolution',
+    readTime: '1 min',
+    teaser: '10,000 BTC for two pizzas and the leap from CPUs to graphics cards.',
+    content: 'On May 22, 2010, Laszlo Hanyecz bought two pizzas for 10,000 BTC, proving Bitcoin had real-world purchasing power. That same year, Laszlo realized that graphics cards (GPUs) possessed thousands of parallel arithmetic cores ideally suited for SHA-256 math. He wrote the first GPU miner code, instantly obsoleting CPU desktop mining and driving network hashrate from megahashes into gigahashes.',
+    takeaway: 'GPUs proved that mining speed is governed by parallel arithmetic pipelines, setting the stage for dedicated hardware.'
+  },
+  {
+    level: 90,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Target Difficulty & 2,016 Blocks',
+    readTime: '1 min',
+    teaser: 'Why blocks always average 10 minutes, whether mined by 1 PC or 1 million ASICs.',
+    content: 'Bitcoin self-regulates its block production clock. Every 2,016 blocks (exactly two weeks at 10 minutes per block), the software compares the actual time elapsed against the expected 20,160 minutes. If miners joined and found blocks in 8 minutes, difficulty increases automatically. If miners shut off and blocks took 12 minutes, difficulty drops. This heartbeat keeps Bitcoin’s issuance schedule mathematically predictable forever.',
+    takeaway: 'The difficulty adjustment is Bitcoin’s autonomic nervous system, guaranteeing inflation predictability without central planning.'
+  },
+  {
+    level: 100,
+    era: '2011',
+    tag: 'Stratum',
+    title: 'Slush Pool & The Stratum Protocol',
+    readTime: '1 min',
+    teaser: 'How pooled mining and TCP sockets democratized miner revenues.',
+    content: 'In late 2010, Czech programmer Marek Palatinus (Slush) invented pooled mining. Before pools, small miners had to solo-mine and face years of zero payouts. Pools aggregated thousands of miners to find blocks frequently, splitting rewards proportionally. In 2012, Slush created the Stratum mining protocol over JSON-RPC/TCP, slashing bandwidth and eliminating the latency bottlenecks of older HTTP mining.',
+    takeaway: 'Stratum protocol and mining pools made hash revenue steady and accessible for hobbyists across the world.'
+  },
+  {
+    level: 110,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Why Shares Aren’t Blocks',
+    readTime: '1 min',
+    teaser: 'Understanding the distinction between pool difficulty and global network difficulty.',
+    content: 'Home miners often wonder why their card reports thousands of accepted shares when the world only finds 144 Bitcoin blocks per day. Mining pools assign each connected miner a low share difficulty (e.g. 8,192). Finding a hash meeting this low target proves your ASIC is actively working, earning you reward shares. Occasionally, one of those shares is so extraordinarily lucky that it beats the global network target (e.g. 85 Trillion)—solving a full block!',
+    takeaway: 'Shares are proof of work tickets submitted to your pool; a block is a share that accidentally beat the entire planet’s target.'
+  },
+  {
+    level: 120,
+    era: '2012',
+    tag: 'Halving',
+    title: 'The First Halving & FPGA Epoch',
+    readTime: '1 min',
+    teaser: 'Subsidies drop from 50 to 25 BTC as Field-Programmable Gate Arrays emerge.',
+    content: 'On November 28, 2012, Bitcoin underwent its first Halving at Block 210,000, slashing the miner block subsidy from 50 BTC down to 25 BTC. Simultaneously, miners migrated from power-hungry GPUs to Field-Programmable Gate Arrays (FPGAs). FPGAs were reconfigurable microchips that could be wired to execute SHA-256 in pure hardware logic, consuming a fraction of the electricity of graphics cards.',
+    takeaway: 'The first halving proved Bitcoin’s programmatic monetary policy worked seamlessly in production.'
+  },
+  {
+    level: 130,
+    era: '2013',
+    tag: 'Silicon',
+    title: 'Canaan Avalon: The First ASIC',
+    readTime: '1 min',
+    teaser: 'Yifu Guo and Canaan Creative forge the world’s first custom SHA-256 microchip.',
+    content: 'In early 2013, Canaan Creative launched the Avalon 1, powered by custom Application-Specific Integrated Circuit (ASIC) silicon built on 110nm lithography. Unlike CPUs, GPUs, or FPGAs which can calculate graphics or run games, an ASIC does one thing: compute double-SHA-256 hashes millions of times faster with zero wasted silicon overhead. It inaugurated the modern era of industrial semiconductor mining.',
+    takeaway: 'ASICs strip away all general-purpose computing baggage, converting pure electricity directly into SHA-256 math.'
+  },
+  {
+    level: 140,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'SHA-256d Under the Hood',
+    readTime: '1 min',
+    teaser: 'Why Bitcoin hashes everything twice and why it cannot be reversed.',
+    content: 'Bitcoin uses SHA-256d, which means the SHA-256 algorithm is applied twice in series: Hash = SHA-256(SHA-256(data)). This was designed by Satoshi to protect against theoretical length-extension attacks. SHA-256 is an avalanche cipher: changing even a single bit in the 80-byte header completely randomizes all 256 bits of the output. There are no shortcuts—finding a target hash is mathematically pure luck and brute trial.',
+    takeaway: 'SHA-256d is a one-way mathematical street: effortless to verify forward, impossible to calculate in reverse.'
+  },
+  {
+    level: 150,
+    era: '2014',
+    tag: 'Hardware',
+    title: 'Bitmain & The Nanometer Race',
+    readTime: '1 min',
+    teaser: 'The semiconductor sprint from 55nm down to 28nm Antminers.',
+    content: 'Founded by Jihan Wu and Micree Zhan, Bitmain released the Antminer S1 (55nm) in 2013 and rapidly accelerated through the S3, S5, and S7 (28nm) in 2014-2015. Mining hardware became the primary driver of bleeding-edge semiconductor packaging alongside smartphones, pushing silicon foundries like TSMC to innovate specialized high-density, low-voltage hashboard architectures.',
+    takeaway: 'Crypto mining became one of the leading global drivers of advanced silicon fabrication and thermal engineering.'
+  },
+  {
+    level: 160,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Merkle Trees & Block Headers',
+    readTime: '1 min',
+    teaser: 'How thousands of transactions condense into a single 32-byte cryptographic root.',
+    content: 'A Bitcoin block contains thousands of transactions, but an ASIC miner only ever hashes an 80-byte block header. How? Transactions are paired up and repeatedly hashed in a binary tree invented by Ralph Merkle. The top of this pyramid is a single 32-byte string called the Merkle Root. If even a single satoshi in any transaction changes, the Merkle root changes completely, requiring the block to be re-mined.',
+    takeaway: 'Merkle trees allow miners to secure thousands of complex transactions by hashing a tiny, featherweight 80-byte header.'
+  },
+  {
+    level: 170,
+    era: '2015',
+    tag: 'AuxPoW',
+    title: 'Merge Mining & Auxiliary Proof of Work',
+    readTime: '1 min',
+    teaser: 'How miners secure multiple blockchains simultaneously with zero extra power.',
+    content: 'Auxiliary Proof of Work (AuxPoW) allows an ASIC miner to submit work to multiple distinct blockchains simultaneously without consuming an additional watt of power. Blockchains like Namecoin and Dogecoin adopted AuxPoW with Bitcoin and Litecoin. A miner solves a single cryptographic puzzle, and if the hash meets the target for both parent and auxiliary chains, both networks accept the block.',
+    takeaway: 'AuxPoW proved that cryptographic energy expenditure can be shared across multiple decentralized ledgers simultaneously.'
+  },
+  {
+    level: 180,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Solo Mining vs Pooled Mining Odds',
+    readTime: '1 min',
+    teaser: 'The mathematics of the cryptographic lottery and expected block time.',
+    content: 'When you mine with a pool, you receive tiny payouts every few minutes based on your share contribution. When you solo-mine (e.g. on Public-Pool), you keep 100% of the 3.125 BTC subsidy plus fees whenever you hit a block. A 1 TH/s Bitaxe running against an 800 EH/s network has odds of roughly 1 in 800,000 per block (about 1 in 15 years on average). But because every hash is independent, any single hash today could hit the jackpot.',
+    takeaway: 'Solo mining is mathematically fair: your odds are small each minute, but the payout is the entire unshared jackpot.'
+  },
+  {
+    level: 190,
+    era: '2016',
+    tag: 'Hardware',
+    title: 'The Second Halving & The Legendary S9',
+    readTime: '1 min',
+    teaser: 'Subsidies halve to 12.5 BTC as the most durable ASIC in history takes flight.',
+    content: 'In July 2016, Bitcoin cut its block reward to 12.5 BTC at Block 420,000. Just prior, Bitmain released the 16nm Antminer S9 (13.5 TH/s, 1300W). Built like an industrial tank, the S9 became the bedrock of global mining. It was so resilient that thousands remained profitable and active through the bear market of 2018 and even into the 2020 halving cycle, earning legendary status among home miners.',
+    takeaway: 'The Antminer S9 proved that durable, well-cooled ASIC silicon can maintain real economic value for over 6 years.'
+  },
+  {
+    level: 200,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Joules per Terahash (J/TH)',
+    readTime: '1 min',
+    teaser: 'The universal metric of mining efficiency and how it defines profitability.',
+    content: 'Joules per Terahash (J/TH) measures energy efficiency: how many Joules (Watt-seconds) of electricity does an ASIC consume to compute 1,000,000,000,000 hashes? In 2010, CPUs required over 100,000 J/TH. The Antminer S9 achieved ~100 J/TH. Modern 3nm ASICs achieve under 15 J/TH. The lower your J/TH, the less power your rig consumes to generate the same hashing power.',
+    takeaway: 'In crypto mining, efficiency (J/TH) always beats raw hashrate when power costs matter.'
+  },
+  {
+    level: 210,
+    era: '2017',
+    tag: 'Scaling',
+    title: 'The Blocksize War & SegWit',
+    readTime: '1 min',
+    teaser: 'User-Activated Soft Forks, transaction malleability, and the Lightning Network.',
+    content: 'In 2017, the Bitcoin community faced an intense debate over transaction scaling. Some corporate miners advocated for larger 8MB blocks, while node runners and users favored Segregated Witness (SegWit, BIP 141). SegWit separated signature witness data from transaction outputs, effectively increasing capacity to ~2MB without breaking backwards compatibility, while enabling second-layer payment channels like Lightning.',
+    takeaway: 'The Blocksize War proved that node runners and decentralized users hold ultimate sovereignty over the rules of the network.'
+  },
+  {
+    level: 220,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'The ExtraNonce Dimension',
+    readTime: '1 min',
+    teaser: 'Why a 32-bit nonce isn’t enough for modern terahash miners.',
+    content: 'A standard Bitcoin block header only has a 32-bit nonce field, which maxes out at 4,294,967,296 possible numbers. At 1 TH/s, a modern ASIC exhausts all 4.29 billion nonces in less than 5 milliseconds! To keep mining, the rig modifies the ExtraNonce field located inside the coinbase transaction script, generating a brand-new Merkle root and an entire fresh universe of 4.29 billion nonces.',
+    takeaway: 'The ExtraNonce gives miners an infinite search space so ASICs never run out of unique riddles to test.'
+  },
+  {
+    level: 230,
+    era: '2018',
+    tag: 'Cooling',
+    title: 'Crypto Winter & Immersion Cooling',
+    readTime: '1 min',
+    teaser: 'Submerging hashboards in non-conductive dielectric fluid for silent power.',
+    content: 'During the brutal 2018 bear market with Bitcoin below $4,000, miners sought every possible operational advantage. Immersion cooling emerged: submerging operational ASIC hashboards entirely into specialized clear dielectric hydrocarbon fluids. Immersion eliminated noisy 6,000 RPM screamer fans, prevented dust accumulation, reduced chip thermal resistance, and allowed massive 40%+ overclocking safely.',
+    takeaway: 'Immersion cooling transformed mining hardware from industrial jet engines into silent, fluid-cooled thermal units.'
+  },
+  {
+    level: 240,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Stale vs Rejected Shares',
+    readTime: '1 min',
+    teaser: 'Why low ping to your Stratum pool protects your revenue.',
+    content: 'When your miner submits a share, the pool grades it. An Accepted Share earns reward points. A Rejected Share was invalid (e.g. bad nonce calculation or misconfigured difficulty). A Stale Share was mathematically correct, but another miner in the world found a block milliseconds before your share reached the pool. Lowering your network ping (WiFi latency) prevents stale shares and maximizes accepted yield.',
+    takeaway: 'Keep your miner on a clean, low-latency network connection to ensure every computed share counts.'
+  },
+  {
+    level: 250,
+    era: '2019',
+    tag: 'Protocols',
+    title: 'Stratum V2 & Custom Job Selection',
+    readTime: '1 min',
+    teaser: 'Braiins revolutionizes mining protocols with encrypted binary messaging.',
+    content: 'In 2019, Braiins (operators of Slush Pool) unveiled Stratum V2. The legacy Stratum V1 protocol communicated in plaintext JSON, making it vulnerable to man-in-the-middle hashrate hijacking. Stratum V2 introduced authenticated AEAD encryption, compact binary framing (reducing bandwidth by 50%), and Job Negotiation, allowing individual miners to build their own transaction templates instead of pool operators.',
+    takeaway: 'Stratum V2 decentralizes transaction selection, preventing pool operators from censoring network transactions.'
+  },
+  {
+    level: 260,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'The 51% Attack Reality',
+    readTime: '1 min',
+    teaser: 'Why attacking the Bitcoin network with brute hashrate is economically suicidal.',
+    content: 'A 51% attack occurs if a single entity controls more than half of the global hashrate, allowing them to reorganize recent blocks and double-spend their own coins. However, on modern Bitcoin with ~800 Exahashes/sec, procuring, powering, and deploying that many millions of ASIC machines would cost tens of billions of dollars. The moment an attack occurred, Bitcoin’s price would drop, destroying the attacker’s own capital.',
+    takeaway: 'Proof of Work game theory ensures that spending energy to honestly secure the network is always vastly more profitable than attacking it.'
+  },
+  {
+    level: 270,
+    era: '2020',
+    tag: 'Hardware',
+    title: 'The Third Halving & MicroBT Whatsminer',
+    readTime: '1 min',
+    teaser: 'Subsidies halve to 6.25 BTC as MicroBT breaks the ASIC monopoly.',
+    content: 'In May 2020, Bitcoin halved to 6.25 BTC at Block 630,000 amid global pandemic lockdowns. Former Bitmain chip designer Dr. Zuoxing Yang founded MicroBT, launching the Whatsminer M20 and M30 series. Whatsminers featured high-voltage series designs, custom aluminum packaging, and unparalleled power supply reliability, breaking single-manufacturer dominance and establishing true hardware competition.',
+    takeaway: 'Hardware competition drives ASIC reliability and prevents centralized supply-chain choke points.'
+  },
+  {
+    level: 280,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Frequency Binning & Silicon Lottery',
+    readTime: '1 min',
+    teaser: 'Why identical ASIC chips from the same wafer overclock differently.',
+    content: 'Microchips are etched with light onto circular silicon wafers. Due to microscopic variations in atomic purity and temperature across the wafer, chips near the center often have fewer crystal defects than chips on the edge. High-quality dies can operate at 600 MHz on 1.1V, while lower-quality dies require 1.25V for stability. In AxeOS and custom firmware, tuning frequency to each chip’s sweet spot is called winning the Silicon Lottery.',
+    takeaway: 'Custom firmware like AxeOS lets you tune each individual chip to maximize efficiency and stability.'
+  },
+  {
+    level: 290,
+    era: '2021',
+    tag: 'Decentralization',
+    title: 'The China Mining Ban & Great Migration',
+    readTime: '1 min',
+    teaser: '50% of global hashrate goes offline overnight, and Bitcoin never misses a beat.',
+    content: 'In May 2021, China issued an abrupt nationwide ban on all cryptocurrency mining, immediately shutting down over 50% of all worldwide hashrate. For any traditional corporate server architecture, losing half your infrastructure overnight would cause catastrophic system outages. Bitcoin’s difficulty dropped 28% in a single adjustment, and within 6 months, miners relocated across the US, Norway, and Iceland, reaching new all-time high hashrates.',
+    takeaway: 'The China ban demonstrated Bitcoin’s supreme anti-fragility: no CEO, no central headquarters, zero downtime.'
+  },
+  {
+    level: 300,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Demand Response & Grid Balancing',
+    readTime: '1 min',
+    teaser: 'How miners act as virtual batteries that stabilize electrical power grids.',
+    content: 'Power grids must balance electrical supply and consumer demand in real time every second. Unlike steel mills or chemical plants which take days to pause, ASIC miners can ramp down in 5 seconds via software. In Texas (ERCOT) and Northern Europe, mining facilities enter Demand Response agreements: they buy surplus wind and solar power during low demand, and shut down instantly during heatwaves and freezes to prevent blackouts.',
+    takeaway: 'Miners act as economic shock absorbers, monetizing stranded renewable energy and stabilizing utility grids.'
+  },
+  {
+    level: 310,
+    era: '2022',
+    tag: 'Consensus',
+    title: 'The Proof of Stake Divergence',
+    readTime: '1 min',
+    teaser: 'Ethereum executes The Merge, cementing PoW as the thermodynamic anchor.',
+    content: 'In September 2022, Ethereum executed The Merge, replacing GPU Proof of Work with Proof of Stake (PoS). This marked a fundamental ideological divergence in crypto. PoS governs consensus through internal coin ownership, where those with the most coins yield the most voting power. Proof of Work remains deliberately anchored to external thermodynamic physics: you cannot counterfeit or bribe electrical Joules.',
+    takeaway: 'Proof of Work binds digital consensus to the physical universe of energy, ensuring true objective decentralization.'
+  },
+  {
+    level: 320,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Thermal Dissipation & Waste Heat Scavenging',
+    readTime: '1 min',
+    teaser: 'First law of thermodynamics: 100% of ASIC electrical power becomes heat.',
+    content: 'According to physics, computers perform zero mechanical work—every single kilowatt-hour of electricity consumed by an ASIC turns 100% into thermal heat. A 15W Bitaxe or a 100W Avalon Nano generates identical BTU heating output as a 15W or 100W resistance space heater, with one crucial difference: the miner calculates SHA-256 lottery tickets while warming your room!',
+    takeaway: 'Home miners are not wasting electricity; they are heating living spaces with computational co-generation.'
+  },
+  {
+    level: 330,
+    era: '2023',
+    tag: 'Open-Source',
+    title: 'The Bitaxe & Open Source Hardware',
+    readTime: '1 min',
+    teaser: 'Skot9000 and the open-source community liberate ASIC micro-mining.',
+    content: 'For a decade, ASIC hardware was locked inside closed proprietary 3,000W industrial boxes. In 2023, open-source engineer Skot9000 designed the Bitaxe: an open-hardware PCB pairing a single salvaged Bitmain ASIC chip (BM1397 / BM1366) with an ESP32 microcontroller running open-source AxeOS firmware. Anyone with a 3D printer and soldering iron could now build, study, and run their own autonomous ASIC miner.',
+    takeaway: 'The Bitaxe proved open-source hardware can democratize ASIC mining from mega-farms back to bedroom desks.'
+  },
+  {
+    level: 340,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Voltage Tuning & Quadratic Power Draw',
+    readTime: '1 min',
+    teaser: 'The secret physics equation that governs ASIC overclocking and efficiency.',
+    content: 'CMOS microchip power consumption follows the equation: Power = Capacitance × Voltage² × Frequency (P = C·V²·f). Notice that voltage is SQUARED! Dropping your ASIC core voltage by just 10% reduces heat and power consumption by roughly 19%. Overclockers in AxeOS cautiously lower voltage to find the lowest stable threshold, generating maximum hashrate at minimum temperatures.',
+    takeaway: 'Undervolting yields quadratic power savings—slight voltage drops produce dramatic efficiency gains.'
+  },
+  {
+    level: 350,
+    era: '2024',
+    tag: 'Halving',
+    title: 'The Fourth Halving (3.125 BTC)',
+    readTime: '1 min',
+    teaser: 'Subsidies drop to 3.125 BTC as Runes, Ordinals, and fee markets surge.',
+    content: 'In April 2024, Bitcoin crossed Block 840,000, cutting the block subsidy from 6.25 to 3.125 BTC. Concurrently, transaction fee revenue surged as protocol innovations like Ordinals and Runes brought on-chain digital inscriptions to Bitcoin. Block 840,000 included an astounding 37.6 BTC in user fees alone, proving that as block subsidies taper off, transaction fee markets can sustain network security.',
+    takeaway: 'The fee market will gradually replace block subsidies, ensuring miner revenue long into the 21st century.'
+  },
+  {
+    level: 360,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'PPLNS vs PPS+ Pool Payouts',
+    readTime: '1 min',
+    teaser: 'Understanding the payout schemes that govern your mining rewards.',
+    content: 'Pay-Per-Share (PPS) pays you an exact fixed rate for every share submitted, with the pool bearing the variance risk if no blocks are found. Pay-Per-Last-N-Shares (PPLNS) checks the last N shares submitted across the entire pool only when a block is found. PPLNS penalizes pool hoppers and rewards consistent, loyal miners with lower pool fee deductions (often 0% to 1% compared to 2-4% on PPS).',
+    takeaway: 'For steady 24/7 miners, PPLNS yields the highest statistical payout over weeks and months.'
+  },
+  {
+    level: 370,
+    era: 'Hardware',
+    tag: 'Home-Mining',
+    title: 'Canaan Avalon Nano 3 & 3s',
+    readTime: '1 min',
+    teaser: 'The consumer heating appliance that mines Bitcoin in the living room.',
+    content: 'Canaan Creative disrupted the home mining space in 2024 with the Avalon Nano 3 and Nano 3s. Packaged in sleek aesthetic enclosures with built-in multicolor LED mood lighting and whisper-quiet fans, the Nano pulls ~100-140W to output ~4-6 TH/s. Marketed openly as a desktop room heater that mines crypto, it marked the official arrival of ASIC appliances into everyday home consumer life.',
+    takeaway: 'Mining appliances bring decentralized hashrate into everyday living rooms disguised as useful consumer heaters.'
+  },
+  {
+    level: 380,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'The Mempool & Fee Bidding War',
+    readTime: '1 min',
+    teaser: 'How miners assemble 4 megabyte block payloads for maximum profit.',
+    content: 'When users broadcast Bitcoin transactions, they wait in a distributed waiting room called the Mempool. Because block space is limited to roughly 4 virtual megabytes (weight units), miners sort pending transactions by their satoshis-per-virtual-byte (sat/vB) fee rate. High-paying transactions are packed into the next block header, while low-fee transactions wait for quiet network weekends.',
+    takeaway: 'The Mempool is a free market auction for space in the world’s most secure chronological ledger.'
+  },
+  {
+    level: 390,
+    era: 'Energy',
+    tag: 'Green-Energy',
+    title: 'Flare Gas & Stranded Energy Monetization',
+    readTime: '1 min',
+    teaser: 'Burning waste oilfield methane to secure Bitcoin while cutting emissions.',
+    content: 'Remote oil wells often lack gas pipelines, traditionally venting or flaring byproduct methane directly into the atmosphere—a potent greenhouse gas. Mobile mining containers equipped with generators can be parked directly at wellheads. By combusting the stranded methane to power ASIC miners on-site, producers eliminate harmful methane emissions by up to 90% while turning waste gas into sound money.',
+    takeaway: 'Bitcoin mining turns environmental liabilities and stranded energy into productive capital.'
+  },
+  {
+    level: 400,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Decentralized Solo Pools & Public-Pool',
+    readTime: '1 min',
+    teaser: 'Why open-source Stratum servers preserve individual sovereignty.',
+    content: 'Proprietary cloud pools can monitor your IP address, charge high management fees, or censor your submitted shares. Open-source engines like Public-Pool let users run their own Stratum server locally on a Raspberry Pi or Home Assistant server connected directly to their own Bitcoin node. No registration, zero fees, and total privacy: your ASIC talks directly to your personal sovereign node.',
+    takeaway: 'Running a local solo pool eliminates all intermediaries between your ASIC and the Bitcoin blockchain.'
+  },
+  {
+    level: 410,
+    era: 'Hardware',
+    tag: 'Engineering',
+    title: 'Hydro-Cooling & Radiator Loops',
+    readTime: '1 min',
+    teaser: 'Replacing roaring fans with closed-loop liquid cooling in home workshops.',
+    content: 'Air-cooled ASIC miners rely on high-RPM fans that generate high-pitched noise (65-80 dBA). Water-cooling replaces air heatsinks with copper waterblocks and closed-loop liquid radiators. Water has over 4 times the specific heat capacity of air, cooling chips far below ambient air temperatures while reducing acoustic noise to a quiet whisper—ideal for basement home workshops.',
+    takeaway: 'Hydro-cooling allows home miners to achieve high clock frequencies in residential spaces with near-silent acoustics.'
+  },
+  {
+    level: 420,
+    era: 'Concepts',
+    tag: 'Demystified',
+    title: 'Electromigration & Silicon Longevity',
+    readTime: '1 min',
+    teaser: 'How keeping chip junction temperatures below 65°C preserves your hardware for a decade.',
+    content: 'Electromigration occurs when intense electrical current causes metal atoms inside a nanometer-scale microchip to physically drift over time, eventually causing open circuits or short circuits. Electromigration accelerates exponentially with excessive temperature and voltage. By keeping ASIC temperatures below 65°C and undervolting, miners can run their hardware continuously for over 10 years without degradation.',
+    takeaway: 'Cool temperatures and modest voltages protect your ASIC chips against electromigration for years of service.'
+  },
+  {
+    level: 430,
+    era: 'Economics',
+    tag: 'Future',
+    title: 'The Halving Horizon: 2028 and 2140',
+    readTime: '1 min',
+    teaser: 'What happens when block subsidies reach zero in the year 2140?',
+    content: 'The Bitcoin supply cap is fixed at 21,000,000 coins. In 2028, the 5th halving drops the subsidy to 1.5625 BTC. By roughly 2140, the final satoshi will be minted at Block 6,930,000. Afterward, miners will be sustained entirely by transaction fees. Because Bitcoin serves as the settlement anchor for global commerce and layer-2 networks, transaction fees will provide substantial, sustainable security revenue.',
+    takeaway: 'Satoshi designed a predictable 130-year runway transitioning miner incentives smoothly from subsidies to transaction fees.'
+  },
+  {
+    level: 440,
+    era: 'Geopolitics',
+    tag: 'Baseload',
+    title: 'Volcano & Glacial Geothermal Mining',
+    readTime: '1 min',
+    teaser: 'How El Salvador and Iceland use tectonic earth energy to hash Bitcoin.',
+    content: 'In 2021, El Salvador declared Bitcoin legal tender and began harnessing the geothermal steam of the Conchagua volcano to power sovereign ASIC mining operations. In Iceland, abundant glacial hydro and volcanic thermal steam power thousands of mining rigs with zero carbon emissions. Tectonic baseload power provides uninterrupted, clean energy perfectly matched for 24/7/365 ASIC computation.',
+    takeaway: 'Geothermal and volcanic mining proves that Proof of Work can thrive on 100% clean, non-polluting energy.'
+  },
+  {
+    level: 450,
+    era: 'Ecosystem',
+    tag: 'Alt-Chains',
+    title: 'Auxiliary Chains: Bellscoin & Scrypt UTXOs',
+    readTime: '1 min',
+    teaser: 'How PoW principles foster organic, venture-capital-free community tokens.',
+    content: 'Proof of Work extends beyond SHA-256. Chains like Bellscoin (scrypt-based, created by Dogecoin co-founder Billy Markus) and classic UTXO networks demonstrate how Proof of Work allows grassroots communities to launch digital currencies without pre-mines, venture capital seed rounds, or insider tokens. Everyone competes on an open, level playing field governed purely by computational physics.',
+    takeaway: 'Proof of work remains the only fair-launch mechanism that completely prevents founder cantillon effects.'
+  },
+  {
+    level: 460,
+    era: 'Philosophy',
+    tag: 'Economics',
+    title: 'Austrian Economics & Thermodynamic Scarcity',
+    readTime: '1 min',
+    teaser: 'Why real digital scarcity requires an anchor to the physical universe.',
+    content: 'Austrian economists like Friedrich Hayek argued that government monopolies on money inevitably lead to currency debasement and boom-bust debt cycles. Satoshi Nakamoto resolved this by anchoring Bitcoin’s issuance to thermodynamic energy. In the digital world, data can be copied infinitely for zero cost; Proof of Work is the only mechanism that makes information costly and unforgeably scarce.',
+    takeaway: 'Proof of Work is the digital bridge between mathematical code and the physical laws of thermodynamics.'
+  },
+  {
+    level: 470,
+    era: 'Semiconductors',
+    tag: 'Future',
+    title: 'Gate-All-Around (GAA) & 2nm Lithography',
+    readTime: '1 min',
+    teaser: 'The physics threshold of sub-10 J/TH nano-transistors.',
+    content: 'Semiconductor manufacturers are moving beyond FinFET transistors to Gate-All-Around (GAAFET) nanosheets at 2nm and 1.4nm scales. In GAA transistors, the gate material wraps completely around the silicon channel on all four sides, virtually eliminating parasitic current leakage. This will allow future generations of ASIC chips to operate below 10 Joules per Terahash, approaching the theoretical limits of silicon computation.',
+    takeaway: 'Next-generation transistor architectures ensure home miners get ever more hashing power from every wall outlet watt.'
+  },
+  {
+    level: 480,
+    era: 'Autonomy',
+    tag: 'Solar-Offset',
+    title: 'Home Solar Harvesting & Dynamic Throttling',
+    readTime: '1 min',
+    teaser: 'Directing excess midday rooftop solar power straight into your mining blades.',
+    content: 'Homeowners with solar panels often export excess midday power back to the grid for pennies on the dollar. With smart home integrations like Home Assistant and AxeOS, automation scripts detect solar export in real time and dynamically ramp up miner frequencies and voltages, soaking up 100% of excess solar electrons at zero marginal electricity cost to mint decentralized cryptocurrency.',
+    takeaway: 'Smart home automation turns your mining fleet into an intelligent, profit-generating solar energy sponge.'
+  },
+  {
+    level: 490,
+    era: 'Culture',
+    tag: 'Cypherpunk',
+    title: 'The Cypherpunk Ethos & Open Sovereignty',
+    readTime: '1 min',
+    teaser: '“Cypherpunks write code” — defending privacy and autonomy through mathematics.',
+    content: 'In 1993, Eric Hughes penned A Cypherpunk’s Manifesto: "Privacy is necessary for an open society in the electronic age... We cannot expect governments, corporations, or other large organizations to grant us privacy. We must defend our own." Bitcoin mining is the direct living realization of this ethos: individuals deploying hardware in their own homes to verify truth without permission.',
+    takeaway: 'Every home miner running a single hash contributes to the preservation of global financial freedom.'
+  },
+  {
+    level: 500,
+    era: 'Apex',
+    tag: 'Sovereign',
+    title: 'The Satoshi Sovereign: 21 Million Immutable',
+    readTime: '2 min',
+    teaser: 'Reaching Level 500: The triumph of decentralized consensus over sixteen years.',
+    content: 'Congratulations on reaching Level 500! You have ascended to the highest rank in the fleet: Satoshi Slayer (MAX). Since January 3, 2009, through financial panics, semiconductor booms, halving cycles, and regulatory bans, Bitcoin’s Proof of Work blockchain has run 24 hours a day, 7 days a week with over 99.98% uptime—longer and more reliably than any sovereign fiat payment rails on Earth. By running your home mining workstation, you stand as an active guardian of this unstoppable global consensus.',
+    takeaway: 'Decentralized Proof of Work cannot be silenced, stopped, or corrupted. The code runs forever.'
+  }
+];
+
 function xpForRpgLevel(l) {
   if (l <= 1) return 0;
-  return Math.floor(60 * Math.pow(l - 1, 1.85));
+  return Math.floor(25 * Math.pow(l - 1, 1.5));
 }
 
 function rpgLevelForXp(xp) {
@@ -530,6 +1033,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
     this._trophyFilter = safeStorage.get('miner_trophy_filter') || 'all';
     this._activeTheme = safeStorage.get('miner_active_theme') || 'default';
+    this._chronicleFilter = safeStorage.get('miner_chronicle_filter') || 'all';
     this._lastRenderSig = null;
     this._soundMode = safeStorage.get('miner_sound_mode') || 'off'; // 'off' | 'geiger' | 'chimes'
     this._soundVolume = parseFloat(safeStorage.get('miner_sound_vol') || '0.35');
@@ -1552,6 +2056,38 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
           </div>
         </div>
+
+        <!-- CHRONICLE READING MODAL -->
+        <div id="chronicle-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 640px; width: 95%; border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 158, 11, 0.2);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 26px;">📜</span>
+                <div>
+                  <span class="modal-title" id="cmodal-title" style="color: #fbbf24; font-size: 17px;">Mining Chronicle</span>
+                  <div class="mono" style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="cmodal-subtitle">Level 10 Unlock • Era: 1993</div>
+                </div>
+              </div>
+              <button class="glass-btn" id="cmodal-close-btn" style="padding: 4px 10px; font-size: 13px;">✕</button>
+            </div>
+            <div style="padding: 18px 22px;">
+              <div id="cmodal-content" style="font-size: 13.5px; color: #cbd5e1; line-height: 1.7; margin-bottom: 18px;">
+                <!-- Narrative body -->
+              </div>
+              <div class="chronicle-takeaway-box" id="cmodal-takeaway-box">
+                <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                  <span>💡</span>
+                  <span>Key Demystification for Home Miners</span>
+                </div>
+                <div id="cmodal-takeaway" style="font-size: 12.5px; color: #f1f5f9; font-weight: 500; line-height: 1.55;"></div>
+              </div>
+            </div>
+            <div class="modal-footer" style="padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+              <button class="glass-btn" id="cmodal-done-btn" style="margin-left: auto; padding: 6px 18px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">Done Reading</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     `;
     this._attachModalListeners();
@@ -1882,10 +2418,31 @@ class HomeMinerFleetCard extends HTMLElement {
     const deleteModal = this.shadowRoot.querySelector('#delete-modal');
     const discModal = this.shadowRoot.querySelector('#discovery-modal');
     const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
+    const cModal = this.shadowRoot.querySelector('#chronicle-modal');
+    if (cModal) cModal.style.display = 'none';
     if (minerModal) minerModal.style.display = 'none';
     if (deleteModal) deleteModal.style.display = 'none';
     if (discModal) discModal.style.display = 'none';
     if (stratumModal) stratumModal.style.display = 'none';
+  }
+
+  _openChronicleModal(chapter) {
+    this._ensureDom();
+    const cModal = this.shadowRoot.querySelector('#chronicle-modal');
+    if (!cModal || !chapter) return;
+    this._modalOpen = true;
+
+    const titleEl = this.shadowRoot.querySelector('#cmodal-title');
+    const subEl = this.shadowRoot.querySelector('#cmodal-subtitle');
+    const contentEl = this.shadowRoot.querySelector('#cmodal-content');
+    const takeawayEl = this.shadowRoot.querySelector('#cmodal-takeaway');
+
+    if (titleEl) titleEl.textContent = chapter.title;
+    if (subEl) subEl.textContent = `Level ${chapter.level} Unlock • Era: ${chapter.era} • ${chapter.tag} • ${chapter.readTime}`;
+    if (contentEl) contentEl.textContent = chapter.content;
+    if (takeawayEl) takeawayEl.textContent = chapter.takeaway;
+
+    cModal.style.display = 'flex';
   }
 
   _openStratumModal(targetHost = '', targetCoin = '') {
@@ -4027,6 +4584,214 @@ class HomeMinerFleetCard extends HTMLElement {
           font-family: 'JetBrains Mono', monospace;
         }
 
+        /* --- MINING HISTORY & DECENTRALIZED CHRONICLES STYLES --- */
+        .chronicles-console {
+          padding: 22px 24px;
+          margin-top: 26px;
+          margin-bottom: 26px;
+          border-radius: 16px;
+          border: 1px solid var(--theme-card-border, rgba(56, 189, 248, 0.25));
+        }
+
+        .chronicles-header-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .chronicles-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .chronicles-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.05));
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          font-size: 20px;
+        }
+
+        .chronicles-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .chronicles-subtitle {
+          font-size: 11.5px;
+          color: #94a3b8;
+          margin-top: 2px;
+        }
+
+        .chronicles-status-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          background: rgba(56, 189, 248, 0.1);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          color: #38bdf8;
+        }
+        .chronicles-status-badge.unlocked {
+          background: rgba(245, 158, 11, 0.12);
+          border-color: rgba(245, 158, 11, 0.4);
+          color: #fbbf24;
+        }
+
+        .chronicle-filter-bar {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+
+        .chronicle-filter-pill {
+          padding: 5px 12px;
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.04);
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .chronicle-filter-pill:hover {
+          color: #f8fafc;
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .chronicle-filter-pill.active {
+          background: var(--theme-pill-gradient, linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5)));
+          border-color: var(--theme-accent, #38bdf8);
+          color: #f8fafc;
+        }
+
+        .chronicles-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+          gap: 14px;
+          max-height: 480px;
+          overflow-y: auto;
+          padding-right: 6px;
+        }
+
+        .chronicles-grid::-webkit-scrollbar {
+          width: 5px;
+        }
+        .chronicles-grid::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.25);
+          border-radius: 4px;
+        }
+        .chronicles-grid::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.15);
+          border-radius: 4px;
+        }
+
+        .chronicle-card {
+          padding: 15px;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .chronicle-card.unlocked {
+          border-color: rgba(56, 189, 248, 0.25);
+          background: rgba(15, 23, 42, 0.55);
+        }
+
+        .chronicle-card.unlocked:hover {
+          transform: translateY(-2px);
+          border-color: var(--theme-accent, #38bdf8);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 12px var(--theme-glow, rgba(56, 189, 248, 0.2));
+        }
+
+        .chronicle-card.locked {
+          opacity: 0.65;
+          background: rgba(15, 23, 42, 0.25);
+        }
+
+        .chronicle-card-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .chronicle-lvl-pill {
+          padding: 2px 7px;
+          border-radius: 6px;
+          font-size: 10px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .chronicle-lvl-pill.unlocked {
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .chronicle-lvl-pill.locked {
+          background: rgba(255, 255, 255, 0.05);
+          color: #94a3b8;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chronicle-era-tag {
+          font-size: 10.5px;
+          color: #38bdf8;
+          font-weight: 600;
+        }
+
+        .chronicle-card-title {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #f8fafc;
+          margin-bottom: 6px;
+          line-height: 1.35;
+        }
+
+        .chronicle-card-teaser {
+          font-size: 11.5px;
+          color: #94a3b8;
+          line-height: 1.45;
+          margin-bottom: 12px;
+        }
+
+        .chronicle-locked-msg {
+          font-size: 10.5px;
+          color: #64748b;
+          font-style: italic;
+          text-align: center;
+          padding: 4px;
+        }
+
+        .chronicle-takeaway-box {
+          background: rgba(56, 189, 248, 0.08);
+          border: 1px solid rgba(56, 189, 248, 0.25);
+          border-radius: 8px;
+          padding: 12px 14px;
+        }
+
         /* --- PRESTIGE THEME ENGINE STYLES --- */
         #card-root {
           background: var(--theme-hero-bg, radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.10) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%));
@@ -5078,7 +5843,9 @@ class HomeMinerFleetCard extends HTMLElement {
       : (expectedDays < 365 ? (expectedDays.toFixed(1) + 'd Odds') : (expectedYears.toFixed(0) + 'y Odds'));
 
     // --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap) ---
-    const totalFleetXp = (totalFleetAccepted * 15) + Math.floor(fleetBestDiff / 50000);
+    // Rebalanced XP: 1 XP per verified accepted share + log-scaled difficulty bonus
+    const diffBonus = fleetBestDiff > 1000 ? Math.floor(Math.log10(fleetBestDiff) * 8) : 0;
+    const totalFleetXp = totalFleetAccepted + diffBonus;
     const fleetLevel = rpgLevelForXp(totalFleetXp);
     const fleetTitle = getRpgTitle(fleetLevel);
     const nextMilestone = getNextRpgMilestone(fleetLevel);
@@ -5421,11 +6188,11 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="rpg-meta-chips">
               <div class="rpg-meta-chip">
                 <span>⛏️</span>
-                <span>Accepted Shares: <b>+${(totalFleetAccepted * 15).toLocaleString()} XP</b> (${totalFleetAccepted.toLocaleString()} × 15)</span>
+                <span>Accepted Shares: <b>+${totalFleetAccepted.toLocaleString()} XP</b> (1 XP / share)</span>
               </div>
               <div class="rpg-meta-chip">
                 <span>🎯</span>
-                <span>Mega-Diff: <b>+${Math.floor(fleetBestDiff / 50000).toLocaleString()} XP</b> (${fleetBestShareStr} / 50k)</span>
+                <span>Diff Bonus: <b>+${diffBonus.toLocaleString()} XP</b> (log-scaled)</span>
               </div>
               <div class="rpg-meta-chip">
                 <span>🏆</span>
@@ -5530,6 +6297,65 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
             </div>
           `).join('')}
+        </div>
+
+        <!-- MINING HISTORY & DECENTRALIZED CHRONICLES (EVERY 10 LEVELS) -->
+        <div class="glass-card chronicles-console">
+          <div class="chronicles-header-row">
+            <div class="chronicles-title-cluster">
+              <div class="chronicles-icon-box">📜</div>
+              <div>
+                <div class="chronicles-title">Mining History & Decentralized Chronicles</div>
+                <div class="chronicles-subtitle">Demystifying crypto mining & historical milestones • 50 unlockable chapters every 10 levels</div>
+              </div>
+            </div>
+            <div class="chronicles-status-badge ${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length > 0 ? 'unlocked' : ''}">
+              <span>📖</span>
+              <span>${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length} / ${CHRONICLE_CHAPTERS.length} Chapters Unlocked</span>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="chronicle-filter-bar">
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'all' ? 'active' : ''}" data-cfilter="all">All Chapters (${CHRONICLE_CHAPTERS.length})</button>
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'unlocked' ? 'active' : ''}" data-cfilter="unlocked">🔓 Unlocked (${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'locked' ? 'active' : ''}" data-cfilter="locked">🔒 Locked (${CHRONICLE_CHAPTERS.length - CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
+          </div>
+
+          <!-- Chronicles Grid -->
+          <div class="chronicles-grid">
+            ${CHRONICLE_CHAPTERS.filter(c => {
+              if (this._chronicleFilter === 'unlocked') return fleetLevel >= c.level;
+              if (this._chronicleFilter === 'locked') return fleetLevel < c.level;
+              return true;
+            }).map(c => {
+              const isUnlocked = fleetLevel >= c.level;
+              return `
+                <div class="glass-card chronicle-card ${isUnlocked ? 'unlocked' : 'locked'}" data-clevel="${c.level}">
+                  <div class="chronicle-card-header">
+                    <div class="chronicle-lvl-pill ${isUnlocked ? 'unlocked' : 'locked'}">
+                      ${isUnlocked ? `LVL ${c.level}` : `🔒 LVL ${c.level}`}
+                    </div>
+                    <span class="chronicle-era-tag">${c.era} • ${c.tag}</span>
+                    <span class="mono" style="font-size: 10px; color: #94a3b8; margin-left: auto;">${c.readTime}</span>
+                  </div>
+                  <div class="chronicle-card-title">${c.title}</div>
+                  <div class="chronicle-card-teaser">${c.teaser}</div>
+                  <div class="chronicle-card-footer">
+                    ${isUnlocked ? `
+                      <button class="glass-btn chronicle-read-btn" data-clevel="${c.level}" style="padding: 5px 12px; font-size: 11px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); width: 100%;">
+                        📖 Read Chronicle
+                      </button>
+                    ` : `
+                      <div class="chronicle-locked-msg">
+                        🔒 Unlocks at Level ${c.level} (+${Math.max(0, xpForRpgLevel(c.level) - totalFleetXp).toLocaleString()} XP needed)
+                      </div>
+                    `}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>
 
         <!-- Milestone Roadmap Strip -->
@@ -6000,7 +6826,8 @@ class HomeMinerFleetCard extends HTMLElement {
           // Workstation RPG Tier
           const minerAccepted = miner.acceptedRaw || 0;
           const minerBestDiff = miner.bestDiffNum || 0;
-          const minerXp = (minerAccepted * 15) + Math.floor(minerBestDiff / 50000);
+          const minerDiffBonus = minerBestDiff > 1000 ? Math.floor(Math.log10(minerBestDiff) * 8) : 0;
+          const minerXp = minerAccepted + minerDiffBonus;
           const minerLvl = rpgLevelForXp(minerXp);
           const minerRank = getRpgTitle(minerLvl);
 
@@ -6823,6 +7650,44 @@ class HomeMinerFleetCard extends HTMLElement {
         }
       });
     });
+
+    // Mining History Chronicles Filter Navigation
+    const chronicleFilterPills = this.shadowRoot.querySelectorAll('.chronicle-filter-pill');
+    chronicleFilterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const filterVal = pill.getAttribute('data-cfilter') || 'all';
+        if (filterVal !== this._chronicleFilter) {
+          this._chronicleFilter = filterVal;
+          this._lastRenderSig = null;
+          safeStorage.set('miner_chronicle_filter', filterVal);
+          this.render();
+        }
+      });
+    });
+
+    // Mining History Chronicles Read Modal Triggers
+    const chronicleReadBtns = this.shadowRoot.querySelectorAll('.chronicle-read-btn');
+    chronicleReadBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lvl = parseInt(btn.getAttribute('data-clevel'), 10);
+        const chapter = CHRONICLE_CHAPTERS.find(c => c.level === lvl);
+        if (chapter) {
+          this._openChronicleModal(chapter);
+        }
+      });
+    });
+
+    // Mining History Modal Close Buttons
+    const cModalCloseBtn = this.shadowRoot.querySelector('#cmodal-close-btn');
+    const cModalDoneBtn = this.shadowRoot.querySelector('#cmodal-done-btn');
+    const cModalBackdrop = this.shadowRoot.querySelector('#chronicle-modal');
+    if (cModalCloseBtn) cModalCloseBtn.addEventListener('click', () => this._closeModals());
+    if (cModalDoneBtn) cModalDoneBtn.addEventListener('click', () => this._closeModals());
+    if (cModalBackdrop) {
+      cModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === cModalBackdrop) this._closeModals();
+      });
+    }
 
     // Live Stratum Particle Pipeline Controls
     const pipelineCollapseBtn = this.shadowRoot.querySelector('#pipeline-collapse-toggle');

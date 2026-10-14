@@ -14,6 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
 
 ### Added
+- **Mining History & Decentralized Chronicles (Level 10-500 Unlocks)** ([#27](https://github.com/everyday3d/home-miner-studio/issues/27)):
+  - Built an educational lore system featuring 50 unlockable chapters unlocked every 10 levels (Level 10, 20, 30 ... 500) within the `Trophies` workspace.
+  - Authored concise, captivating historical narratives spanning:
+    - *Origins & Cypherpunk Pioneers*: 1993 Proof of Work Genesis (Dwork & Naor), 1997 Hashcash (Adam Back), 1998 B-Money & Bit Gold (Wei Dai & Nick Szabo), 2004 RPOW (Hal Finney).
+    - *Genesis & First Breakthroughs*: 2008 Satoshi Whitepaper, 2009 Genesis Block & Block #1, 2010 Pizza Day & GPU mining, 2011 Slush Pool & Stratum protocol.
+    - *Hardware & Semiconductor Epochs*: 2012 FPGA epoch & First Halving, 2013 Canaan Avalon 1 (first ASIC), 2014 Bitmain 28nm race, 2016 Antminer S9, 2020 MicroBT Whatsminer, 2023 Bitaxe open-source hardware, 2024 Canaan Avalon Nano 3/3s home heaters.
+    - *Demystified Core Concepts*: Plain-English explanations demystifying nonces, target difficulty & 2,016-block retargets, why shares aren't blocks, double-SHA-256d mechanics, Merkle roots, ExtraNonce dimensions, solo mining odds, stale vs rejected shares, 51% attack economic game theory, PPLNS vs PPS+ payouts, silicon lottery binning, and electromigration prevention.
+    - *Thermodynamics, Energy & Future*: Home space-heating thermal scavenging, demand-response grid balancing, oilfield flare gas harvesting, geothermal volcano mining, rooftop solar surplus dynamic throttling, and the 2140 zero-subsidy fee market transition.
+  - Implemented interactive Chronicle Reader modal (`#chronicle-modal`) with clean typography, unlock level badge, era tag, full narrative, and dedicated "Key Demystification for Home Miners" summary takeaway callout.
+  - Added filter pills (`All Chapters`, `🔓 Unlocked`, `🔒 Locked`) with live unlock counters.
+
+### Changed
+- **RPG XP Gain Rebalancing & Sustainable Progression Curve** ([#27](https://github.com/everyday3d/home-miner-studio/issues/27)):
+  - Significantly reduced XP gain velocity across all mining activities to establish a realistic, long-term progression path up to Level 500.
+  - Rebalanced share reward from 15 XP per share down to 1 XP per verified accepted share (15x reduction).
+  - Replaced linear difficulty divisor (`diff / 50000`) with a log-scaled bonus (`Math.floor(Math.log10(diff) * 8)`), rewarding rare high-difficulty share submissions (20-80 XP) without allowing a single lucky lottery share to instantly skip hundreds of levels.
+  - Rebalanced level progression formula to `Math.floor(25 * Math.pow(lvl - 1, 1.5))`, aligning Level 10 unlock with ~675 shares, Level 100 with ~24,600 shares, and Level 500 with ~278,600 shares.
+  - Updated Hero Banner telemetry chips and individual workstation cards to reflect rebalanced XP formulas.
 - **Collapsible Live Stratum Particle Pipeline & Visual Block Assembly Module** ([#26](https://github.com/everyday3d/home-miner-studio/issues/26)):
   - Built real-time 4-stage visual pipeline (`.pipeline-card`) rendering the continuous flow of cryptographic operations:
     1. **Stratum Ingress**: Live pool host/port socket connection indicator, live Job ID tracker, and pulsing blue conduit transmission bar.
