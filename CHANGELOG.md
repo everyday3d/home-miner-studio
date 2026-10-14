@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Built pure in-browser celebration system with zero CDN dependencies: HTML5 canvas particle burst physics and Web Audio API synthesized 4-note victory fanfare chime (`🎉 Test Win Celebration`).
 
 ### Fixed
+- **Workspace Tab Bar Horizontal Overflow & Audio Test Playback** ([#21](https://github.com/everyday3d/home-miner-studio/issues/21)):
+  - Added `overflow-x: auto`, `scrollbar-width: none`, and `flex-shrink: 0` to `.workspace-tab-bar` and `.tab-pill` so the 5th tab (`🌐 Overview`) never clips off-screen or overflows the card boundary on narrower Lovelace dashboards.
+  - Streamlined tab titles and pill badges (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Overview`) reducing overall bar width footprint from ~990px to ~650px.
+  - Resolved `[🔊 Test Share Audio]` button silence by adding unconditional `force` playback flag, eliminating synchronous sound mode reset race conditions.
+  - Enhanced synthesized Web Audio acoustic waveforms: extended Geiger click to 50ms with dual-oscillator frequency drop (1400Hz -> 150Hz) and upgraded milestone chime to 450ms crystal harmonic chord (E6/B6) for crisp audibility across all device speakers.
+  - Added real-time visual tactile feedback on the audio test button (`🔊 Playing Audio...`).
 - **Dashboard Screen Flashing on State Telemetry Updates** ([#19](https://github.com/everyday3d/home-miner-studio/issues/19)):
   - Removed unconditional `tabFadeIn` (`from { opacity: 0 }`) CSS keyframe animation from `.tab-pane` to eliminate whole-screen flashing whenever DOM re-renders.
   - Implemented entity signature change-detection helper (`_computeMinerStateSignature`) inside `set hass(hass)` that filters out non-mining entities (3D printers, lights, weather, media players, automations) and skips re-rendering when mining/market states are identical.

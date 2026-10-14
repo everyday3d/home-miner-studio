@@ -2140,8 +2140,8 @@ class HomeMinerFleetCard extends HTMLElement {
         .workspace-tab-bar {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 6px;
+          gap: 6px;
+          padding: 5px;
           background: rgba(15, 23, 42, 0.65);
           backdrop-filter: blur(24px) saturate(160%);
           -webkit-backdrop-filter: blur(24px) saturate(160%);
@@ -2152,17 +2152,25 @@ class HomeMinerFleetCard extends HTMLElement {
           position: sticky;
           top: 10px;
           z-index: 50;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .workspace-tab-bar::-webkit-scrollbar {
+          display: none;
         }
 
         .tab-pill {
-          flex: 1;
+          flex: 1 1 0;
+          min-width: max-content;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          padding: 10px 14px;
+          gap: 6px;
+          padding: 8px 12px;
           border-radius: 10px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
           color: #94a3b8;
@@ -2173,6 +2181,7 @@ class HomeMinerFleetCard extends HTMLElement {
           user-select: none;
           text-align: center;
           white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .tab-pill:hover {
@@ -2190,7 +2199,7 @@ class HomeMinerFleetCard extends HTMLElement {
         .tab-pill .tab-badge {
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
-          padding: 2px 7px;
+          padding: 2px 6px;
           border-radius: 999px;
           background: rgba(56, 189, 248, 0.2);
           color: #38bdf8;
@@ -3788,27 +3797,27 @@ class HomeMinerFleetCard extends HTMLElement {
       <div class="workspace-tab-bar">
         <div class="tab-pill ${activeTab === 'hardware' ? 'active' : ''}" data-tab="hardware">
           <span>🖥️</span>
-          <span>Fleet & Hardware</span>
+          <span>Fleet</span>
           <span class="tab-badge">${displayedMiners.length}</span>
         </div>
         <div class="tab-pill ${activeTab === 'yield' ? 'active' : ''}" data-tab="yield">
           <span>⚡</span>
-          <span>Yield Matrix & Stratum</span>
-          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">TOP: ${topYieldCoin} 👑</span>
+          <span>Yield Matrix</span>
+          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">${topYieldCoin} 👑</span>
         </div>
         <div class="tab-pill ${activeTab === 'radar' ? 'active' : ''}" data-tab="radar">
           <span>🎯</span>
-          <span>Solo Block Radar</span>
+          <span>Solo Radar</span>
           <span class="tab-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399;">${radarOddsBadge}</span>
         </div>
         <div class="tab-pill ${activeTab === 'market' ? 'active' : ''}" data-tab="market">
           <span>📈</span>
-          <span>Market Intelligence</span>
+          <span>Market</span>
           <span class="tab-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">${currentStats.change_pct >= 0 ? '+' : ''}${currentStats.change_pct.toFixed(1)}%</span>
         </div>
         <div class="tab-pill ${activeTab === 'all' ? 'active' : ''}" data-tab="all">
           <span>🌐</span>
-          <span>Overview (All)</span>
+          <span>Overview</span>
         </div>
       </div>
 
@@ -4532,61 +4541,70 @@ class HomeMinerFleetCard extends HTMLElement {
     return this._audioCtx;
   }
 
-  _playGeigerClick(volumeMultiplier = 1.0) {
-    if (this._soundMode === 'off') return;
+  _playGeigerClick(volumeMultiplier = 1.0, force = false) {
+    if (!force && this._soundMode === 'off') return;
     try {
       const ctx = this._getAudioContext();
       if (!ctx) return;
-      const vol = (this._soundVolume || 0.35) * volumeMultiplier;
+      const vol = Math.min(1.0, (this._soundVolume || 0.4) * volumeMultiplier * 1.5);
+      
+      // Dual oscillator design: crisp metallic snap + mechanical tick
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
 
-      // Bandpass click for authentic high-frequency Geiger/relay tick
+      // Bandpass centered at 1900Hz for tactile mechanical tick
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(2200 + (Math.random() - 0.5) * 400, ctx.currentTime);
-      filter.Q.setValueAtTime(4.5, ctx.currentTime);
+      filter.frequency.setValueAtTime(1900 + (Math.random() - 0.5) * 300, ctx.currentTime);
+      filter.Q.setValueAtTime(2.5, ctx.currentTime);
 
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(800 + Math.random() * 600, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.012);
+      osc.frequency.setValueAtTime(1400, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.045);
 
-      gain.gain.setValueAtTime(vol * 0.45, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.015);
+      gain.gain.setValueAtTime(vol * 0.8, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
 
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.018);
+      osc.stop(ctx.currentTime + 0.055);
     } catch (e) {
-      // Audio playback caught
+      console.warn('[Home Miner Studio] Geiger audio error:', e);
     }
   }
 
-  _playShareChime(diffMultiplier = 100) {
-    if (this._soundMode !== 'chimes') return;
+  _playShareChime(diffMultiplier = 100, force = false) {
+    if (!force && this._soundMode !== 'chimes') return;
     try {
       const ctx = this._getAudioContext();
       if (!ctx) return;
-      const vol = (this._soundVolume || 0.35) * 0.6;
-      // High harmonic crystal bells (C6 / E6 / G6 chord)
-      const baseFreq = diffMultiplier >= 1000 ? 1174.66 : (diffMultiplier >= 100 ? 880 : 659.25);
-      [baseFreq, baseFreq * 1.5].forEach((f, idx) => {
+      const vol = Math.min(1.0, (this._soundVolume || 0.4) * 1.2);
+      // High harmonic crystal bells (E6 1318.51Hz + B6 1975.53Hz + E7 2637Hz)
+      const chord = diffMultiplier >= 1000 
+        ? [1318.51, 1975.53, 2637.02] 
+        : [880.00, 1318.51, 1760.00];
+
+      chord.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(f, ctx.currentTime);
-        gain.gain.setValueAtTime(vol * (idx === 0 ? 0.35 : 0.2), ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+        const noteVol = vol * (0.35 / (idx + 1));
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(noteVol, ctx.currentTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.42);
+
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
+        osc.stop(ctx.currentTime + 0.45);
       });
     } catch (e) {
-      // Audio playback caught
+      console.warn('[Home Miner Studio] Chime audio error:', e);
     }
   }
 
@@ -4738,14 +4756,22 @@ class HomeMinerFleetCard extends HTMLElement {
     const testAudioBtn = this.shadowRoot.querySelector('#test-audio-btn');
     if (testAudioBtn) {
       testAudioBtn.addEventListener('click', () => {
-        const origMode = this._soundMode;
-        this._soundMode = 'chimes';
-        // Play rapid 3-click geiger burst then milestone chime
-        this._playGeigerClick(1.0);
-        setTimeout(() => this._playGeigerClick(1.1), 50);
-        setTimeout(() => this._playGeigerClick(1.2), 100);
-        setTimeout(() => this._playShareChime(1000), 160);
-        this._soundMode = origMode;
+        const origText = testAudioBtn.innerHTML;
+        testAudioBtn.innerHTML = '🔊 Playing Audio...';
+        testAudioBtn.style.color = '#34d399';
+        testAudioBtn.style.borderColor = '#34d399';
+
+        // Play 3 rapid geiger clicks followed by a milestone chime (forced playback)
+        this._playGeigerClick(1.2, true);
+        setTimeout(() => this._playGeigerClick(1.3, true), 80);
+        setTimeout(() => this._playGeigerClick(1.4, true), 160);
+        setTimeout(() => this._playShareChime(1000, true), 240);
+
+        setTimeout(() => {
+          testAudioBtn.innerHTML = origText;
+          testAudioBtn.style.color = '#38bdf8';
+          testAudioBtn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+        }, 900);
       });
     }
 
@@ -4755,10 +4781,10 @@ class HomeMinerFleetCard extends HTMLElement {
       soundBtn.addEventListener('click', () => {
         if (this._soundMode === 'off') {
           this._soundMode = 'geiger';
-          this._playGeigerClick(1.2);
+          this._playGeigerClick(1.2, true);
         } else if (this._soundMode === 'geiger') {
           this._soundMode = 'chimes';
-          this._playShareChime(100);
+          this._playShareChime(100, true);
         } else {
           this._soundMode = 'off';
         }
