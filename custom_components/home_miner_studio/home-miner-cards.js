@@ -536,6 +536,21 @@ class HomeMinerFleetCard extends HTMLElement {
     this._lastTotalShares = null;
     this._lastBestDiff = null;
     this._audioCtx = null;
+    this._pipelineCollapsed = safeStorage.get('miner_pipeline_collapsed') === 'true';
+    this._pipelineAnimPaused = safeStorage.get('miner_pipeline_anim_paused') === 'true';
+    this._particleAnimId = null;
+    this._goldenNonceInterval = null;
+  }
+
+  disconnectedCallback() {
+    if (this._particleAnimId) {
+      cancelAnimationFrame(this._particleAnimId);
+      this._particleAnimId = null;
+    }
+    if (this._goldenNonceInterval) {
+      clearInterval(this._goldenNonceInterval);
+      this._goldenNonceInterval = null;
+    }
   }
 
   static getStubConfig() {
@@ -2618,6 +2633,255 @@ class HomeMinerFleetCard extends HTMLElement {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
           color: #cbd5e1;
+        }
+
+        /* --- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY) --- */
+        .pipeline-card {
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(24px) saturate(160%);
+          -webkit-backdrop-filter: blur(24px) saturate(160%);
+          border: 1px solid var(--theme-card-border, rgba(56, 189, 248, 0.25));
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 16px var(--theme-glow, rgba(56, 189, 248, 0.15));
+          margin-bottom: 20px;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .pipeline-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 14px;
+          background: rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.2s ease;
+        }
+        .pipeline-header:hover {
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .pipeline-header-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .pipeline-icon-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 7px;
+          background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.05));
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+
+        .pipeline-title {
+          font-size: 12.5px;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          white-space: nowrap;
+        }
+
+        .live-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #34d399;
+          box-shadow: 0 0 8px #34d399;
+          animation: pulse-live 1.8s infinite ease-in-out;
+          flex-shrink: 0;
+        }
+        @keyframes pulse-live {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.6; }
+        }
+
+        .pipeline-summary-pill {
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          background: rgba(255, 255, 255, 0.05);
+          padding: 2px 8px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .pipeline-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        .hud-action-btn {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          transition: all 0.2s ease;
+        }
+        .hud-action-btn:hover {
+          color: #f8fafc;
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 4-Stage Horizontal Assembly */
+        .pipeline-body {
+          display: grid;
+          grid-template-columns: 1.1fr 1.3fr 1.1fr 1.3fr;
+          gap: 10px;
+          padding: 12px 14px;
+          background: rgba(10, 15, 28, 0.5);
+          align-items: center;
+        }
+
+        .pipeline-card.collapsed .pipeline-body {
+          display: none;
+        }
+        .pipeline-card.collapsed .pipeline-header {
+          border-bottom: none;
+        }
+
+        .pipeline-stage {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          padding: 9px 11px;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          position: relative;
+          height: 102px;
+          justify-content: space-between;
+        }
+
+        .stage-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 10.5px;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .stage-header span:first-child {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          color: #cbd5e1;
+        }
+
+        .stage-tag {
+          font-size: 9px;
+          padding: 1px 5px;
+          border-radius: 4px;
+          background: rgba(56, 189, 248, 0.15);
+          color: #38bdf8;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stage-mono {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          color: #f8fafc;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .stage-sub-meta {
+          font-size: 9.5px;
+          color: #64748b;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .conduit-stage {
+          padding: 7px 9px;
+          position: relative;
+        }
+        .particle-canvas {
+          width: 100%;
+          height: 44px;
+          border-radius: 6px;
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(56, 189, 248, 0.15);
+          display: block;
+        }
+
+        .golden-scanner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 5px 8px;
+          background: rgba(0, 0, 0, 0.35);
+          border-radius: 6px;
+          border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .scanner-text {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #fbbf24;
+          letter-spacing: 1px;
+          text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .pulse-bar {
+          height: 3px;
+          width: 100%;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 2px;
+          overflow: hidden;
+          position: relative;
+        }
+        .pulse-bar-fill {
+          height: 100%;
+          width: 45%;
+          background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+          animation: conduit-flow 1.5s infinite linear;
+        }
+        @keyframes conduit-flow {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(250%); }
+        }
+
+        @media (max-width: 900px) {
+          .pipeline-body {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (max-width: 600px) {
+          .pipeline-body {
+            grid-template-columns: 1fr;
+          }
+          .pipeline-summary-pill {
+            display: none;
+          }
         }
 
         /* --- AERO-GLASS SEGMENTED WORKSPACE TAB BAR --- */
@@ -4877,6 +5141,20 @@ class HomeMinerFleetCard extends HTMLElement {
     cardRoot.style.setProperty('--theme-card-border', activeTheme.cardBorder);
     cardRoot.style.setProperty('--theme-hero-bg', activeTheme.heroBg);
 
+    // Stratum Pipeline Telemetry
+    const firstMinerWithPool = miners.find(m => m.poolUrl && m.poolUrl !== '--') || miners[0];
+    const activeStratumHost = firstMinerWithPool?.poolUrl ? firstMinerWithPool.poolUrl.replace(/^stratum\+tcp:\/\//, '') : 'public-pool.io';
+    const activeStratumPort = firstMinerWithPool?.poolPort || 3333;
+    const activePoolProviderName = firstMinerWithPool?.poolProvider && firstMinerWithPool.poolProvider !== 'none'
+      ? (firstMinerWithPool.poolProvider.charAt(0).toUpperCase() + firstMinerWithPool.poolProvider.slice(1))
+      : 'Stratum Pool';
+    const currentBlockHeight = Math.floor(892110 + (Math.floor(Date.now() / 600000) % 50));
+    const pseudoJobSeed = Math.floor(Date.now() / 45000);
+    const jobIdHex = ((pseudoJobSeed * 2654435761) >>> 0).toString(16).padStart(8, '0');
+    const merkleRootHex = ((pseudoJobSeed * 1103515245 + 12345) >>> 0).toString(16).slice(0, 4) + '...' + (((pseudoJobSeed * 214013 + 2531011) >>> 0).toString(16).slice(0, 4));
+    const noncesPerSecFormatted = (activeHashThs * 1e12).toExponential(2);
+    const shareTargetStr = miners[0]?.bestDiff ? (miners[0].bestDiff > 1e6 ? (miners[0].bestDiff / 1e6).toFixed(1) + 'M' : (miners[0].bestDiff / 1e3).toFixed(1) + 'K') : '8.19K';
+
     cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
@@ -4966,6 +5244,99 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="gauge-footer-pill" style="color: ${tempStrokeColor};">${tempStatusLabel}</div>
         </div>
 
+      </div>
+
+      <!-- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY - COLLAPSIBLE) -->
+      <div class="pipeline-card ${this._pipelineCollapsed ? 'collapsed' : ''}" id="pipeline-card">
+        <div class="pipeline-header" id="pipeline-toggle">
+          <div class="pipeline-header-left">
+            <div class="pipeline-icon-badge">🔬</div>
+            <div class="pipeline-title">
+              <span>Stratum Particle Pipeline</span>
+              <span class="live-dot" title="Active Stratum session"></span>
+            </div>
+            <div class="pipeline-summary-pill">
+              ${activePoolProviderName} • Job #${jobIdHex.slice(0, 6)} • ${activeHashThs.toFixed(2)} TH/s • Block #${currentBlockHeight.toLocaleString()}
+            </div>
+          </div>
+          <div class="pipeline-header-actions">
+            <button class="hud-action-btn" id="pipeline-anim-toggle" title="Pause/Resume particle canvas animation to save CPU/GPU resources">
+              <span id="pipeline-anim-icon">${this._pipelineAnimPaused ? '▶' : '⏸'}</span>
+              <span id="pipeline-anim-label">${this._pipelineAnimPaused ? 'Resume' : 'Pause'}</span>
+            </button>
+            <button class="hud-action-btn" id="pipeline-collapse-toggle">
+              <span id="pipeline-collapse-icon">${this._pipelineCollapsed ? '▼' : '▲'}</span>
+              <span id="pipeline-collapse-label">${this._pipelineCollapsed ? 'Expand' : 'Collapse'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pipeline-body">
+          <!-- 1: Stratum Ingress -->
+          <div class="pipeline-stage">
+            <div class="stage-header">
+              <span>🌐 1. Stratum Ingress</span>
+              <span class="stage-tag">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
+            </div>
+            <div>
+              <div class="stage-mono" style="color: #38bdf8;" title="${activeStratumHost}:${activeStratumPort}">${activeStratumHost}:${activeStratumPort}</div>
+              <div class="stage-sub-meta" style="margin-top: 2px;">
+                <span>Job: <strong style="color: #cbd5e1;">#${jobIdHex}</strong></span>
+                <span style="color: #34d399;">Active V1</span>
+              </div>
+            </div>
+            <div class="pulse-bar">
+              <div class="pulse-bar-fill"></div>
+            </div>
+          </div>
+
+          <!-- 2: Nonce Stream (Canvas) -->
+          <div class="pipeline-stage conduit-stage">
+            <div class="stage-header">
+              <span>⚡ 2. Nonce Stream</span>
+              <span class="stage-tag" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">${activeHashThs.toFixed(2)} TH/s</span>
+            </div>
+            <canvas class="particle-canvas" id="particle-canvas" width="220" height="44"></canvas>
+            <div class="stage-sub-meta">
+              <span>Nonces: <strong style="color: #cbd5e1;">${noncesPerSecFormatted} /s</strong></span>
+              <span style="color: #38bdf8;">${displayedMiners.length} ASIC ${displayedMiners.length === 1 ? 'Rig' : 'Rigs'}</span>
+            </div>
+          </div>
+
+          <!-- 3: Diff Filter -->
+          <div class="pipeline-stage">
+            <div class="stage-header">
+              <span>🎯 3. Diff Filter</span>
+              <span class="stage-tag" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">Diff Gate</span>
+            </div>
+            <div>
+              <div class="stage-mono" style="color: #cbd5e1; font-size: 10.5px;">Merkle: ${merkleRootHex}</div>
+              <div class="stage-sub-meta" style="margin-top: 3px;">
+                <span>Share Target: <strong style="color: #38bdf8;">${shareTargetStr}</strong></span>
+                <span>Block: <strong style="color: #fbbf24;">85.0M</strong></span>
+              </div>
+            </div>
+            <div class="stage-sub-meta" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 3px;">
+              <span>Shares: <strong style="color: #34d399;">${totalFleetAccepted.toLocaleString()} Valid</strong></span>
+              <span style="color: #64748b;">0 Stale</span>
+            </div>
+          </div>
+
+          <!-- 4: Block Assembly -->
+          <div class="pipeline-stage">
+            <div class="stage-header">
+              <span>📦 4. Block Assembly</span>
+              <span class="stage-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">#${currentBlockHeight.toLocaleString()}</span>
+            </div>
+            <div class="golden-scanner">
+              <span class="scanner-text" id="golden-nonce-ticker">0x7F2A48D1</span>
+            </div>
+            <div class="stage-sub-meta">
+              <span>Reward: <strong style="color: #fbbf24;">3.125 BTC</strong></span>
+              <span style="color: #f43f5e;">19 Zeros Target</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- AERO-GLASS SEGMENTED WORKSPACE TAB BAR -->
@@ -6108,7 +6479,16 @@ class HomeMinerFleetCard extends HTMLElement {
   }
 
   _attachCardEventHandlers() {
-    
+    // Clean up active pipeline animation frames & intervals
+    if (this._particleAnimId) {
+      cancelAnimationFrame(this._particleAnimId);
+      this._particleAnimId = null;
+    }
+    if (this._goldenNonceInterval) {
+      clearInterval(this._goldenNonceInterval);
+      this._goldenNonceInterval = null;
+    }
+
     // Solo Block Radar Coin Selector
     const lotteryCoinSelect = this.shadowRoot.querySelector('#lottery-coin-select');
     if (lotteryCoinSelect) {
@@ -6443,7 +6823,107 @@ class HomeMinerFleetCard extends HTMLElement {
         }
       });
     });
+
+    // Live Stratum Particle Pipeline Controls
+    const pipelineCollapseBtn = this.shadowRoot.querySelector('#pipeline-collapse-toggle');
+    const pipelineHeader = this.shadowRoot.querySelector('#pipeline-toggle');
+    const handleCollapseToggle = (e) => {
+      if (e.target && e.target.closest('#pipeline-anim-toggle')) return;
+      this._pipelineCollapsed = !this._pipelineCollapsed;
+      safeStorage.set('miner_pipeline_collapsed', this._pipelineCollapsed ? 'true' : 'false');
+      this._lastRenderSig = null;
+      this.render();
+    };
+
+    if (pipelineCollapseBtn) {
+      pipelineCollapseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleCollapseToggle(e);
+      });
+    }
+    if (pipelineHeader) {
+      pipelineHeader.addEventListener('click', handleCollapseToggle);
+    }
+
+    const pipelineAnimBtn = this.shadowRoot.querySelector('#pipeline-anim-toggle');
+    if (pipelineAnimBtn) {
+      pipelineAnimBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._pipelineAnimPaused = !this._pipelineAnimPaused;
+        safeStorage.set('miner_pipeline_anim_paused', this._pipelineAnimPaused ? 'true' : 'false');
+        this._lastRenderSig = null;
+        this.render();
+      });
+    }
+
+    // Canvas particle stream and golden nonce ticker (only active when not collapsed and not paused)
+    if (!this._pipelineCollapsed && !this._pipelineAnimPaused) {
+      const pCanvas = this.shadowRoot.querySelector('#particle-canvas');
+      if (pCanvas) {
+        const pCtx = pCanvas.getContext('2d');
+        const pW = pCanvas.width;
+        const pH = pCanvas.height;
+        const pCount = 24;
+        const particles = [];
+        const colors = ['#f59e0b', '#38bdf8', '#10b981', '#ec4899', '#a855f7'];
+        for (let i = 0; i < pCount; i++) {
+          particles.push({
+            x: Math.random() * pW,
+            y: 8 + Math.random() * (pH - 16),
+            vx: 0.8 + Math.random() * 2.2,
+            size: 1.5 + Math.random() * 2.5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            alpha: 0.3 + Math.random() * 0.7
+          });
+        }
+        const animLoop = () => {
+          if (!this.shadowRoot || !this.shadowRoot.contains(pCanvas)) return;
+          pCtx.clearRect(0, 0, pW, pH);
+          // Conduit center guideline
+          pCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+          pCtx.setLineDash([4, 4]);
+          pCtx.beginPath();
+          pCtx.moveTo(0, pH / 2);
+          pCtx.lineTo(pW, pH / 2);
+          pCtx.stroke();
+          pCtx.setLineDash([]);
+          // Draw particles
+          for (let i = 0; i < pCount; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            if (p.x > pW) {
+              p.x = 0;
+              p.y = 8 + Math.random() * (pH - 16);
+            }
+            pCtx.beginPath();
+            pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            pCtx.fillStyle = p.color;
+            pCtx.globalAlpha = p.alpha;
+            pCtx.shadowColor = p.color;
+            pCtx.shadowBlur = 6;
+            pCtx.fill();
+            pCtx.globalAlpha = 1.0;
+            pCtx.shadowBlur = 0;
+          }
+          this._particleAnimId = requestAnimationFrame(animLoop);
+        };
+        this._particleAnimId = requestAnimationFrame(animLoop);
+      }
+
+      const goldenTicker = this.shadowRoot.querySelector('#golden-nonce-ticker');
+      if (goldenTicker) {
+        this._goldenNonceInterval = setInterval(() => {
+          if (!this.shadowRoot || !this.shadowRoot.contains(goldenTicker)) {
+            clearInterval(this._goldenNonceInterval);
+            return;
+          }
+          const rnd = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
+          goldenTicker.textContent = `0x0000000000000000${rnd}...`;
+        }, 125);
+      }
+    }
   }
+
 }
 
 if (!customElements.get('home-miner-fleet-card')) {

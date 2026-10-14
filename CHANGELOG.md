@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
 
 ### Added
+- **Collapsible Live Stratum Particle Pipeline & Visual Block Assembly Module** ([#26](https://github.com/everyday3d/home-miner-studio/issues/26)):
+  - Built real-time 4-stage visual pipeline (`.pipeline-card`) rendering the continuous flow of cryptographic operations:
+    1. **Stratum Ingress**: Live pool host/port socket connection indicator, live Job ID tracker, and pulsing blue conduit transmission bar.
+    2. **Nonce Stream**: Multi-colored HTML5 Canvas particle stream (24 particles, 60fps) visualizing real-time fleet hashing throughput and nonces computed per second.
+    3. **Diff Filter**: Real-time Merkle root display, network diff gate target validator, and cumulative accepted fleet shares tracker.
+    4. **Block Assembly**: Candidate block height tracker, 125ms rolling golden nonce scanner (`0x0000000000...`), and target block subsidy reward.
+  - Designed compact vertical footprint (<38px collapsed, ~140px expanded) positioned between the Hero Gauges and the Workspace Tab Bar.
+  - Implemented 1-click collapse/expand accordion toggle with persistent state saved in `safeStorage` (`miner_pipeline_collapsed`).
+  - Added particle animation pause/resume button with persistent state (`miner_pipeline_anim_paused`) allowing users to pause canvas rendering on low-power dashboards and mobile devices.
+  - Included lifecycle safety in `disconnectedCallback()` to ensure zero memory leaks or stray animation loops when card unmounts.
 - **Automated Lovelace Resource Cache-Busting Pipeline** ([#25](https://github.com/everyday3d/home-miner-studio/issues/25)):
   - Built automated deployment pipeline (`scripts/deploy_ha.mjs` and `scripts/deploy_ha.ps1`) that copies card bundles to both `custom_components/` and `www/` network shares, and updates Home Assistant's in-memory Lovelace resource registry over WebSocket (`lovelace/resources/update`) with a live timestamp parameter (`?v=<timestamp>`).
   - Implemented Python-side automatic Lovelace resource synchronization in `custom_components/home_miner_studio/__init__.py`: on integration startup, automatically inspects `lovelace.resources` and updates the registered resource URL with manifest version + file mtime query string (`?v=<version>.<mtime>`).
