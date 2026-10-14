@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
 
 ### Added
+- **Comprehensive Mobile UX & Small-Screen Responsiveness Optimization Pass** ([#29](https://github.com/everyday3d/home-miner-studio/issues/29)):
+  - Optimized dashboard layout across narrow viewports (360px – 640px) ensuring fluid responsive collapse, touch-friendly UI, and zero horizontal page scrolling on smartphones and mobile companion apps.
+  - Implemented `@media (max-width: 640px)` stylesheet adaptations in `home-miner-cards.js`:
+    - Compact card padding (`12px 8px` on `:host`, `14px 12px` on `.glass-card`) maximizing usable horizontal space.
+    - Stacked `.top-bar` header with an adaptive 2x2 grid for `.top-actions` featuring 36px touch-target action buttons.
+    - Single-column stacked `.hero-orbit-grid` with centered 105px SVG radial ring gauges.
+    - Responsive `.pipeline-card` with hidden non-critical summary pills and scaled Stratum stage tiles.
+    - Sticky-friendly `.workspace-tab-bar` with momentum flick-scrolling (`-webkit-overflow-scrolling: touch`) and icon-first compact tab pills.
+    - Full-width single-column `.workstations-grid` with 2-column action buttons (`Edit`, `Delete`, `Restart`, `Reboot`), 2-column telemetry tiles, and 2-column tuning presets.
+    - Scaled 96px Level Orb and wrapping telemetry chips in `.rpg-hero-banner`.
+    - Single-column collapse for `.trophy-grid`, `.chronicles-grid`, and `.theme-cards-grid` with swipeable horizontal filter pill bars.
+    - Momentum touch-scroll wrapper (`.yield-table-wrap`) for the multi-coin yield matrix with compact cell padding.
+    - Viewport-clamped `.modal-box` (`max-height: 90vh; overflow-y: auto;`) preventing dialog offscreen clipping on discovery and chronicle modals.
 - **Mining History & Decentralized Chronicles (Level 10-500 Unlocks)** ([#27](https://github.com/everyday3d/home-miner-studio/issues/27)):
   - Built an educational lore system featuring 50 unlockable chapters unlocked every 10 levels (Level 10, 20, 30 ... 500) within the `Trophies` workspace.
   - Authored concise, captivating historical narratives spanning:

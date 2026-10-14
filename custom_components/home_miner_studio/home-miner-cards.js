@@ -2995,6 +2995,9 @@ class HomeMinerFleetCard extends HTMLElement {
           border-radius: 18px;
           width: 100%;
           max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
           padding: 24px;
           box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.15);
           display: flex;
@@ -5036,6 +5039,405 @@ class HomeMinerFleetCard extends HTMLElement {
         #card-root[data-theme="celestial_diamond"] .cyan-glow {
           border-color: rgba(255, 255, 255, 0.4);
           box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 40px -6px rgba(255, 255, 255, 0.35), 0 0 20px rgba(56, 189, 248, 0.25);
+        }
+
+        /* ==========================================================================
+           COMPREHENSIVE MOBILE & SMALL-SCREEN RESPONSIVENESS OPTIMIZATION (<= 640px)
+           ========================================================================== */
+        @media (max-width: 640px) {
+          :host {
+            padding: 12px 8px !important;
+            border-radius: 14px !important;
+          }
+
+          .glass-card {
+            padding: 14px 12px !important;
+            border-radius: 14px !important;
+            margin-bottom: 12px !important;
+          }
+
+          /* Top Command Bar */
+          .top-bar {
+            padding: 12px 10px !important;
+            margin-bottom: 14px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+
+          .brand-cluster {
+            justify-content: flex-start !important;
+          }
+
+          .brand-title {
+            font-size: 16px !important;
+          }
+
+          .top-actions {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            width: 100% !important;
+          }
+
+          .top-actions .glass-btn {
+            justify-content: center !important;
+            text-align: center !important;
+            padding: 7px 6px !important;
+            font-size: 10px !important;
+            width: 100% !important;
+            min-height: 36px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+
+          /* 3 Hero Ring Gauges */
+          .hero-orbit-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .gauge-card {
+            padding: 14px 10px !important;
+          }
+
+          .gauge-wrapper {
+            width: 105px !important;
+            height: 105px !important;
+            margin: 6px 0 8px 0 !important;
+          }
+
+          .gauge-main-val {
+            font-size: 20px !important;
+          }
+
+          /* Stratum Particle Pipeline */
+          .pipeline-card {
+            border-radius: 12px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .pipeline-header {
+            padding: 8px 10px !important;
+          }
+
+          .pipeline-title {
+            font-size: 11px !important;
+          }
+
+          .pipeline-summary-pill {
+            display: none !important;
+          }
+
+          .pipeline-header-actions {
+            gap: 4px !important;
+          }
+
+          .pipeline-header-actions .hud-action-btn {
+            padding: 4px 6px !important;
+            font-size: 9.5px !important;
+          }
+
+          .pipeline-body {
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
+            padding: 8px !important;
+          }
+
+          .pipeline-stage {
+            height: auto !important;
+            min-height: 80px !important;
+            padding: 8px 10px !important;
+          }
+
+          .particle-canvas {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+
+          /* Segmented Tab Bar */
+          .workspace-tab-bar {
+            position: sticky !important;
+            top: 4px !important;
+            padding: 4px !important;
+            margin-bottom: 14px !important;
+            border-radius: 12px !important;
+            gap: 4px !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+
+          .tab-pill {
+            padding: 7px 8px !important;
+            font-size: 11px !important;
+            border-radius: 8px !important;
+            min-height: 36px !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+
+          .tab-pill .tab-badge {
+            display: none !important;
+          }
+
+          /* Hardware Workstations */
+          .workstations-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+
+          .pod-header-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .pod-name {
+            font-size: 15px !important;
+          }
+
+          .pod-header-row > div:last-child {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            width: 100% !important;
+          }
+
+          .pod-header-row > div:last-child .glass-btn {
+            justify-content: center !important;
+            text-align: center !important;
+            padding: 7px 6px !important;
+            font-size: 10.5px !important;
+            width: 100% !important;
+            min-height: 36px !important;
+          }
+
+          .telemetry-tile-row {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .tile-glass-box {
+            padding: 10px 10px !important;
+          }
+
+          .tile-num {
+            font-size: 17px !important;
+          }
+
+          .tactile-bay {
+            padding: 12px 10px !important;
+            border-radius: 12px !important;
+          }
+
+          .profile-pill-rack {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+          }
+
+          .pill-btn {
+            text-align: center !important;
+            padding: 7px 4px !important;
+            font-size: 10px !important;
+            width: 100% !important;
+            min-height: 34px !important;
+          }
+
+          /* Trophies & RPG Hero Banner */
+          .rpg-hero-banner {
+            padding: 16px 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 14px !important;
+          }
+
+          .level-orb-box {
+            width: 96px !important;
+            height: 96px !important;
+          }
+
+          .level-orb-num {
+            font-size: 24px !important;
+          }
+
+          .level-orb-sub {
+            font-size: 8px !important;
+          }
+
+          .rpg-rank-badge-row {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 6px !important;
+          }
+
+          .rpg-meta-chips {
+            flex-direction: column !important;
+            gap: 6px !important;
+            width: 100% !important;
+          }
+
+          .rpg-meta-chip {
+            width: 100% !important;
+            justify-content: center !important;
+            font-size: 10.5px !important;
+          }
+
+          .trophy-filter-bar {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 6px !important;
+          }
+
+          .trophy-filter-pill {
+            flex-shrink: 0 !important;
+          }
+
+          .trophy-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            margin-bottom: 16px !important;
+          }
+
+          .trophy-card {
+            padding: 14px 12px !important;
+          }
+
+          .roadmap-strip {
+            -webkit-overflow-scrolling: touch !important;
+          }
+
+          /* Mining History Chronicles */
+          .chronicles-console {
+            padding: 14px 10px !important;
+            margin-top: 14px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .chronicles-header-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .chronicle-filter-bar {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 6px !important;
+          }
+
+          .chronicle-filter-pill {
+            flex-shrink: 0 !important;
+          }
+
+          .chronicles-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            max-height: 400px !important;
+          }
+
+          .chronicle-card {
+            padding: 12px 10px !important;
+          }
+
+          /* Prestige Themes */
+          .theme-console {
+            padding: 14px 10px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .theme-header-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .theme-cards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+
+          /* Yield Matrix & Market Intelligence */
+          .yield-matrix-console {
+            padding: 14px 10px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .yield-header-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .yield-table-wrap {
+            -webkit-overflow-scrolling: touch !important;
+          }
+
+          .yield-table th, .yield-table td {
+            padding: 8px 8px !important;
+            font-size: 10.5px !important;
+          }
+
+          .market-intelligence-console {
+            padding: 14px 10px !important;
+          }
+
+          .market-console-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .market-stats-row {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+
+          .lottery-console {
+            padding: 14px 10px !important;
+          }
+
+          /* Modals Mobile Touch & Scroll Safety */
+          .modal-backdrop {
+            padding: 10px !important;
+            align-items: center !important;
+          }
+
+          .modal-box {
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 18px 14px !important;
+            border-radius: 16px !important;
+            gap: 10px !important;
+          }
+
+          .modal-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .modal-field.full {
+            grid-column: span 1 !important;
+          }
+
+          .modal-footer {
+            flex-direction: column-reverse !important;
+            gap: 8px !important;
+          }
+
+          .modal-footer .glass-btn {
+            width: 100% !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 9px 12px !important;
+          }
         }
       
 `;
