@@ -399,6 +399,106 @@ function getRpgBadges(stats) {
   ];
 }
 
+// --- PRESTIGE THEME ENGINE (Unlocked at Lvl 100 • 5 Milestone Aesthetic Themes) ---
+const PRESTIGE_THEMES = [
+  {
+    id: 'default',
+    name: 'Cyber Obsidian',
+    reqLevel: 0,
+    subtitle: 'Default • Classic Aero-Glass',
+    icon: '💎',
+    previewGradient: 'linear-gradient(135deg, #090d16 0%, #0f172a 50%, #0284c7 100%)',
+    accent: '#38bdf8',
+    accentSecondary: '#fbbf24',
+    accentGlow: 'rgba(56, 189, 248, 0.4)',
+    cardBg: 'rgba(15, 23, 42, 0.72)',
+    cardBorder: 'rgba(255, 255, 255, 0.12)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.10) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5))',
+    goldGlow: '0 0 35px -8px rgba(245, 158, 11, 0.22)'
+  },
+  {
+    id: 'solar_flare',
+    name: 'Solar Flare Gold',
+    reqLevel: 100,
+    subtitle: 'Level 100 • Volt Tamer Tier',
+    icon: '☀️',
+    previewGradient: 'linear-gradient(135deg, #451a03 0%, #b45309 40%, #fbbf24 100%)',
+    accent: '#fbbf24',
+    accentSecondary: '#f59e0b',
+    accentGlow: 'rgba(245, 158, 11, 0.5)',
+    cardBg: 'rgba(28, 20, 10, 0.75)',
+    cardBorder: 'rgba(245, 158, 11, 0.3)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(217, 119, 6, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(24, 17, 8, 0.85) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(120, 53, 15, 0.6))',
+    goldGlow: '0 0 40px -6px rgba(245, 158, 11, 0.45)'
+  },
+  {
+    id: 'thermal_magma',
+    name: 'Thermal Magma',
+    reqLevel: 200,
+    subtitle: 'Level 200 • Thermal Dominator Tier',
+    icon: '🔥',
+    previewGradient: 'linear-gradient(135deg, #4c0519 0%, #be123c 45%, #fb7185 100%)',
+    accent: '#f43f5e',
+    accentSecondary: '#fb7185',
+    accentGlow: 'rgba(244, 63, 94, 0.5)',
+    cardBg: 'rgba(30, 10, 18, 0.78)',
+    cardBorder: 'rgba(244, 63, 94, 0.32)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(26, 8, 16, 0.85) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(136, 19, 55, 0.6))',
+    goldGlow: '0 0 40px -6px rgba(244, 63, 94, 0.45)'
+  },
+  {
+    id: 'emerald_matrix',
+    name: 'Emerald Matrix',
+    reqLevel: 300,
+    subtitle: 'Level 300 • Crypto Colossus Tier',
+    icon: '❇️',
+    previewGradient: 'linear-gradient(135deg, #022c22 0%, #047857 45%, #34d399 100%)',
+    accent: '#10b981',
+    accentSecondary: '#34d399',
+    accentGlow: 'rgba(16, 185, 129, 0.5)',
+    cardBg: 'rgba(6, 28, 20, 0.78)',
+    cardBorder: 'rgba(16, 185, 129, 0.3)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(5, 150, 105, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(5, 24, 17, 0.85) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 78, 59, 0.6))',
+    goldGlow: '0 0 40px -6px rgba(16, 185, 129, 0.45)'
+  },
+  {
+    id: 'amethyst_nebula',
+    name: 'Amethyst Nebula',
+    reqLevel: 400,
+    subtitle: 'Level 400 • Consensus Sovereign Tier',
+    icon: '🔮',
+    previewGradient: 'linear-gradient(135deg, #2e1065 0%, #6d28d9 45%, #c084fc 100%)',
+    accent: '#a855f7',
+    accentSecondary: '#c084fc',
+    accentGlow: 'rgba(168, 85, 247, 0.5)',
+    cardBg: 'rgba(24, 10, 42, 0.78)',
+    cardBorder: 'rgba(168, 85, 247, 0.32)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(20, 8, 36, 0.85) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 7, 100, 0.6))',
+    goldGlow: '0 0 40px -6px rgba(168, 85, 247, 0.45)'
+  },
+  {
+    id: 'celestial_diamond',
+    name: 'Celestial Diamond',
+    reqLevel: 500,
+    subtitle: 'Level 500 • Satoshi Slayer (Apex Tier)',
+    icon: '👑',
+    previewGradient: 'linear-gradient(135deg, #38bdf8 0%, #ec4899 50%, #fbbf24 100%)',
+    accent: '#f8fafc',
+    accentSecondary: '#38bdf8',
+    accentGlow: 'rgba(255, 255, 255, 0.65)',
+    cardBg: 'rgba(18, 24, 38, 0.82)',
+    cardBorder: 'rgba(255, 255, 255, 0.4)',
+    heroBg: 'radial-gradient(at 0% 0%, rgba(236, 72, 153, 0.18) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.22) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.88) 0px, transparent 100%)',
+    pillGradient: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(56, 189, 248, 0.4))',
+    goldGlow: '0 0 50px -4px rgba(255, 255, 255, 0.5), 0 0 30px rgba(56, 189, 248, 0.4)'
+  }
+];
+
 class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
@@ -422,6 +522,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._currentMiners = [];
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
     this._trophyFilter = safeStorage.get('miner_trophy_filter') || 'all';
+    this._activeTheme = safeStorage.get('miner_active_theme') || 'default';
     this._lastRenderSig = null;
     this._soundMode = safeStorage.get('miner_sound_mode') || 'off'; // 'off' | 'geiger' | 'chimes'
     this._soundVolume = parseFloat(safeStorage.get('miner_sound_vol') || '0.35');
@@ -463,6 +564,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const parts = [
       this._activeTab || 'hardware',
       this._trophyFilter || 'all',
+      this._activeTheme || 'default',
       this._soundMode || 'off',
       this._selectedCoin || '',
       this._selectedLotteryCoin || '',
@@ -3638,6 +3740,252 @@ class HomeMinerFleetCard extends HTMLElement {
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
         }
+
+        /* --- PRESTIGE THEME ENGINE STYLES --- */
+        #card-root {
+          background: var(--theme-hero-bg, radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.10) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%));
+          border-radius: 20px;
+          position: relative;
+          transition: background 0.5s ease;
+        }
+
+        .theme-console {
+          padding: 20px 24px;
+          margin-bottom: 24px;
+        }
+        .theme-console.locked-engine {
+          background: rgba(15, 23, 42, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .theme-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .theme-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .theme-icon-box {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.35));
+          border: 1px solid rgba(245, 158, 11, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 22px;
+          box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+          flex-shrink: 0;
+        }
+        .theme-title {
+          font-size: 16px;
+          font-weight: 800;
+          color: #f8fafc;
+        }
+        .theme-subtitle {
+          font-size: 12px;
+          color: #94a3b8;
+          margin-top: 2px;
+        }
+        .theme-status-badge {
+          padding: 5px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .theme-status-badge.unlocked {
+          background: rgba(16, 185, 129, 0.2);
+          border: 1px solid #10b981;
+          color: #34d399;
+          box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+        }
+        .theme-status-badge.locked {
+          background: rgba(148, 163, 184, 0.1);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          color: #94a3b8;
+        }
+
+        .theme-teaser-body {
+          padding: 14px 18px;
+          border-radius: 12px;
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .theme-teaser-text {
+          font-size: 13px;
+          color: #cbd5e1;
+          line-height: 1.5;
+        }
+
+        .theme-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 16px;
+        }
+        .theme-option-card {
+          padding: 16px;
+          border-radius: 14px;
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          position: relative;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .theme-option-card:hover {
+          transform: translateY(-2px);
+        }
+        .theme-option-card.active {
+          border-color: #fbbf24;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.85));
+          box-shadow: 0 0 24px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        .theme-option-card.locked {
+          opacity: 0.62;
+          background: rgba(15, 23, 42, 0.4);
+        }
+
+        .theme-swatch-bar {
+          width: 100%;
+          height: 38px;
+          border-radius: 8px;
+          box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0,0,0,0.4);
+          position: relative;
+          overflow: hidden;
+        }
+        .theme-swatch-bar::after {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%; width: 50%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+          transform: skewX(-20deg);
+          animation: theme-shimmer 3.5s infinite;
+        }
+        @keyframes theme-shimmer {
+          0% { left: -100%; }
+          50%, 100% { left: 200%; }
+        }
+
+        .theme-card-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .theme-card-name {
+          font-size: 14px;
+          font-weight: 800;
+          color: #f8fafc;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .theme-card-tier {
+          font-size: 11px;
+          color: #94a3b8;
+          margin-top: 2px;
+        }
+
+        .theme-btn {
+          width: 100%;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          border: 1px solid transparent;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+        .theme-btn.active-btn {
+          background: rgba(245, 158, 11, 0.25);
+          border-color: #fbbf24;
+          color: #fde68a;
+          box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+        }
+        .theme-btn.apply-btn {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.15);
+          color: #f8fafc;
+        }
+        .theme-btn.apply-btn:hover {
+          background: rgba(56, 189, 248, 0.2);
+          border-color: #38bdf8;
+          color: #38bdf8;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+        .theme-btn.locked-btn {
+          background: rgba(255, 255, 255, 0.03);
+          border-color: rgba(255, 255, 255, 0.06);
+          color: #64748b;
+          cursor: not-allowed;
+        }
+
+        /* --- THEME SPECIFIC OVERRIDES --- */
+        #card-root[data-theme="solar_flare"] .tab-pill.active {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(120, 53, 15, 0.6));
+          border-color: #fbbf24;
+          box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+        }
+        #card-root[data-theme="solar_flare"] .cyan-glow {
+          border-color: rgba(245, 158, 11, 0.35);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(245, 158, 11, 0.25);
+        }
+
+        #card-root[data-theme="thermal_magma"] .tab-pill.active {
+          background: linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(136, 19, 55, 0.6));
+          border-color: #f43f5e;
+          box-shadow: 0 0 20px rgba(244, 63, 94, 0.45);
+        }
+        #card-root[data-theme="thermal_magma"] .cyan-glow {
+          border-color: rgba(244, 63, 94, 0.35);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(244, 63, 94, 0.25);
+        }
+
+        #card-root[data-theme="emerald_matrix"] .tab-pill.active {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 78, 59, 0.6));
+          border-color: #10b981;
+          box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
+        }
+        #card-root[data-theme="emerald_matrix"] .cyan-glow {
+          border-color: rgba(16, 185, 129, 0.35);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(16, 185, 129, 0.25);
+        }
+
+        #card-root[data-theme="amethyst_nebula"] .tab-pill.active {
+          background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 7, 100, 0.6));
+          border-color: #a855f7;
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.45);
+        }
+        #card-root[data-theme="amethyst_nebula"] .cyan-glow {
+          border-color: rgba(168, 85, 247, 0.35);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(168, 85, 247, 0.25);
+        }
+
+        #card-root[data-theme="celestial_diamond"] .tab-pill.active {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(56, 189, 248, 0.4));
+          border-color: #ffffff;
+          box-shadow: 0 0 25px rgba(255, 255, 255, 0.5), 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        #card-root[data-theme="celestial_diamond"] .cyan-glow {
+          border-color: rgba(255, 255, 255, 0.4);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 40px -6px rgba(255, 255, 255, 0.35), 0 0 20px rgba(56, 189, 248, 0.25);
+        }
       
 `;
   }
@@ -4491,8 +4839,22 @@ class HomeMinerFleetCard extends HTMLElement {
     const currentTrophyFilter = this._trophyFilter || 'all';
     const displayedBadges = currentTrophyFilter === 'all' ? rpgBadges : rpgBadges.filter(b => b.cat === currentTrophyFilter);
 
+    // Prestige Theme Resolution
+    const isThemeEngineUnlocked = fleetLevel >= 100;
+    const activeThemeId = isThemeEngineUnlocked ? (this._activeTheme || 'default') : 'default';
+    const activeTheme = PRESTIGE_THEMES.find(t => t.id === activeThemeId) || PRESTIGE_THEMES[0];
+
     const cardRoot = this.shadowRoot.querySelector('#card-root');
     if (!cardRoot) return;
+
+    cardRoot.setAttribute('data-theme', activeTheme.id);
+    cardRoot.style.setProperty('--theme-accent', activeTheme.accent);
+    cardRoot.style.setProperty('--theme-accent-sec', activeTheme.accentSecondary);
+    cardRoot.style.setProperty('--theme-glow', activeTheme.accentGlow);
+    cardRoot.style.setProperty('--theme-pill-gradient', activeTheme.pillGradient);
+    cardRoot.style.setProperty('--theme-card-border', activeTheme.cardBorder);
+    cardRoot.style.setProperty('--theme-hero-bg', activeTheme.heroBg);
+
     cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
@@ -4677,7 +5039,68 @@ class HomeMinerFleetCard extends HTMLElement {
                 <span>Trophy Cabinet: <b style="color: #34d399;">${unlockedBadgesCount} / ${rpgBadges.length} Badges Unlocked (${Math.round((unlockedBadgesCount / rpgBadges.length) * 100)}%)</b></span>
               </div>
             </div>
+        </div>
+
+        <!-- PRESTIGE THEME ENGINE CONSOLE -->
+        <div class="glass-card theme-console ${!isThemeEngineUnlocked ? 'locked-engine' : ''}">
+          <div class="theme-header-row">
+            <div class="theme-title-cluster">
+              <div class="theme-icon-box" style="${!isThemeEngineUnlocked ? 'filter: grayscale(1); opacity: 0.6;' : ''}">🎨</div>
+              <div>
+                <div class="theme-title">Prestige Theme Engine ${!isThemeEngineUnlocked ? '<span class="mono" style="font-size: 11px; color: #94a3b8; font-weight: 700;">(LOCKED)</span>' : ''}</div>
+                <div class="theme-subtitle">Unlock bespoke aesthetic glass finishes every 100 levels • Level Cap: 500</div>
+              </div>
+            </div>
+            <div class="theme-status-badge ${isThemeEngineUnlocked ? 'unlocked' : 'locked'}">
+              <span>${isThemeEngineUnlocked ? '✨' : '🔒'}</span>
+              <span>${isThemeEngineUnlocked ? `ENGINE UNLOCKED • Active: ${activeTheme.name}` : `LOCKED • Lvl ${fleetLevel} / 100 (${100 - fleetLevel} lvls left)`}</span>
+            </div>
           </div>
+
+          ${!isThemeEngineUnlocked ? `
+            <div class="theme-teaser-body">
+              <div class="theme-teaser-text">
+                Ascend to <b>Level 100 (Volt Tamer)</b> to unlock the Prestige Theme Engine and your first custom luxury finish: <b>☀️ Solar Flare Gold</b>!
+              </div>
+              <div class="rpg-progress-track" style="margin-top: 10px; margin-bottom: 6px;">
+                <div class="rpg-progress-fill" style="width: ${Math.min(100, Math.round((fleetLevel / 100) * 100))}%;"></div>
+              </div>
+              <div class="mono" style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between;">
+                <span>Level ${fleetLevel} / 100 (${Math.min(100, Math.round((fleetLevel / 100) * 100))}%)</span>
+                <span style="color: #fbbf24;">+${Math.max(0, xpForRpgLevel(100) - totalFleetXp).toLocaleString()} XP needed</span>
+              </div>
+            </div>
+          ` : `
+            <div class="theme-cards-grid">
+              ${PRESTIGE_THEMES.map(theme => {
+                const isUnlocked = fleetLevel >= theme.reqLevel;
+                const isActive = activeTheme.id === theme.id;
+                const lvlsLeft = theme.reqLevel - fleetLevel;
+
+                return `
+                  <div class="theme-option-card ${isActive ? 'active' : isUnlocked ? '' : 'locked'}">
+                    <div class="theme-swatch-bar" style="background: ${theme.previewGradient};"></div>
+                    <div class="theme-card-info">
+                      <div>
+                        <div class="theme-card-name"><span>${theme.icon}</span> ${theme.name}</div>
+                        <div class="theme-card-tier">${theme.subtitle}</div>
+                      </div>
+                      <span class="mono" style="font-size: 10px; font-weight: 700; color: ${isActive ? '#fbbf24' : isUnlocked ? '#34d399' : '#64748b'};">
+                        ${isActive ? 'ACTIVE ⭐' : isUnlocked ? 'UNLOCKED' : (theme.reqLevel === 500 ? 'APEX LOCK' : 'LOCKED')}
+                      </span>
+                    </div>
+                    ${isActive ? `
+                      <button class="theme-btn active-btn" disabled>⭐ Active Palette</button>
+                    ` : isUnlocked ? `
+                      <button class="theme-btn apply-btn theme-apply-btn" data-theme="${theme.id}">⚡ Apply Theme</button>
+                    ` : `
+                      <button class="theme-btn locked-btn" disabled>🔒 Unlocks at Lvl ${theme.reqLevel} (${lvlsLeft} lvls left)</button>
+                    `}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
         </div>
 
         <!-- Trophy Filter Bar -->
@@ -5955,6 +6378,20 @@ class HomeMinerFleetCard extends HTMLElement {
           this._trophyFilter = cat;
           this._lastRenderSig = null;
           safeStorage.set('miner_trophy_filter', cat);
+          this.render();
+        }
+      });
+    });
+
+    // Prestige Theme Apply Buttons
+    const themeApplyBtns = this.shadowRoot.querySelectorAll('.theme-apply-btn');
+    themeApplyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const themeId = btn.getAttribute('data-theme');
+        if (themeId && themeId !== this._activeTheme) {
+          this._activeTheme = themeId;
+          this._lastRenderSig = null;
+          safeStorage.set('miner_active_theme', themeId);
           this.render();
         }
       });

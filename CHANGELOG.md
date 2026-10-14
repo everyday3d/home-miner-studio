@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Prestige Theme Engine & 5 Milestone Aesthetic Glass Themes (Lvl 100-500 Unlocks)** ([#23](https://github.com/everyday3d/home-miner-studio/issues/23)):
+  - Built the **Prestige Theme Engine** which automatically unlocks when the fleet reaches **Level 100 (*Volt Tamer*)**, featuring a teaser progress bar before Level 100 and a 6-theme luxury selection console once unlocked.
+  - Designed 5 elegant, shiny, and enticing milestone aesthetic glass finishes unlocked at each 100th level:
+    - **Default**: *💎 Cyber Obsidian* (Classic Aero-Glass deep obsidian navy with cyan `#38bdf8` and gold neon accents).
+    - **Level 100**: *☀️ Solar Flare Gold* (Luminous golden champagne & incandescent solar amber glass with golden specular highlights).
+    - **Level 200**: *🔥 Thermal Magma* (Fiery molten crimson & radiant ruby magma glass with volcanic glow aura).
+    - **Level 300**: *❇️ Emerald Matrix* (Luminous cyber emerald & jade crystalline glass with radioactive green neon highlights).
+    - **Level 400**: *🔮 Amethyst Nebula* (Royal violet & ultraviolet cosmic starlight glass with celestial lilac glow).
+    - **Level 500 (Apex MAX)**: *👑 Celestial Diamond* (Prismatic iridescent platinum diamond glass with chromatic rainbow refraction).
+  - Integrated dynamic CSS custom properties (`--theme-accent`, `--theme-glow`, `--theme-pill-gradient`, `--theme-hero-bg`) that transform the entire dashboard's lighting, gauge rings, active tabs, and glass card borders upon theme selection.
+  - Persisted user theme preference across browser sessions using `safeStorage` (`miner_active_theme`).
 - **RPG Fleet Gamification System (Lvl 500 Cap) & Expanded Trophy Cabinet** ([#22](https://github.com/everyday3d/home-miner-studio/issues/22)):
   - Built an Aero-Glass RPG Progression System with mathematical leveling formula ($XP = 15 \times \text{Shares} + \lfloor\text{Diff}/50,000\rfloor$) scaling from Level 1 up to **Level 500 Cap**.
   - Created 21 distinct milestone rank titles awarded at every 25th level: Level 1 (*Novice Breadboarder*), Level 25 (*Silicon Apprentice*), Level 50 (*Stratum Journeyman*), Level 75 (*Frequency Enthusiast*), Level 100 (*Volt Tamer*), Level 125 (*Heatsink Warden*), Level 150 (*Hashrate Vanguard*), Level 175 (*Difficulty Crusher*), Level 200 (*Thermal Dominator*), Level 225 (*Silicon Alchemist*), Level 250 (*Megahash Overlord*), Level 275 (*ASIC Architect*), Level 300 (*Crypto Colossus*), Level 325 (*Zero-Latency Phantom*), Level 350 (*Quantum Proofmaster*), Level 375 (*Sub-Zero Cryomancer*), Level 400 (*Consensus Sovereign*), Level 425 (*Genesis Archon*), Level 450 (*Celestial Hasher*), Level 475 (*Blockchain Demiurge*), up to Level 500 (*Satoshi Slayer [MAX]*).
