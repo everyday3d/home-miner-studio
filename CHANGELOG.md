@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Coin Solo Block Lottery Radar & Dynamic Coin Selector** ([#16](https://github.com/everyday3d/home-miner-studio/issues/16)):
+  - Added an interactive **Track Coin** selector dropdown (`#lottery-coin-select`) in the Radar header row, allowing users to dynamically switch the tracked cryptocurrency across active fleet coins (e.g. `WOJAK (Mining ⛏️)`, `BTC (Mining ⛏️)`) and popular mineable coins (`BCH`, `BELLS`, `DGB`, `LTC`, `DOGE`, `PEPE`, `KAS`).
+  - Automatically defaults the radar to the coin currently being mined by the fleet (e.g. Wojak) rather than forcibly defaulting to Bitcoin.
+  - Implemented coin-specific network difficulty parameters and block rewards across all supported algorithms (Wojak: 10,000 WJK @ 50M diff; Bitcoin: 3.125 BTC @ 109.80T diff; Bitcoin Cash: 3.125 BCH @ 650G diff; Bellscoin: 50 BEL @ 120M diff; Dogecoin: 10,000 DOGE @ 18M diff; Litecoin: 6.25 LTC @ 45M diff; etc.).
+  - Dynamically recalculates solo win probability (e.g. ~1.8 days for Wojak vs ~10,800 years for Bitcoin), daily chance percentage, and block bounty jackpot value in USD and native cryptocurrency tokens.
+  - Added dynamic milestone progress bar ticks tailored to the target coin's difficulty scale, with automatic detection when a miner's best share exceeds target difficulty (`🎉 100% EXCEEDS TARGET`).
+  - Persisted user's coin tracking preference across browser reloads via `safeStorage`.
 - **Solo Block Lottery Radar & Neon Mega-Share VFX Celebration** ([#14](https://github.com/everyday3d/home-miner-studio/issues/14)):
   - Built an interactive **Solo Block Lottery Radar Console** on the dashboard displaying real-time mathematical odds (expected days/years, daily probability percentage) based on active fleet TH/s against Bitcoin network difficulty (109.80 T).
   - Integrated real-time Block Bounty Jackpot valuation (3.125 BTC * Spot Price) highlighting potential solo block bounty reward.

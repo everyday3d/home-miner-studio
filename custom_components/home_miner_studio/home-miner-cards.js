@@ -1950,6 +1950,49 @@ class HomeMinerFleetCard extends HTMLElement {
           font-family: 'JetBrains Mono', monospace;
         }
 
+        .lottery-coin-wrap {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          background: rgba(15, 23, 42, 0.75);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          border-radius: 999px;
+          padding: 3px 8px 3px 12px;
+          box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+        }
+
+        .lottery-coin-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #fbbf24;
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.5px;
+          white-space: nowrap;
+        }
+
+        .lottery-coin-select {
+          background: #0f172a !important;
+          border: 1px solid rgba(245, 158, 11, 0.5) !important;
+          color: #f8fafc !important;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 6px;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .lottery-coin-select:focus {
+          border-color: #fbbf24 !important;
+          box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        }
+
+        .lottery-coin-select option {
+          background-color: #0f172a !important;
+          color: #f8fafc !important;
+        }
+
         .lottery-hud-grid {
           display: grid;
           grid-template-columns: 180px 1fr;
@@ -2520,31 +2563,217 @@ class HomeMinerFleetCard extends HTMLElement {
       }
     }
 
-    // Bitcoin Network Difficulty (109.80 T standard)
-    const netDiff = 109.80 * 1e12;
+    // Multi-Coin Profiles & Network Difficulties for Solo Block Lottery Radar
+    const coinRadarProfiles = {
+      'WOJAK': {
+        name: 'Wojak',
+        symbol: 'WOJAK',
+        sign: '🎭',
+        reward: 10000,
+        diffNum: 5.0e7,
+        diffStr: '50.00 M',
+        accentColor: '#38bdf8',
+        algo: 'SHA-256d',
+        milestones: ['10 K', '100 K', '1 M', '10 M', '25 M', '50 M (WIN)']
+      },
+      'WJK': {
+        name: 'Wojak',
+        symbol: 'WJK',
+        sign: '🎭',
+        reward: 10000,
+        diffNum: 5.0e7,
+        diffStr: '50.00 M',
+        accentColor: '#38bdf8',
+        algo: 'SHA-256d',
+        milestones: ['10 K', '100 K', '1 M', '10 M', '25 M', '50 M (WIN)']
+      },
+      'BTC': {
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        sign: '₿',
+        reward: 3.125,
+        diffNum: 109.80 * 1e12,
+        diffStr: '109.80 T',
+        accentColor: '#fbbf24',
+        algo: 'SHA-256',
+        milestones: ['1 M', '100 M', '1 G (Mega)', '10 G', '100 G', '1 T', '109.8 T (WIN)']
+      },
+      'BCH': {
+        name: 'Bitcoin Cash',
+        symbol: 'BCH',
+        sign: '💚',
+        reward: 3.125,
+        diffNum: 6.5e11,
+        diffStr: '650.00 G',
+        accentColor: '#10b981',
+        algo: 'SHA-256',
+        milestones: ['1 M', '100 M', '1 G (Mega)', '10 G', '100 G', '650 G (WIN)']
+      },
+      'BELLS': {
+        name: 'Bellscoin',
+        symbol: 'BELLS',
+        sign: '🔔',
+        reward: 50,
+        diffNum: 1.2e8,
+        diffStr: '120.00 M',
+        accentColor: '#f59e0b',
+        algo: 'Scrypt / SHA',
+        milestones: ['100 K', '1 M', '10 M', '50 M', '120 M (WIN)']
+      },
+      'BEL': {
+        name: 'Bellscoin',
+        symbol: 'BEL',
+        sign: '🔔',
+        reward: 50,
+        diffNum: 1.2e8,
+        diffStr: '120.00 M',
+        accentColor: '#f59e0b',
+        algo: 'Scrypt / SHA',
+        milestones: ['100 K', '1 M', '10 M', '50 M', '120 M (WIN)']
+      },
+      'DGB': {
+        name: 'DigiByte',
+        symbol: 'DGB',
+        sign: '⚡',
+        reward: 350,
+        diffNum: 1.5e10,
+        diffStr: '15.00 G',
+        accentColor: '#0284c7',
+        algo: 'SHA-256',
+        milestones: ['1 M', '50 M', '500 M', '2 G', '15 G (WIN)']
+      },
+      'LTC': {
+        name: 'Litecoin',
+        symbol: 'LTC',
+        sign: 'Ł',
+        reward: 6.25,
+        diffNum: 4.5e7,
+        diffStr: '45.00 M',
+        accentColor: '#cbd5e1',
+        algo: 'Scrypt',
+        milestones: ['100 K', '1 M', '5 M', '20 M', '45 M (WIN)']
+      },
+      'DOGE': {
+        name: 'Dogecoin',
+        symbol: 'DOGE',
+        sign: '🐶',
+        reward: 10000,
+        diffNum: 1.8e7,
+        diffStr: '18.00 M',
+        accentColor: '#eab308',
+        algo: 'Scrypt',
+        milestones: ['100 K', '500 K', '2 M', '8 M', '18 M (WIN)']
+      },
+      'PEPE': {
+        name: 'Pepecoin',
+        symbol: 'PEPE',
+        sign: '🐸',
+        reward: 10000,
+        diffNum: 8.5e7,
+        diffStr: '85.00 M',
+        accentColor: '#22c55e',
+        algo: 'Scrypt / SHA',
+        milestones: ['100 K', '1 M', '10 M', '40 M', '85 M (WIN)']
+      },
+      'KAS': {
+        name: 'Kaspa',
+        symbol: 'KAS',
+        sign: '💎',
+        reward: 22.5,
+        diffNum: 1.2e15,
+        diffStr: '1.20 P',
+        accentColor: '#06b6d4',
+        algo: 'kHeavyHash',
+        milestones: ['1 G', '10 G', '100 G', '1 T', '100 T', '1.2 P (WIN)']
+      }
+    };
+
+    // Collect all coins actively mined by fleet miners
+    const fleetCoins = [];
+    miners.forEach(m => {
+      const c = (m.coin || 'BTC').toUpperCase();
+      if (!fleetCoins.includes(c)) fleetCoins.push(c);
+    });
+    if (fleetCoins.length === 0) fleetCoins.push('BTC');
+
+    const catalogCoins = ['WOJAK', 'BTC', 'BCH', 'BELLS', 'DGB', 'LTC', 'DOGE', 'PEPE', 'KAS'];
+    const allRadarCoins = [...fleetCoins];
+    catalogCoins.forEach(c => {
+      if (!allRadarCoins.includes(c)) allRadarCoins.push(c);
+    });
+
+    // Resolve active radar coin: user preference > safeStorage > active fleet coin > BTC
+    const storedRadarCoin = safeStorage.get('lottery_selected_coin');
+    const defaultActiveCoin = isSingleRigView ? (displayedMiners[0]?.coin?.toUpperCase() || fleetCoins[0]) : fleetCoins[0];
+    const radarCoin = (this._selectedLotteryCoin || storedRadarCoin || defaultActiveCoin || 'BTC').toUpperCase();
+
+    const selectedProfile = coinRadarProfiles[radarCoin] || {
+      name: radarCoin,
+      symbol: radarCoin,
+      sign: '🪙',
+      reward: 1,
+      diffNum: 109.80 * 1e12,
+      diffStr: '109.80 T',
+      accentColor: '#fbbf24',
+      algo: 'SHA-256',
+      milestones: ['1 M', '100 M', '1 G', '10 G', '109.8 T (WIN)']
+    };
+
+    this._activeRadarCoin = radarCoin;
+    this._activeRadarReward = selectedProfile.reward;
+
+    const netDiff = selectedProfile.diffNum;
     const activeHashThs = totalHashThs > 0 ? totalHashThs : 1.38;
 
     // Expected days = (Difficulty * 2^32) / (Hashrate_THs * 10^12 * 86400)
-    // 2^32 = 4294967296
     const expectedDays = (netDiff * 4294967296) / (activeHashThs * 1e12 * 86400);
     const expectedYears = expectedDays / 365.25;
     const dailyChancePct = (1 / expectedDays) * 100;
 
-    // Block Bounty Jackpot: 3.125 BTC * Spot Price
-    let btcPriceForJackpot = 83467;
+    // Spot Price Lookup for Selected Radar Coin
+    let coinSpotPrice = 0;
     Object.keys(states).forEach(eid => {
-      if ((eid.includes('bitcoin') || eid.includes('btc')) && (eid.endsWith('_coin_price_usd') || eid.endsWith('_coin_price') || eid.endsWith('_price'))) {
-        const p = parseFloat(states[eid]?.state);
-        if (!isNaN(p) && p > 1000) btcPriceForJackpot = p;
+      if ((eid.endsWith('_coin_price_usd') || eid.endsWith('_coin_price') || eid.endsWith('_price') || eid.endsWith('_bitcoin_price')) && states[eid]?.state) {
+        const c = (states[eid]?.attributes?.coin || (eid.includes('bitcoin') ? 'BTC' : '')).toUpperCase();
+        if (c === radarCoin || (radarCoin === 'WOJAK' && c === 'WJK') || (radarCoin === 'WJK' && c === 'WOJAK')) {
+          const p = parseFloat(states[eid].state);
+          if (!isNaN(p) && p > 0) coinSpotPrice = p;
+        }
       }
     });
-    const blockBountyJackpotUsd = 3.125 * btcPriceForJackpot;
 
-    // Logarithmic Progress to Block Target (Scale: 1 M = 1e6 to 109.8 T = 1.098e14)
-    const logMin = 6;
+    if (coinSpotPrice === 0) {
+      const defaultSpot = {
+        'BTC': 83467,
+        'WOJAK': 0.000024,
+        'WJK': 0.000024,
+        'BCH': 385,
+        'LTC': 82,
+        'DOGE': 0.165,
+        'BELLS': 0.45,
+        'BEL': 0.45,
+        'KAS': 0.13,
+        'DGB': 0.0085,
+        'PEPE': 0.0000095
+      };
+      coinSpotPrice = defaultSpot[radarCoin] || 1.0;
+    }
+
+    const blockBountyJackpotUsd = selectedProfile.reward * coinSpotPrice;
+
+    // Dynamic Logarithmic Progress to Selected Coin's Block Target
     const logMax = Math.log10(netDiff);
-    const currentLog = fleetBestDiff > 1e6 ? Math.log10(fleetBestDiff) : 6;
-    const logProgressPct = Math.min(100, Math.max(2, ((currentLog - logMin) / (logMax - logMin)) * 100)).toFixed(1);
+    const logMin = Math.max(2, Math.floor(logMax - 7));
+    const currentLog = fleetBestDiff > Math.pow(10, logMin) ? Math.log10(fleetBestDiff) : logMin;
+    let logProgressPct = Math.min(100, Math.max(2, ((currentLog - logMin) / (logMax - logMin)) * 100));
+    const isBlockSolved = fleetBestDiff >= netDiff;
+    if (isBlockSolved) logProgressPct = 100;
+    const logProgressStr = logProgressPct.toFixed(1);
+
+    const blipDist = Math.max(16, Math.min(68, (logProgressPct / 100) * 68));
+    const blipX = (80 - blipDist * 0.707).toFixed(1);
+    const blipY = (80 - blipDist * 0.707).toFixed(1);
+    const blipColor = isBlockSolved ? '#34d399' : (fleetBestDiff >= 1e9 ? '#fbbf24' : '#38bdf8');
     
     // Extract Global & Per-Rig Market Data
     const defaultMarketPrices = {
@@ -2870,15 +3099,27 @@ class HomeMinerFleetCard extends HTMLElement {
       <div class="glass-card amber-glow lottery-radar-console">
         <div class="lottery-header-row">
           <div class="lottery-title-cluster">
-            <div class="lottery-icon-box">🎯</div>
+            <div class="lottery-icon-box">${selectedProfile.sign || '🎯'}</div>
             <div>
-              <div class="lottery-title">Solo Block Lottery Radar & Mega-Share Telemetry</div>
+              <div class="lottery-title">Solo Block Lottery Radar • ${selectedProfile.name} (${radarCoin})</div>
               <div class="mono" style="font-size: 11px; color: #94a3b8;">
-                Mathematical Block Bounty Odds • Real-Time Difficulty Target Tracker
+                Mathematical Block Bounty Odds • ${selectedProfile.algo} Difficulty Target Tracker
               </div>
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <!-- Interactive Coin Selector Dropdown -->
+            <div class="lottery-coin-wrap">
+              <span class="lottery-coin-label">TRACK COIN:</span>
+              <select id="lottery-coin-select" class="lottery-coin-select">
+                ${allRadarCoins.map(c => {
+                  const isMining = fleetCoins.includes(c);
+                  const isSel = c === radarCoin;
+                  const tag = isMining ? ' (Mining ⛏️)' : '';
+                  return `<option value="${c}" ${isSel ? 'selected' : ''}>${c}${tag}</option>`;
+                }).join('')}
+              </select>
+            </div>
             <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12);">
               <span class="status-orb" style="background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></span>
               Active Fleet: ${activeHashThs.toFixed(2)} TH/s
@@ -2937,18 +3178,18 @@ class HomeMinerFleetCard extends HTMLElement {
                 <line x1="80" y1="80" x2="80" y2="8" stroke="#34d399" stroke-width="2" filter="drop-shadow(0 0 4px #34d399)" />
               </g>
 
-              <!-- Blip: Mega-Share (14.09 G) positioned at radius ~39px (~52% milestone) -->
-              <g class="radar-blip-mega" transform="translate(48, 58)">
-                <circle cx="0" cy="0" r="4.5" fill="#fbbf24" filter="url(#blipGlow)" />
-                <circle cx="0" cy="0" r="8" fill="none" stroke="#fbbf24" stroke-width="1.2" class="blip-pulse-ring" />
-                <text x="7" y="3" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">${fleetBestShareStr !== '--' ? fleetBestShareStr : '14.09G'}</text>
+              <!-- Blip: Mega-Share positioned at dynamic radius based on milestone progress -->
+              <g class="radar-blip-mega" transform="translate(${blipX}, ${blipY})">
+                <circle cx="0" cy="0" r="4.5" fill="${blipColor}" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="8" fill="none" stroke="${blipColor}" stroke-width="1.2" class="blip-pulse-ring" />
+                <text x="7" y="3" fill="${blipColor}" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">${fleetBestShareStr !== '--' ? fleetBestShareStr : '14.09G'}${isBlockSolved ? ' ★ WIN!' : ''}</text>
               </g>
 
-              <!-- Blip: Standard high share (920 M) -->
-              <g class="radar-blip-std" transform="translate(98, 92)">
-                <circle cx="0" cy="0" r="3" fill="#34d399" filter="url(#blipGlow)" />
-                <circle cx="0" cy="0" r="6" fill="none" stroke="#34d399" stroke-width="1" class="blip-pulse-ring" />
-                <text x="5" y="2" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7">920M</text>
+              <!-- Blip: Standard target difficulty milestone -->
+              <g class="radar-blip-std" transform="translate(108, 98)">
+                <circle cx="0" cy="0" r="3" fill="#10b981" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="6" fill="none" stroke="#10b981" stroke-width="1" class="blip-pulse-ring" />
+                <text x="5" y="2" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="7">Target</text>
               </g>
 
               <!-- Center Hub -->
@@ -2964,20 +3205,24 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="lottery-metrics-column">
             <!-- Jackpot Banner -->
             <div class="jackpot-banner">
-              <div class="jackpot-label mono">CURRENT BLOCK BOUNTY JACKPOT</div>
+              <div class="jackpot-label mono">CURRENT ${radarCoin} BLOCK BOUNTY JACKPOT</div>
               <div class="jackpot-val-row">
-                <span class="jackpot-amount mono">$${Math.round(blockBountyJackpotUsd).toLocaleString()}</span>
-                <span class="jackpot-btc-badge mono">3.125 BTC</span>
+                <span class="jackpot-amount mono">$${blockBountyJackpotUsd >= 1 ? blockBountyJackpotUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : blockBountyJackpotUsd.toFixed(4)}</span>
+                <span class="jackpot-btc-badge mono" style="color: ${selectedProfile.accentColor}; border-color: ${selectedProfile.accentColor}; background: rgba(245, 158, 11, 0.15);">
+                  ${selectedProfile.reward.toLocaleString()} ${radarCoin}
+                </span>
               </div>
-              <div class="jackpot-sub mono">Next block bounty awarded 100% to solo miner upon valid block hash</div>
+              <div class="jackpot-sub mono">Next block bounty awarded 100% to solo miner upon valid ${radarCoin} block hash</div>
             </div>
 
             <!-- Odds & Stats 3-Card Rack -->
             <div class="lottery-stat-tiles">
               <div class="lottery-mini-tile">
                 <div class="mini-tile-label">Solo Win Odds</div>
-                <div class="mini-tile-val mono" style="color: #38bdf8;">1 in ${expectedYears >= 100 ? Math.round(expectedYears).toLocaleString() + ' Yrs' : Math.round(expectedDays).toLocaleString() + ' Days'}</div>
-                <div class="mini-tile-sub mono">${dailyChancePct.toFixed(7)}% / day</div>
+                <div class="mini-tile-val mono" style="color: #38bdf8;">
+                  1 in ${expectedYears >= 100 ? Math.round(expectedYears).toLocaleString() + ' Yrs' : (expectedDays >= 1 ? Math.round(expectedDays).toLocaleString() + ' Days' : (expectedDays * 24).toFixed(1) + ' Hours')}
+                </div>
+                <div class="mini-tile-sub mono">${dailyChancePct >= 1 ? dailyChancePct.toFixed(2) + '%' : dailyChancePct.toFixed(7) + '%'} / day</div>
               </div>
               <div class="lottery-mini-tile">
                 <div class="mini-tile-label">Lifetime Best Share</div>
@@ -2986,8 +3231,8 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
               <div class="lottery-mini-tile">
                 <div class="mini-tile-label">Network Difficulty</div>
-                <div class="mini-tile-val mono" style="color: #a78bfa;">109.80 T</div>
-                <div class="mini-tile-sub mono">Target: ~1.098e14</div>
+                <div class="mini-tile-val mono" style="color: #a78bfa;">${selectedProfile.diffStr}</div>
+                <div class="mini-tile-sub mono">Target: ~${selectedProfile.diffNum.toExponential(2)}</div>
               </div>
             </div>
           </div>
@@ -2997,27 +3242,26 @@ class HomeMinerFleetCard extends HTMLElement {
         <div class="share-progress-container">
           <div class="share-progress-header">
             <span class="mono" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">
-              🚀 Fleet Share Difficulty Milestone to Solving Block (Log10 Scale)
+              🚀 Fleet Share Difficulty Milestone to Solving ${radarCoin} Block (Log10 Scale)
             </span>
-            <span class="mono" style="font-size: 11px; color: #fbbf24; font-weight: 700;">
-              ${fleetBestShareStr} (${logProgressPct}% to Block Target)
+            <span class="mono" style="font-size: 11px; color: ${isBlockSolved ? '#34d399' : '#fbbf24'}; font-weight: 700;">
+              ${isBlockSolved ? `🎉 100% (${fleetBestShareStr} EXCEEDS ${radarCoin} TARGET!)` : `${fleetBestShareStr} (${logProgressStr}% to ${radarCoin} Target)`}
             </span>
           </div>
           <div class="share-progress-track">
-            <div class="share-progress-fill" style="width: ${logProgressPct}%;"></div>
+            <div class="share-progress-fill" style="width: ${logProgressPct}%; background: ${isBlockSolved ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #f59e0b, #fbbf24)'};"></div>
             <div class="share-progress-pin" style="left: ${logProgressPct}%;">
-              <div class="share-pin-glow"></div>
-              <div class="share-pin-label mono">${fleetBestShareStr}</div>
+              <div class="share-pin-glow" style="background: ${isBlockSolved ? '#34d399' : '#fbbf24'}; box-shadow: 0 0 12px ${isBlockSolved ? '#34d399' : '#fbbf24'};"></div>
+              <div class="share-pin-label mono" style="color: ${isBlockSolved ? '#34d399' : '#fbbf24'};">${fleetBestShareStr}</div>
             </div>
           </div>
           <div class="share-milestone-row mono">
-            <span>1 M</span>
-            <span>100 M</span>
-            <span style="color: #fbbf24; font-weight: 700;">1 G (Mega)</span>
-            <span style="color: #fbbf24; font-weight: 700;">10 G</span>
-            <span>100 G</span>
-            <span>1 T</span>
-            <span style="color: #34d399; font-weight: 800;">109.8 T (WIN)</span>
+            ${(selectedProfile.milestones || ['1 M', '100 M', '1 G', '10 G', `${selectedProfile.diffStr} (WIN)`]).map((m, idx, arr) => {
+              const isWin = idx === arr.length - 1;
+              const isMega = m.includes('Mega') || m.includes('1 G');
+              const colorStyle = isWin ? 'color: #34d399; font-weight: 800;' : (isMega ? 'color: #fbbf24; font-weight: 700;' : '');
+              return `<span style="${colorStyle}">${m}</span>`;
+            }).join('')}
           </div>
         </div>
       </div>
@@ -3405,8 +3649,22 @@ class HomeMinerFleetCard extends HTMLElement {
     }
   }
 
-  _triggerCelebration() {
+  _triggerCelebration(coin = 'BTC', reward = 3.125) {
     this._playVictoryFanfare();
+    const btn = this.shadowRoot?.querySelector('#test-celebration-btn');
+    if (btn) {
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = `🎉 SOLO BLOCK: +${reward.toLocaleString()} ${coin}!`;
+      btn.style.background = 'rgba(52, 211, 153, 0.35)';
+      btn.style.borderColor = '#34d399';
+      btn.style.color = '#34d399';
+      setTimeout(() => {
+        btn.innerHTML = origHtml;
+        btn.style.background = 'rgba(245, 158, 11, 0.2)';
+        btn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+        btn.style.color = '#fbbf24';
+      }, 3500);
+    }
     const canvas = this.shadowRoot?.querySelector('#celebration-canvas');
     if (!canvas) return;
 
@@ -3485,11 +3743,24 @@ class HomeMinerFleetCard extends HTMLElement {
 
   _attachCardEventHandlers() {
     
+    // Solo Block Radar Coin Selector
+    const lotteryCoinSelect = this.shadowRoot.querySelector('#lottery-coin-select');
+    if (lotteryCoinSelect) {
+      lotteryCoinSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val) {
+          this._selectedLotteryCoin = val;
+          safeStorage.set('lottery_selected_coin', val);
+          this.render();
+        }
+      });
+    }
+
     // Solo Block Win Celebration Test Button
     const celebrateBtn = this.shadowRoot.querySelector('#test-celebration-btn');
     if (celebrateBtn) {
       celebrateBtn.addEventListener('click', () => {
-        this._triggerCelebration();
+        this._triggerCelebration(this._activeRadarCoin || 'WOJAK', this._activeRadarReward || 10000);
       });
     }
     
