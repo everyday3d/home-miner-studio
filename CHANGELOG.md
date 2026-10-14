@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Injected **Mega-Share Card Aura** and shimmery gold pill badges (`🏆 MEGA-SHARE 14.09 G`) on miner workstation cards exceeding 1 G difficulty.
   - Built pure in-browser celebration system with zero CDN dependencies: HTML5 canvas particle burst physics and Web Audio API synthesized 4-note victory fanfare chime (`🎉 Test Win Celebration`).
 
+### Fixed
+- **Desktop Lovelace Configuration Error & Lifecycle Guards** ([#15](https://github.com/everyday3d/home-miner-studio/issues/15)):
+  - Added `safeStorage` helper (`get`, `set`, `remove`) with `try...catch` guards replacing all naked `localStorage` accesses, preventing desktop browsers with strict privacy partition policies or iframe sandboxes from throwing uncaught `SecurityError`.
+  - Guarded `customElements.define('home-miner-fleet-card')` registration with `if (!customElements.get('home-miner-fleet-card'))`, eliminating uncaught `NotSupportedError` / `DOMException` upon re-evaluating or hot-reloading Lovelace cards.
+  - Implemented `static getStubConfig()` and `getLayoutOptions()` on `HomeMinerFleetCard` for seamless compatibility with Home Assistant 2026.10 section/grid desktop layouts.
+  - Wrapped `render()` execution in safe `try...catch` and verified `this._hass.states` readiness before evaluating entity dictionaries, preventing race conditions during fast desktop dashboard initialization.
+  - Added null guards to `_attachModalListeners()` ensuring `#modal-root`, `#miner-modal`, and `#delete-modal` checks never throw when elements have not yet mounted.
+  - Updated live Home Assistant Lovelace resource registry in memory via WebSocket (`lovelace/resources/update`) to bust browser cache across desktop sessions.
+
 ## [0.5.2] - 2026-10-13
 
 ### Added

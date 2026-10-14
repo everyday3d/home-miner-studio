@@ -6,6 +6,26 @@
  * Production Telemetry: 100% real entity data, Celsius-only units, frosted glassmorphism layers, SVG radial ring gauges.
  */
 
+const safeStorage = {
+  get(key) {
+    try {
+      return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+  set(key, val) {
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(key, val);
+    } catch (e) {}
+  },
+  remove(key) {
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+    } catch (e) {}
+  }
+};
+
 class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
@@ -23,6 +43,21 @@ class HomeMinerFleetCard extends HTMLElement {
     this._minerPools = {};
     this._minerWallets = {};
     this._minerCoins = {};
+  }
+
+  static getStubConfig() {
+    return {
+      type: 'custom:home-miner-fleet-card',
+      title: 'Crypto Miner Fleet Studio'
+    };
+  }
+
+  getLayoutOptions() {
+    return {
+      grid_columns: 4,
+      grid_rows: 'auto',
+      grid_min_columns: 2
+    };
   }
 
   connectedCallback() {
@@ -49,10 +84,8 @@ class HomeMinerFleetCard extends HTMLElement {
     if (this._minerNames && this._minerNames[host]) {
       return this._minerNames[host];
     }
-    try {
-      const local = localStorage.getItem('miner_name_' + host);
-      if (local && local.trim()) return local.trim();
-    } catch (e) {}
+    const local = safeStorage.get('miner_name_' + host);
+    if (local && local.trim()) return local.trim();
 
     const states = this._hass?.states || {};
     const eids = Array.isArray(entityIds) ? entityIds : [entityIds];
@@ -725,6 +758,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const modalRoot = this.shadowRoot.querySelector('#modal-root');
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
     const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+    if (!modalRoot) return;
 
     // Intercept keyboard event bubbling: NEVER allow keydown/keyup/keypress to escape to Lovelace
     const stopPropagation = (e) => {
@@ -736,8 +770,8 @@ class HomeMinerFleetCard extends HTMLElement {
 
     ['keydown', 'keyup', 'keypress'].forEach(eventType => {
       modalRoot.addEventListener(eventType, stopPropagation);
-      minerModal.addEventListener(eventType, stopPropagation);
-      deleteModal.addEventListener(eventType, stopPropagation);
+      if (minerModal) minerModal.addEventListener(eventType, stopPropagation);
+      if (deleteModal) deleteModal.addEventListener(eventType, stopPropagation);
     });
 
     const inputsAndSelects = modalRoot.querySelectorAll('input, select, button');
@@ -748,24 +782,28 @@ class HomeMinerFleetCard extends HTMLElement {
     });
 
     // Prevent clicks inside .modal-box from bubbling to backdrop
-    minerModal.querySelectorAll('.modal-box').forEach(box => {
-      box.addEventListener('click', (e) => e.stopPropagation());
-    });
-    deleteModal.querySelectorAll('.modal-box').forEach(box => {
-      box.addEventListener('click', (e) => e.stopPropagation());
-    });
+    if (minerModal) {
+      minerModal.querySelectorAll('.modal-box').forEach(box => {
+        box.addEventListener('click', (e) => e.stopPropagation());
+      });
+      // Close on backdrop click
+      minerModal.addEventListener('click', (e) => {
+        if (e.target === minerModal) {
+          this._closeModals();
+        }
+      });
+    }
 
-    // Close on backdrop click
-    minerModal.addEventListener('click', (e) => {
-      if (e.target === minerModal) {
-        this._closeModals();
-      }
-    });
-    deleteModal.addEventListener('click', (e) => {
-      if (e.target === deleteModal) {
-        this._closeModals();
-      }
-    });
+    if (deleteModal) {
+      deleteModal.querySelectorAll('.modal-box').forEach(box => {
+        box.addEventListener('click', (e) => e.stopPropagation());
+      });
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+          this._closeModals();
+        }
+      });
+    }
 
     // Close and cancel buttons
     const closeBtn = this.shadowRoot.querySelector('#modal-close-btn');
@@ -860,15 +898,15 @@ class HomeMinerFleetCard extends HTMLElement {
           if (this._modalMode === 'add') {
             if (name) {
               this._minerNames[host] = name;
-              try { localStorage.setItem('miner_name_' + host, name); } catch (e) {}
+              safeStorage.set('miner_name_' + host, name);
             }
             if (poolProvider) {
               this._minerPools[host] = poolProvider;
-              try { localStorage.setItem('miner_pool_' + host, poolProvider); } catch (e) {}
+              safeStorage.set('miner_pool_' + host, poolProvider);
             }
             if (poolWallet !== undefined) {
               this._minerWallets[host] = poolWallet;
-              try { localStorage.setItem('miner_wallet_' + host, poolWallet); } catch (e) {}
+              safeStorage.set('miner_wallet_' + host, poolWallet);
             }
             await this._hass.callService('home_miner_studio', 'add_miner', {
               host,
@@ -883,19 +921,19 @@ class HomeMinerFleetCard extends HTMLElement {
             const targetHost = this._activeHost || host;
             if (name) {
               this._minerNames[targetHost] = name;
-              try { localStorage.setItem('miner_name_' + targetHost, name); } catch (e) {}
+              safeStorage.set('miner_name_' + targetHost, name);
             }
             if (poolProvider) {
               this._minerPools[targetHost] = poolProvider;
-              try { localStorage.setItem('miner_pool_' + targetHost, poolProvider); } catch (e) {}
+              safeStorage.set('miner_pool_' + targetHost, poolProvider);
             }
             if (poolWallet !== undefined) {
               this._minerWallets[targetHost] = poolWallet;
-              try { localStorage.setItem('miner_wallet_' + targetHost, poolWallet); } catch (e) {}
+              safeStorage.set('miner_wallet_' + targetHost, poolWallet);
             }
             if (coin) {
               this._minerCoins[targetHost] = coin.toUpperCase();
-              try { localStorage.setItem('miner_coin_' + targetHost, coin.toUpperCase()); } catch (e) {}
+              safeStorage.set('miner_coin_' + targetHost, coin.toUpperCase());
             }
             await this._hass.callService('home_miner_studio', 'edit_miner', {
               host: targetHost,
@@ -924,7 +962,7 @@ class HomeMinerFleetCard extends HTMLElement {
         try {
           const host = this._deleteTargetHost;
           delete this._minerNames[host];
-          try { localStorage.removeItem('miner_name_' + host); } catch (e) {}
+          safeStorage.remove('miner_name_' + host);
           await this._hass.callService('home_miner_studio', 'delete_miner', { host });
           this._closeModals();
           confirmDeleteBtn.textContent = 'Confirm Delete';
@@ -1166,9 +1204,9 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-host').value = host;
     this.shadowRoot.querySelector('#modal-host').disabled = true;
     this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
-    const activePool = this._minerPools[host] || localStorage.getItem('miner_pool_' + host) || pool || 'none';
-    const activeWallet = this._minerWallets[host] || localStorage.getItem('miner_wallet_' + host) || wallet || '';
-    const activeCoin = this._minerCoins[host] || localStorage.getItem('miner_coin_' + host) || coin || 'BTC';
+    const activePool = this._minerPools[host] || safeStorage.get('miner_pool_' + host) || pool || 'none';
+    const activeWallet = this._minerWallets[host] || safeStorage.get('miner_wallet_' + host) || wallet || '';
+    const activeCoin = this._minerCoins[host] || safeStorage.get('miner_coin_' + host) || coin || 'BTC';
     this.shadowRoot.querySelector('#modal-pool').value = activePool;
     this.shadowRoot.querySelector('#modal-wallet').value = activeWallet;
     this.shadowRoot.querySelector('#modal-coin').value = activeCoin;
@@ -2236,78 +2274,79 @@ class HomeMinerFleetCard extends HTMLElement {
   }
 
   render() {
-    if (!this._hass) return;
+    if (!this._hass || !this._hass.states) return;
     this._ensureDom();
     if (this._modalOpen) return;
 
-    const states = this._hass.states;
-    const miners = [];
+    try {
+      const states = this._hass.states;
+      const miners = [];
 
-    // Blacklist filter to ensure non-mining appliances (Bambu printers, ESPresense) are strictly excluded
-    const isBlacklisted = (eid) => {
-      const lower = eid.toLowerCase();
-      return lower.includes('bambu') ||
-             lower.includes('cooling_fan') ||
-             lower.includes('heatbreak_fan') ||
-             lower.includes('chamber_fan') ||
-             lower.includes('aux_fan') ||
-             lower.includes('espresense') ||
-             lower.includes('a1_') ||
-             lower.includes('p2s_') ||
-             lower.includes('x1_') ||
-             lower.includes('p1_');
-    };
+      // Blacklist filter to ensure non-mining appliances (Bambu printers, ESPresense) are strictly excluded
+      const isBlacklisted = (eid) => {
+        const lower = eid.toLowerCase();
+        return lower.includes('bambu') ||
+               lower.includes('cooling_fan') ||
+               lower.includes('heatbreak_fan') ||
+               lower.includes('chamber_fan') ||
+               lower.includes('aux_fan') ||
+               lower.includes('espresense') ||
+               lower.includes('a1_') ||
+               lower.includes('p2s_') ||
+               lower.includes('x1_') ||
+               lower.includes('p1_');
+      };
 
-    // Strict Celsius conversion helper
-    const toCelsius = (stateObj) => {
-      if (!stateObj || stateObj.state === undefined || stateObj.state === 'unknown' || stateObj.state === 'unavailable') return null;
-      const val = parseFloat(stateObj.state);
-      if (isNaN(val)) return null;
-      const unit = stateObj.attributes?.unit_of_measurement;
-      if (unit === '°F' || unit === 'F') {
-        return (val - 32) * (5 / 9);
-      }
-      if (unit === '°C' || unit === 'C') {
+      // Strict Celsius conversion helper
+      const toCelsius = (stateObj) => {
+        if (!stateObj || stateObj.state === undefined || stateObj.state === 'unknown' || stateObj.state === 'unavailable') return null;
+        const val = parseFloat(stateObj.state);
+        if (isNaN(val)) return null;
+        const unit = stateObj.attributes?.unit_of_measurement;
+        if (unit === '°F' || unit === 'F') {
+          return (val - 32) * (5 / 9);
+        }
+        if (unit === '°C' || unit === 'C') {
+          return val;
+        }
+        if (val > 65) {
+          return (val - 32) * (5 / 9);
+        }
         return val;
-      }
-      if (val > 65) {
-        return (val - 32) * (5 / 9);
-      }
-      return val;
-    };
+      };
 
-    
+      
 
-    // 1. Bitaxe Miner Detection & Aggregation
-    const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
-    if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
-      const bitaxeName = this._getMinerName('192.168.1.91', 'My Bitaxe Supra', ['sensor.my_bitaxe_hashrate_th_s', 'sensor.my_bitaxe_hashrate_gh_s', 'sensor.my_bitaxe_power_draw']);
-      const ths = parseFloat(states['sensor.my_bitaxe_hashrate_th_s']?.state || 0) ||
-                  (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
-      const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
-      const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.my_bitaxe_efficiency']?.state || '0.0');
-      const temp = toCelsius(states['sensor.my_bitaxe_chip_temperature']) ?? 0;
-      const vrTemp = toCelsius(states['sensor.my_bitaxe_vr_temperature']) ?? 0;
-      const fan = parseInt(states['sensor.my_bitaxe_fan_speed']?.state || 0);
-      const freq = states['number.my_bitaxe_target_frequency']?.state || states['sensor.my_bitaxe_core_frequency']?.state || '675';
-      const volt = states['number.my_bitaxe_target_core_voltage']?.state || '1170';
-      const actVolt = states['sensor.my_bitaxe_actual_core_voltage']?.state || volt;
-      const inVolt = parseFloat(states['sensor.my_bitaxe_input_voltage']?.state || 0).toFixed(2);
-      const inAmps = parseFloat(states['sensor.my_bitaxe_current_draw']?.state || 0).toFixed(2);
-      const profile = states['select.my_bitaxe_power_profile']?.state || 'Custom';
+      // 1. Bitaxe Miner Detection & Aggregation
+      const bitaxeHashState = states['sensor.my_bitaxe_hashrate_th_s'] || states['sensor.my_bitaxe_hashrate_gh_s'];
+      if (bitaxeHashState && !isBlacklisted('my_bitaxe')) {
+        const bitaxeName = this._getMinerName('192.168.1.91', 'My Bitaxe Supra', ['sensor.my_bitaxe_hashrate_th_s', 'sensor.my_bitaxe_hashrate_gh_s', 'sensor.my_bitaxe_power_draw']);
+        const ths = parseFloat(states['sensor.my_bitaxe_hashrate_th_s']?.state || 0) ||
+                    (parseFloat(states['sensor.my_bitaxe_hashrate_gh_s']?.state || 0) / 1000);
+        const watts = parseFloat(states['sensor.my_bitaxe_power_draw']?.state || 0);
+        const eff = ths > 0 ? (watts / ths).toFixed(1) : (states['sensor.my_bitaxe_efficiency']?.state || '0.0');
+        const temp = toCelsius(states['sensor.my_bitaxe_chip_temperature']) ?? 0;
+        const vrTemp = toCelsius(states['sensor.my_bitaxe_vr_temperature']) ?? 0;
+        const fan = parseInt(states['sensor.my_bitaxe_fan_speed']?.state || 0);
+        const freq = states['number.my_bitaxe_target_frequency']?.state || states['sensor.my_bitaxe_core_frequency']?.state || '675';
+        const volt = states['number.my_bitaxe_target_core_voltage']?.state || '1170';
+        const actVolt = states['sensor.my_bitaxe_actual_core_voltage']?.state || volt;
+        const inVolt = parseFloat(states['sensor.my_bitaxe_input_voltage']?.state || 0).toFixed(2);
+        const inAmps = parseFloat(states['sensor.my_bitaxe_current_draw']?.state || 0).toFixed(2);
+        const profile = states['select.my_bitaxe_power_profile']?.state || 'Custom';
 
-      const bitaxeAccepted = parseInt(states['sensor.my_bitaxe_shares_accepted']?.state || 0);
-      const bitaxeRejected = parseInt(states['sensor.my_bitaxe_shares_rejected']?.state || 0);
-      const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
-      const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
-      const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
-      // Clean any legacy public_pool cache for Bitaxe
-      if (localStorage.getItem('miner_pool_192.168.1.91') === 'public_pool') {
-        try { localStorage.setItem('miner_pool_192.168.1.91', 'mining_dutch'); } catch (e) {}
-      }
-      const bitaxeSavedPool = this._minerPools['192.168.1.91'] || localStorage.getItem('miner_pool_192.168.1.91');
-      const bitaxeSavedWallet = this._minerWallets['192.168.1.91'] || localStorage.getItem('miner_wallet_192.168.1.91');
-      const bitaxeSavedCoin = this._minerCoins['192.168.1.91'] || localStorage.getItem('miner_coin_192.168.1.91');
+        const bitaxeAccepted = parseInt(states['sensor.my_bitaxe_shares_accepted']?.state || 0);
+        const bitaxeRejected = parseInt(states['sensor.my_bitaxe_shares_rejected']?.state || 0);
+        const bitaxeHw = parseInt(states['sensor.my_bitaxe_hardware_errors']?.state || 0);
+        const bitaxeBestDiff = states['sensor.my_bitaxe_best_difficulty']?.state;
+        const bitaxeBestStr = bitaxeBestDiff ? (parseFloat(bitaxeBestDiff) >= 1e9 ? (parseFloat(bitaxeBestDiff)/1e9).toFixed(2) + ' G' : (parseFloat(bitaxeBestDiff)/1e6).toFixed(2) + ' M') : '--';
+        // Clean any legacy public_pool cache for Bitaxe
+        if (safeStorage.get('miner_pool_192.168.1.91') === 'public_pool') {
+          safeStorage.set('miner_pool_192.168.1.91', 'mining_dutch');
+        }
+        const bitaxeSavedPool = this._minerPools['192.168.1.91'] || safeStorage.get('miner_pool_192.168.1.91');
+        const bitaxeSavedWallet = this._minerWallets['192.168.1.91'] || safeStorage.get('miner_wallet_192.168.1.91');
+        const bitaxeSavedCoin = this._minerCoins['192.168.1.91'] || safeStorage.get('miner_coin_192.168.1.91');
       const bitaxePoolStatusObj = states['sensor.my_bitaxe_pool_connection_status'];
       const bitaxePoolStatus = bitaxePoolStatusObj?.state || 'Alive';
       const bitaxePoolUrl = bitaxePoolStatusObj?.attributes?.pool_url || 'americas.mining-dutch.nl:9995';
@@ -2385,9 +2424,9 @@ class HomeMinerFleetCard extends HTMLElement {
       const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
       const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
       const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
-      const avalonSavedPool = this._minerPools['192.168.1.154'] || localStorage.getItem('miner_pool_192.168.1.154');
-      const avalonSavedWallet = this._minerWallets['192.168.1.154'] || localStorage.getItem('miner_wallet_192.168.1.154');
-      const avalonSavedCoin = this._minerCoins['192.168.1.154'] || localStorage.getItem('miner_coin_192.168.1.154');
+      const avalonSavedPool = this._minerPools['192.168.1.154'] || safeStorage.get('miner_pool_192.168.1.154');
+      const avalonSavedWallet = this._minerWallets['192.168.1.154'] || safeStorage.get('miner_wallet_192.168.1.154');
+      const avalonSavedCoin = this._minerCoins['192.168.1.154'] || safeStorage.get('miner_coin_192.168.1.154');
       const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
       const avalonCoin = avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
       const poolStatus = avalonPoolStatusObj?.state ||
@@ -3328,6 +3367,9 @@ class HomeMinerFleetCard extends HTMLElement {
     `;
 
     this._attachCardEventHandlers();
+    } catch (err) {
+      console.error('Error rendering HomeMinerFleetCard:', err);
+    }
   }
 
   _playVictoryFanfare() {
@@ -3642,7 +3684,9 @@ class HomeMinerFleetCard extends HTMLElement {
   }
 }
 
-customElements.define('home-miner-fleet-card', HomeMinerFleetCard);
+if (!customElements.get('home-miner-fleet-card')) {
+  customElements.define('home-miner-fleet-card', HomeMinerFleetCard);
+}
 if (!customElements.get('home-miner-card')) {
   customElements.define('home-miner-card', class extends HomeMinerFleetCard {});
 }
