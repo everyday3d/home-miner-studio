@@ -144,7 +144,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const padTop = 22;
     const padBottom = 34;
     const padLeft = 20;
-    const padRight = 70;
+    const padRight = 85;
     const plotW = width - padLeft - padRight;
     const plotH = height - padTop - padBottom;
 
@@ -185,7 +185,9 @@ class HomeMinerFleetCard extends HTMLElement {
 
     const fmtPrice = (val) => {
       if (val >= 1000) return '$' + Math.round(val).toLocaleString();
-      return '$' + val.toFixed(2);
+      if (val >= 1) return '$' + val.toFixed(2);
+      if (val >= 0.001) return '$' + val.toFixed(4);
+      return '$' + val.toFixed(6);
     };
 
     const midP = minP + rangeP / 2;
@@ -2122,40 +2124,63 @@ class HomeMinerFleetCard extends HTMLElement {
       ]
     };
 
-    let activeCoinPrice = 83467.0;
-    let activeChange24h = 1.64;
-    let activeCoinSymbol = 'BTC';
-    let activeCoinName = 'Bitcoin';
-    let activeCoinSign = '₿';
-    let activeHistory = defaultMarketPrices;
+    const availableCoins = new Set();
+    miners.forEach(m => { if (m.coin) availableCoins.add(m.coin.toUpperCase()); });
+    if (availableCoins.size === 0) availableCoins.add('WOJAK');
+
+    const preferredCoin = isSingleRigView && displayedMiners[0]?.coin
+      ? displayedMiners[0].coin.toUpperCase()
+      : (this._selectedCoin || (miners[0]?.coin ? miners[0].coin.toUpperCase() : 'WOJAK'));
+
+    let activeCoinPrice = 0.00002513;
+    let activeChange24h = 2.39;
+    let activeCoinSymbol = preferredCoin;
+    let activeCoinName = preferredCoin === 'WOJAK' ? 'Wojak' : 'Bitcoin';
+    let activeCoinSign = preferredCoin === 'WOJAK' ? '🎭' : '₿';
+    let activeHistory = JSON.parse(JSON.stringify(defaultMarketPrices));
     let activeStats = {
-      '24h': { high: 84120, low: 81990, change_pct: 1.64 },
-      '7d': { high: 84120, low: 78900, change_pct: 5.38 },
-      '30d': { high: 84120, low: 75800, change_pct: 9.12 },
-      '1y': { high: 84120, low: 58200, change_pct: 34.6 }
+      '24h': { high: 0.000026, low: 0.000024, change_pct: 2.39 },
+      '7d': { high: 0.000026, low: 0.000023, change_pct: 4.17 },
+      '30d': { high: 0.000027, low: 0.000022, change_pct: 8.70 },
+      '1y': { high: 0.000030, low: 0.000018, change_pct: 31.58 }
     };
 
+    let matchingSensor = null;
     Object.keys(states).forEach(eid => {
-      if ((eid.endsWith('_coin_price_usd') || eid.endsWith('_bitcoin_price')) && states[eid]?.state) {
-        const p = parseFloat(states[eid].state);
-        if (!isNaN(p) && p > 0) activeCoinPrice = p;
-        const attrs = states[eid].attributes || {};
-        if (attrs.coin) activeCoinSymbol = attrs.coin;
-        if (attrs.coin_name) activeCoinName = attrs.coin_name;
-        if (attrs.coin_sign) activeCoinSign = attrs.coin_sign;
-        if (attrs.change_24h_pct !== undefined) activeChange24h = parseFloat(attrs.change_24h_pct);
-        if (attrs.history_24h && attrs.history_24h.length) activeHistory['24h'] = attrs.history_24h;
-        if (attrs.history_7d && attrs.history_7d.length) activeHistory['7d'] = attrs.history_7d;
-        if (attrs.history_30d && attrs.history_30d.length) activeHistory['30d'] = attrs.history_30d;
-        if (attrs.history_1y && attrs.history_1y.length) activeHistory['1y'] = attrs.history_1y;
-        if (attrs.market_stats && attrs.market_stats['24h']) activeStats = attrs.market_stats;
+      if ((eid.endsWith('_coin_price_usd') || eid.endsWith('_coin_price') || eid.endsWith('_bitcoin_price')) && states[eid]?.state) {
+        const c = (states[eid]?.attributes?.coin || (eid.includes('bitcoin') ? 'BTC' : '')).toUpperCase();
+        if (c === preferredCoin) {
+          matchingSensor = states[eid];
+        } else if (!matchingSensor) {
+          matchingSensor = states[eid];
+        }
       }
     });
 
+    if (matchingSensor) {
+      const p = parseFloat(matchingSensor.state);
+      if (!isNaN(p) && p > 0) activeCoinPrice = p;
+      const attrs = matchingSensor.attributes || {};
+      if (attrs.coin) activeCoinSymbol = attrs.coin.toUpperCase();
+      if (attrs.coin_name) activeCoinName = attrs.coin_name;
+      if (attrs.coin_sign) activeCoinSign = attrs.coin_sign;
+      if (attrs.change_24h_pct !== undefined) activeChange24h = parseFloat(attrs.change_24h_pct);
+      if (attrs.history_24h && attrs.history_24h.length) activeHistory['24h'] = attrs.history_24h;
+      if (attrs.history_7d && attrs.history_7d.length) activeHistory['7d'] = attrs.history_7d;
+      if (attrs.history_30d && attrs.history_30d.length) activeHistory['30d'] = attrs.history_30d;
+      if (attrs.history_1y && attrs.history_1y.length) activeHistory['1y'] = attrs.history_1y;
+      if (attrs.market_stats && attrs.market_stats['24h']) activeStats = attrs.market_stats;
+    }
+
+    if (activeCoinSymbol === 'WOJAK' || activeCoinSymbol === 'WJK') {
+      activeCoinSign = '🎭';
+      activeCoinName = 'Wojak';
+    }
+
     const activeTf = this._selectedTimeframe || '24h';
-    const tfPoints = activeHistory[activeTf] || activeHistory['24h'];
+    const tfPoints = activeHistory[activeTf] || activeHistory['24h'] || [];
     this._currentTfPoints = tfPoints;
-    const currentStats = activeStats[activeTf] || activeStats['24h'] || { high: activeCoinPrice * 1.02, low: activeCoinPrice * 0.98, change_pct: activeChange24h };
+    const currentStats = activeStats[activeTf] || activeStats['24h'] || { high: activeCoinPrice * 1.05, low: activeCoinPrice * 0.95, change_pct: activeChange24h };
     const chartSvgHtml = this._generateMarketChartSvg(tfPoints, activeTf, activeCoinPrice, currentStats.change_pct);
 
     // Aggregate Mining Pool Telemetry across Fleet
@@ -2325,6 +2350,68 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="gauge-footer-pill" style="color: ${tempStrokeColor};">${tempStatusLabel}</div>
         </div>
 
+      </div>
+
+      <!-- MARKET INTELLIGENCE CONSOLE & HISTORICAL COIN PRICE CHART -->
+      <div class="glass-card cyan-glow market-intelligence-console" style="margin-bottom: 24px; padding: 20px 22px;">
+        <div class="market-console-header">
+          <div class="market-title-cluster">
+            <span style="font-size: 24px;">${activeCoinSign}</span>
+            <div>
+              <div style="font-size: 15px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
+                <span>${activeCoinName} (${activeCoinSymbol}) Market Intelligence</span>
+                ${availableCoins.size > 1 ? `
+                  <div style="display: flex; gap: 4px; margin-left: 8px;">
+                    ${Array.from(availableCoins).map(c => `
+                      <button class="timeframe-btn coin-toggle-btn ${c === activeCoinSymbol ? 'active' : ''}" data-coin="${c}" style="padding: 2px 8px; font-size: 10px;">
+                        ${c}
+                      </button>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
+                Real-Time Coin Valuation & Historical Performance (15m Polling)
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeframe Selector Pills (Day, Week, Month, Year) -->
+          <div class="timeframe-pill-rack">
+            <button class="timeframe-btn ${activeTf === '24h' ? 'active' : ''}" data-tf="24h">24H</button>
+            <button class="timeframe-btn ${activeTf === '7d' ? 'active' : ''}" data-tf="7d">7D</button>
+            <button class="timeframe-btn ${activeTf === '30d' ? 'active' : ''}" data-tf="30d">30D</button>
+            <button class="timeframe-btn ${activeTf === '1y' ? 'active' : ''}" data-tf="1y">1Y</button>
+          </div>
+        </div>
+
+        <!-- Live Price & Period High/Low Stats -->
+        <div class="market-hero-stats-row" style="margin-top: 14px; margin-bottom: 12px;">
+          <div class="market-live-price">
+            ${activeCoinPrice >= 1 ? '$' + Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '$' + Number(activeCoinPrice).toFixed(6)}
+          </div>
+          <div class="coin-change-pill ${currentStats.change_pct >= 0 ? 'pos' : 'neg'}" style="font-size: 12px; padding: 4px 10px;">
+            ${currentStats.change_pct >= 0 ? '▲ +' : '▼ '}${Number(currentStats.change_pct).toFixed(2)}% (${activeTf.toUpperCase()})
+          </div>
+          <div class="market-stat-chip">
+            <span>High:</span>
+            <span style="color: #34d399; font-weight: 700;">${currentStats.high >= 1 ? '$' + Number(currentStats.high).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.high).toFixed(6)}</span>
+          </div>
+          <div class="market-stat-chip">
+            <span>Low:</span>
+            <span style="color: #f43f5e; font-weight: 700;">${currentStats.low >= 1 ? '$' + Number(currentStats.low).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.low).toFixed(6)}</span>
+          </div>
+        </div>
+
+        <!-- Interactive SVG Chart Stage -->
+        <div class="chart-stage">
+          ${chartSvgHtml}
+          <div id="chart-tooltip" class="chart-scrubber-tooltip" style="display: none;">
+            <span id="tooltip-price" style="color: #38bdf8; font-weight: 700;">$0.00</span>
+            <span style="color: #64748b;">•</span>
+            <span id="tooltip-time" style="color: #94a3b8;">--</span>
+          </div>
+        </div>
       </div>
 
       <!-- MINING POOL TELEMETRY RACK -->
@@ -2760,10 +2847,10 @@ class HomeMinerFleetCard extends HTMLElement {
         const pt = pts[idx];
         if (!pt) return;
 
-        const plotX = 20 + pct * (800 - 20 - 70);
+        const plotX = 20 + pct * (800 - 20 - 85);
         const minP = Math.min(...pts.map(p => p.p));
         const maxP = Math.max(...pts.map(p => p.p));
-        const rangeP = Math.max(1, maxP - minP);
+        const rangeP = maxP > minP ? (maxP - minP) : (maxP > 0 ? maxP * 0.08 : 1);
         const plotY = 22 + (180 - 22 - 34) - ((pt.p - minP) / rangeP) * (180 - 22 - 34);
 
         scrubberGroup.style.display = 'inline';
@@ -2773,7 +2860,8 @@ class HomeMinerFleetCard extends HTMLElement {
         scrubberDot.setAttribute('cy', plotY);
 
         tooltip.style.display = 'flex';
-        tooltipPrice.textContent = '$' + Number(pt.p).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const numP = Number(pt.p || 0);
+        tooltipPrice.textContent = numP >= 1 ? '$' + numP.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '$' + numP.toFixed(6);
         const d = new Date(pt.t * 1000);
         tooltipTime.textContent = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       });
@@ -2783,6 +2871,18 @@ class HomeMinerFleetCard extends HTMLElement {
         tooltip.style.display = 'none';
       });
     }
+
+    // Coin Toggle Buttons
+    const coinBtns = this.shadowRoot.querySelectorAll('.coin-toggle-btn[data-coin]');
+    coinBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = btn.getAttribute('data-coin');
+        if (c && c !== this._selectedCoin) {
+          this._selectedCoin = c;
+          this.render();
+        }
+      });
+    });
 
     // Action Buttons (Reboot, Restart)
     const actionBtns = this.shadowRoot.querySelectorAll('button[data-action]');
