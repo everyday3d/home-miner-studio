@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-13
+
 ### Added
+- **Single-Miner Filtering & Full Dashboard Aero-Glass Unification**:
+  - Added `miner_type` and `miner_host` configuration properties to `HomeMinerFleetCard` enabling dedicated single-rig workstation views on distinct Lovelace dashboard tabs.
+  - Unified the entire Home Assistant `crypto-miners` dashboard (Fleet Studio, Bitaxe Studio, and Avalon Nano 3S tabs) in full aero-glass styling with dedicated radial ring gauges.
+  - Injected interactive Market Intelligence Console into card DOM with live sub-penny price formatting, period stats, multi-coin toggle pills (`[🎭 WOJAK]`, `[₿ BTC]`), and timeframe selection (`24H`, `7D`, `30D`, `1Y`).
 - **Interactive Auto-Import Discovery Modal & Hardware Illustrations** ([#11](https://github.com/everyday3d/home-miner-studio/issues/11)):
   - Replaced blind auto-import service invocation on "⚡ 1-Click Discovery" with an interactive Glassmorphic modal displaying all detected LAN hardware.
   - Rendered custom vector SVG hardware graphics for Bitaxe, Canaan Avalon Nano, Antminer / Whatsminer, and NerdMiner with real-time selection checkmarks.

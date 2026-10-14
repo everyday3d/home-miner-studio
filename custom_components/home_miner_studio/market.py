@@ -112,7 +112,7 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
     coin_def = COIN_DEFINITIONS.get(coin_clean, {"id": coin_clean.lower(), "name": coin_clean, "sign": "🪙"})
     coin_id = coin_def["id"]
 
-    headers = {"User-Agent": "HomeMinerStudio/0.5.0"}
+    headers = {"User-Agent": "HomeMinerStudio/0.5.2"}
     price = 0.0
     change_24h = 0.0
     raw_24h_prices: list[list[float]] = []
