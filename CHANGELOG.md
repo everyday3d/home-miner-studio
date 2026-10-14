@@ -14,12 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
 
 ### Added
-- **Automated Lovelace Resource Cache-Busting Pipeline & CodeGraph Synchronization** ([#25](https://github.com/everyday3d/home-miner-studio/issues/25)):
-  - Built automated deployment pipeline (`scripts/deploy_ha.mjs` and `scripts/deploy_ha.ps1`) that copies card bundles to both `custom_components/` and `www/` network shares, updates Home Assistant's in-memory Lovelace resource registry over WebSocket (`lovelace/resources/update`) with a live timestamp parameter (`?v=<timestamp>`), and automatically triggers `codegraph sync` to refresh codebase symbol intelligence on every push.
+- **Automated Lovelace Resource Cache-Busting Pipeline** ([#25](https://github.com/everyday3d/home-miner-studio/issues/25)):
+  - Built automated deployment pipeline (`scripts/deploy_ha.mjs` and `scripts/deploy_ha.ps1`) that copies card bundles to both `custom_components/` and `www/` network shares, and updates Home Assistant's in-memory Lovelace resource registry over WebSocket (`lovelace/resources/update`) with a live timestamp parameter (`?v=<timestamp>`).
   - Implemented Python-side automatic Lovelace resource synchronization in `custom_components/home_miner_studio/__init__.py`: on integration startup, automatically inspects `lovelace.resources` and updates the registered resource URL with manifest version + file mtime query string (`?v=<version>.<mtime>`).
   - Added `home_miner_studio.bust_card_cache` Home Assistant service allowing users and dashboard scripts to trigger an instant resource cache-bust on demand.
   - Integrated in-browser startup build banner (`console.info`) and a clickable `v0.5.3-rpg 🔄` hard cache purge link on the card's top header (plus `Shift+Click` on the Refresh Fleet button) which purges `window.caches`, calls the cache bust service, and performs a clean hard page reload.
-  - Updated workspace rules (`AGENTS.md`, `GEMINI.md`) mandating execution of the automated deploy & CodeGraph sync pipeline on every local push.
+  - Updated workspace rules mandating execution of the automated deploy pipeline on every local push.
 - **Prestige Theme Engine & 5 Milestone Aesthetic Glass Themes (Lvl 100-500 Unlocks)** ([#23](https://github.com/everyday3d/home-miner-studio/issues/23)):
   - Built the **Prestige Theme Engine** which automatically unlocks when the fleet reaches **Level 100 (*Volt Tamer*)**, featuring a teaser progress bar before Level 100 and a 6-theme luxury selection console once unlocked.
   - Designed 5 elegant, shiny, and enticing milestone aesthetic glass finishes unlocked at each 100th level:
