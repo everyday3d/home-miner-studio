@@ -2021,8 +2021,8 @@ class HomeMinerFleetCard extends HTMLElement {
       const avalonSavedPool = this._minerPools['192.168.1.154'] || localStorage.getItem('miner_pool_192.168.1.154');
       const avalonSavedWallet = this._minerWallets['192.168.1.154'] || localStorage.getItem('miner_wallet_192.168.1.154');
       const avalonSavedCoin = this._minerCoins['192.168.1.154'] || localStorage.getItem('miner_coin_192.168.1.154');
-      const avalonCoin = avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
       const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
+      const avalonCoin = avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
       const poolStatus = avalonPoolStatusObj?.state ||
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
       const avalonPoolProvider = avalonSavedPool || avalonPoolStatusObj?.attributes?.pool_provider || (cleanPoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
