@@ -2059,13 +2059,26 @@ class HomeMinerFleetCard extends HTMLElement {
       });
     }
 
-    // Calculate Fleet Totals
+    const filterType = (this._config?.miner_type || '').toLowerCase();
+    const filterHost = this._config?.miner_host || '';
+    const isSingleRigView = !!(filterType || filterHost);
+
+    let displayedMiners = miners;
+    if (filterType) {
+      displayedMiners = displayedMiners.filter(m => (m.type || '').toLowerCase().includes(filterType) || (m.name || '').toLowerCase().includes(filterType));
+    }
+    if (filterHost) {
+      displayedMiners = displayedMiners.filter(m => m.host === filterHost);
+    }
+
+    // Calculate Totals (for displayed rigs if filtered, or full fleet if overview)
     let totalHashThs = 0;
     let totalWatts = 0;
     let tempSum = 0;
     let tempCount = 0;
 
-    miners.forEach(m => {
+    const rigsForTotals = isSingleRigView ? displayedMiners : miners;
+    rigsForTotals.forEach(m => {
       totalHashThs += m.ths;
       totalWatts += m.watts;
       if (m.temp > 0) {
@@ -2212,11 +2225,11 @@ class HomeMinerFleetCard extends HTMLElement {
 
     // SVG Radial Arc Metrics
     // Circumference = 2 * PI * 42 = 263.89
-    const hashTarget = 7.0;
+    const hashTarget = isSingleRigView ? (totalHashThs > 2.5 ? 6.0 : 2.0) : 7.0;
     const hashOffset = Math.max(0, 264 - Math.min(1, totalHashThs / hashTarget) * 264);
     const hashPct = Math.round((totalHashThs / hashTarget) * 100);
 
-    const pwrTarget = 150.0;
+    const pwrTarget = isSingleRigView ? (totalWatts > 50 ? 150.0 : 35.0) : 150.0;
     const pwrOffset = Math.max(0, 264 - Math.min(1, totalWatts / pwrTarget) * 264);
 
     const tempTarget = 80.0;
@@ -2224,20 +2237,18 @@ class HomeMinerFleetCard extends HTMLElement {
     const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
     const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
 
-    
-
     const cardRoot = this.shadowRoot.querySelector('#card-root');
     if (!cardRoot) return;
     cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
         <div class="brand-cluster">
-          <div class="brand-icon-box">⛏</div>
+          <div class="brand-icon-box">${isSingleRigView ? (filterType.includes('bitaxe') ? '⚡' : '🖥️') : '⛏'}</div>
           <div>
-            <div class="brand-title">Home Miner Studio</div>
+            <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${miners.length} Active ASIC Blades
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'}
             </div>
           </div>
         </div>
@@ -2252,9 +2263,9 @@ class HomeMinerFleetCard extends HTMLElement {
       <!-- 3 VISUAL HERO RING GAUGES -->
       <div class="hero-orbit-grid">
         
-        <!-- 1: Fleet Hashrate -->
+        <!-- 1: Hashrate Gauge -->
         <div class="glass-card cyan-glow gauge-card">
-          <div class="gauge-header-label">Fleet Hashrate</div>
+          <div class="gauge-header-label">${isSingleRigView ? 'Miner Hashrate' : 'Fleet Hashrate'}</div>
           <div class="gauge-wrapper">
             <svg class="gauge-svg" viewBox="0 0 100 100">
               <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
@@ -2272,9 +2283,9 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="gauge-footer-pill">Rated: ${hashTarget.toFixed(1)} TH/s Target (${hashPct}%)</div>
         </div>
 
-        <!-- 2: Total Electrical Load -->
+        <!-- 2: Electrical Load -->
         <div class="glass-card amber-glow gauge-card">
-          <div class="gauge-header-label">Total Electrical Load</div>
+          <div class="gauge-header-label">${isSingleRigView ? 'Electrical Load' : 'Total Electrical Load'}</div>
           <div class="gauge-wrapper">
             <svg class="gauge-svg" viewBox="0 0 100 100">
               <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
@@ -2294,9 +2305,9 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
 
-        <!-- 3: Average ASIC Temperature -->
+        <!-- 3: Temperature -->
         <div class="glass-card gauge-card" style="border-color: rgba(52, 211, 153, 0.28); box-shadow: 0 16px 40px -10px rgba(0,0,0,0.5), 0 0 30px -8px rgba(52, 211, 153, 0.12);">
-          <div class="gauge-header-label">Average Thermal Core</div>
+          <div class="gauge-header-label">${isSingleRigView ? 'Thermal Core' : 'Average Thermal Core'}</div>
           <div class="gauge-wrapper">
             <svg class="gauge-svg" viewBox="0 0 100 100">
               <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
@@ -2372,10 +2383,16 @@ class HomeMinerFleetCard extends HTMLElement {
       </div>
 
       <!-- HARDWARE SECTION -->
-      <div class="hardware-section-title">Hardware Workstations</div>
+      <div class="hardware-section-title">${isSingleRigView ? 'Workstation Controls & Telemetry' : 'Hardware Workstations'}</div>
 
       <div>
-        ${miners.map(miner => {
+        ${displayedMiners.length === 0 ? `
+          <div class="glass-card" style="text-align: center; padding: 40px; color: #94a3b8;">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+            <div style="font-size: 16px; font-weight: 600; color: #f8fafc;">No matching miner found for this view</div>
+            <div style="font-size: 13px; margin-top: 6px;">Filter: ${filterType || filterHost}</div>
+          </div>
+        ` : displayedMiners.map(miner => {
           const isBitaxe = miner.type === 'bitaxe';
           const chipTemp = miner.temp;
           const fanRpm = miner.fan;
@@ -2822,10 +2839,23 @@ class HomeMinerFleetCard extends HTMLElement {
 }
 
 customElements.define('home-miner-fleet-card', HomeMinerFleetCard);
+if (!customElements.get('home-miner-card')) {
+  customElements.define('home-miner-card', class extends HomeMinerFleetCard {});
+}
+if (!customElements.get('home-miner-studio-card')) {
+  customElements.define('home-miner-studio-card', class extends HomeMinerFleetCard {});
+}
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'home-miner-fleet-card',
   name: 'Home Miner Fleet Studio Card',
   description: 'Luminous Glassmorphism crypto mining dashboard with real-time Bitaxe AxeOS overclocking and Canaan Avalon Nano telemetry.',
+  preview: true,
+});
+window.customCards.push({
+  type: 'home-miner-card',
+  name: 'Home Miner Studio Card',
+  description: 'Single-miner or fleet crypto mining dashboard with aero-glass styling.',
   preview: true,
 });
