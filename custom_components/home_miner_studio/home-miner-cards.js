@@ -47,6 +47,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._lastYieldFetch = 0;
     this._fetchingPrices = false;
     this._currentMiners = [];
+    this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
   }
 
   static getStubConfig() {
@@ -2061,6 +2062,86 @@ class HomeMinerFleetCard extends HTMLElement {
           color: #cbd5e1;
         }
 
+        /* --- AERO-GLASS SEGMENTED WORKSPACE TAB BAR --- */
+        .workspace-tab-bar {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px;
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(24px) saturate(160%);
+          -webkit-backdrop-filter: blur(24px) saturate(160%);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 14px;
+          margin-bottom: 22px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+          position: sticky;
+          top: 10px;
+          z-index: 50;
+        }
+
+        .tab-pill {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 700;
+          font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+          color: #94a3b8;
+          background: transparent;
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          user-select: none;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .tab-pill:hover {
+          color: #f8fafc;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-pill.active {
+          color: #ffffff;
+          background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5));
+          border: 1px solid #38bdf8;
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-pill .tab-badge {
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: rgba(56, 189, 248, 0.2);
+          color: #38bdf8;
+          font-weight: 700;
+        }
+
+        .tab-pane {
+          animation: tabFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes tabFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .workstations-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+          gap: 16px;
+        }
+
+        .workstations-grid .glass-card {
+          margin-bottom: 0;
+        }
+
         /* Hardware Pod Grid */
         .hardware-section-title {
           font-size: 12px;
@@ -3507,6 +3588,12 @@ class HomeMinerFleetCard extends HTMLElement {
     // Sort by netDailyProfit descending
     yieldRows.sort((a, b) => b.netDailyProfit - a.netDailyProfit);
 
+    const activeTab = this._activeTab || 'hardware';
+    const topYieldCoin = yieldRows[0]?.coin || 'WOJAK';
+    const radarOddsBadge = isBlockSolved
+      ? '🎉 WIN!'
+      : (expectedDays < 365 ? (expectedDays.toFixed(1) + 'd Odds') : (expectedYears.toFixed(0) + 'y Odds'));
+
     const cardRoot = this.shadowRoot.querySelector('#card-root');
     if (!cardRoot) return;
     cardRoot.innerHTML = `
@@ -3597,70 +3684,104 @@ class HomeMinerFleetCard extends HTMLElement {
 
       </div>
 
-      <!-- MARKET INTELLIGENCE CONSOLE & HISTORICAL COIN PRICE CHART -->
-      <div class="glass-card cyan-glow market-intelligence-console" style="margin-bottom: 24px; padding: 20px 22px;">
-        <div class="market-console-header">
-          <div class="market-title-cluster">
-            <span style="font-size: 24px;">${activeCoinSign}</span>
-            <div>
-              <div style="font-size: 15px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
-                <span>${activeCoinName} (${activeCoinSymbol}) Market Intelligence</span>
-                ${availableCoins.size > 1 ? `
-                  <div style="display: flex; gap: 4px; margin-left: 8px;">
-                    ${Array.from(availableCoins).map(c => `
-                      <button class="timeframe-btn coin-toggle-btn ${c === activeCoinSymbol ? 'active' : ''}" data-coin="${c}" style="padding: 2px 8px; font-size: 10px;">
-                        ${c}
-                      </button>
-                    `).join('')}
-                  </div>
-                ` : ''}
-              </div>
-              <div style="font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
-                Real-Time Coin Valuation & Historical Performance (15m Polling)
-              </div>
-            </div>
-          </div>
-
-          <!-- Timeframe Selector Pills (Day, Week, Month, Year) -->
-          <div class="timeframe-pill-rack">
-            <button class="timeframe-btn ${activeTf === '24h' ? 'active' : ''}" data-tf="24h">24H</button>
-            <button class="timeframe-btn ${activeTf === '7d' ? 'active' : ''}" data-tf="7d">7D</button>
-            <button class="timeframe-btn ${activeTf === '30d' ? 'active' : ''}" data-tf="30d">30D</button>
-            <button class="timeframe-btn ${activeTf === '1y' ? 'active' : ''}" data-tf="1y">1Y</button>
-          </div>
+      <!-- AERO-GLASS SEGMENTED WORKSPACE TAB BAR -->
+      <div class="workspace-tab-bar">
+        <div class="tab-pill ${activeTab === 'hardware' ? 'active' : ''}" data-tab="hardware">
+          <span>🖥️</span>
+          <span>Fleet & Hardware</span>
+          <span class="tab-badge">${displayedMiners.length}</span>
         </div>
-
-        <!-- Live Price & Period High/Low Stats -->
-        <div class="market-hero-stats-row" style="margin-top: 14px; margin-bottom: 12px;">
-          <div class="market-live-price">
-            ${activeCoinPrice >= 1 ? '$' + Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '$' + Number(activeCoinPrice).toFixed(6)}
-          </div>
-          <div class="coin-change-pill ${currentStats.change_pct >= 0 ? 'pos' : 'neg'}" style="font-size: 12px; padding: 4px 10px;">
-            ${currentStats.change_pct >= 0 ? '▲ +' : '▼ '}${Number(currentStats.change_pct).toFixed(2)}% (${activeTf.toUpperCase()})
-          </div>
-          <div class="market-stat-chip">
-            <span>High:</span>
-            <span style="color: #34d399; font-weight: 700;">${currentStats.high >= 1 ? '$' + Number(currentStats.high).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.high).toFixed(6)}</span>
-          </div>
-          <div class="market-stat-chip">
-            <span>Low:</span>
-            <span style="color: #f43f5e; font-weight: 700;">${currentStats.low >= 1 ? '$' + Number(currentStats.low).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.low).toFixed(6)}</span>
-          </div>
+        <div class="tab-pill ${activeTab === 'yield' ? 'active' : ''}" data-tab="yield">
+          <span>⚡</span>
+          <span>Yield Matrix & Stratum</span>
+          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">TOP: ${topYieldCoin} 👑</span>
         </div>
-
-        <!-- Interactive SVG Chart Stage -->
-        <div class="chart-stage">
-          ${chartSvgHtml}
-          <div id="chart-tooltip" class="chart-scrubber-tooltip" style="display: none;">
-            <span id="tooltip-price" style="color: #38bdf8; font-weight: 700;">$0.00</span>
-            <span style="color: #64748b;">•</span>
-            <span id="tooltip-time" style="color: #94a3b8;">--</span>
-          </div>
+        <div class="tab-pill ${activeTab === 'radar' ? 'active' : ''}" data-tab="radar">
+          <span>🎯</span>
+          <span>Solo Block Radar</span>
+          <span class="tab-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399;">${radarOddsBadge}</span>
+        </div>
+        <div class="tab-pill ${activeTab === 'market' ? 'active' : ''}" data-tab="market">
+          <span>📈</span>
+          <span>Market Intelligence</span>
+          <span class="tab-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">${currentStats.change_pct >= 0 ? '+' : ''}${currentStats.change_pct.toFixed(1)}%</span>
+        </div>
+        <div class="tab-pill ${activeTab === 'all' ? 'active' : ''}" data-tab="all">
+          <span>🌐</span>
+          <span>Overview (All)</span>
         </div>
       </div>
 
+      ${(activeTab === 'market' || activeTab === 'all') ? `
+      <!-- MARKET INTELLIGENCE CONSOLE & HISTORICAL COIN PRICE CHART -->
+      <div class="tab-pane">
+        <div class="glass-card cyan-glow market-intelligence-console" style="margin-bottom: 24px; padding: 20px 22px;">
+          <div class="market-console-header">
+            <div class="market-title-cluster">
+              <span style="font-size: 24px;">${activeCoinSign}</span>
+              <div>
+                <div style="font-size: 15px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
+                  <span>${activeCoinName} (${activeCoinSymbol}) Market Intelligence</span>
+                  ${availableCoins.size > 1 ? `
+                    <div style="display: flex; gap: 4px; margin-left: 8px;">
+                      ${Array.from(availableCoins).map(c => `
+                        <button class="timeframe-btn coin-toggle-btn ${c === activeCoinSymbol ? 'active' : ''}" data-coin="${c}" style="padding: 2px 8px; font-size: 10px;">
+                          ${c}
+                        </button>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+                <div style="font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
+                  Real-Time Coin Valuation & Historical Performance (15m Polling)
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeframe Selector Pills (Day, Week, Month, Year) -->
+            <div class="timeframe-pill-rack">
+              <button class="timeframe-btn ${activeTf === '24h' ? 'active' : ''}" data-tf="24h">24H</button>
+              <button class="timeframe-btn ${activeTf === '7d' ? 'active' : ''}" data-tf="7d">7D</button>
+              <button class="timeframe-btn ${activeTf === '30d' ? 'active' : ''}" data-tf="30d">30D</button>
+              <button class="timeframe-btn ${activeTf === '1y' ? 'active' : ''}" data-tf="1y">1Y</button>
+            </div>
+          </div>
+
+          <!-- Live Price & Period High/Low Stats -->
+          <div class="market-hero-stats-row" style="margin-top: 14px; margin-bottom: 12px;">
+            <div class="market-live-price">
+              ${activeCoinPrice >= 1 ? '$' + Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '$' + Number(activeCoinPrice).toFixed(6)}
+            </div>
+            <div class="coin-change-pill ${currentStats.change_pct >= 0 ? 'pos' : 'neg'}" style="font-size: 12px; padding: 4px 10px;">
+              ${currentStats.change_pct >= 0 ? '▲ +' : '▼ '}${Number(currentStats.change_pct).toFixed(2)}% (${activeTf.toUpperCase()})
+            </div>
+            <div class="market-stat-chip">
+              <span>High:</span>
+              <span style="color: #34d399; font-weight: 700;">${currentStats.high >= 1 ? '$' + Number(currentStats.high).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.high).toFixed(6)}</span>
+            </div>
+            <div class="market-stat-chip">
+              <span>Low:</span>
+              <span style="color: #f43f5e; font-weight: 700;">${currentStats.low >= 1 ? '$' + Number(currentStats.low).toLocaleString(undefined, {maximumFractionDigits: 2}) : '$' + Number(currentStats.low).toFixed(6)}</span>
+            </div>
+          </div>
+
+          <!-- Interactive SVG Chart Stage -->
+          <div class="chart-stage">
+            ${chartSvgHtml}
+            <div id="chart-tooltip" class="chart-scrubber-tooltip" style="display: none;">
+              <span id="tooltip-price" style="color: #38bdf8; font-weight: 700;">$0.00</span>
+              <span style="color: #64748b;">•</span>
+              <span id="tooltip-time" style="color: #94a3b8;">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      ${(activeTab === 'radar' || activeTab === 'all') ? `
       <!-- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE CONSOLE -->
-      <div class="glass-card amber-glow lottery-radar-console">
+      <div class="tab-pane">
+        <div class="glass-card amber-glow lottery-radar-console">
         <div class="lottery-header-row">
           <div class="lottery-title-cluster">
             <div class="lottery-icon-box">${selectedProfile.sign || '🎯'}</div>
@@ -3829,9 +3950,13 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
       </div>
+      </div>
+      ` : ''}
 
+      ${(activeTab === 'hardware' || activeTab === 'all') ? `
       <!-- MINING POOL TELEMETRY RACK -->
-      <div class="glass-card cyan-glow" style="margin-bottom: 24px; padding: 18px 22px;">
+      <div class="tab-pane">
+        <div class="glass-card cyan-glow" style="margin-bottom: 24px; padding: 18px 22px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 16px;">🏊</span>
@@ -3884,9 +4009,13 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
       </div>
+      </div>
+      ` : ''}
 
+      ${(activeTab === 'yield' || activeTab === 'all') ? `
       <!-- MULTI-COIN LIVE YIELD MATRIX & 1-CLICK STRATUM SWITCHER -->
-      <div class="glass-card yield-matrix-console">
+      <div class="tab-pane">
+        <div class="glass-card yield-matrix-console">
         <div class="yield-header-row">
           <div class="yield-title-cluster">
             <div class="yield-icon-box">⚡</div>
@@ -3985,11 +4114,15 @@ class HomeMinerFleetCard extends HTMLElement {
           </table>
         </div>
       </div>
+      </div>
+      ` : ''}
 
+      ${(activeTab === 'hardware' || activeTab === 'all') ? `
       <!-- HARDWARE SECTION -->
-      <div class="hardware-section-title">${isSingleRigView ? 'Workstation Controls & Telemetry' : 'Hardware Workstations'}</div>
+      <div class="tab-pane">
+        <div class="hardware-section-title">${isSingleRigView ? 'Workstation Controls & Telemetry' : 'Hardware Workstations'}</div>
 
-      <div>
+        <div class="workstations-grid">
         ${displayedMiners.length === 0 ? `
           <div class="glass-card" style="text-align: center; padding: 40px; color: #94a3b8;">
             <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
@@ -4272,7 +4405,9 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
           `;
         }).join('')}
+        </div>
       </div>
+      ` : ''}
     `;
 
     this._attachCardEventHandlers();
@@ -4631,6 +4766,19 @@ class HomeMinerFleetCard extends HTMLElement {
       btn.addEventListener('click', () => {
         const coin = btn.getAttribute('data-coin') || '';
         this._openStratumModal('', coin);
+      });
+    });
+
+    // Workspace Tab Bar Navigation
+    const tabPills = this.shadowRoot.querySelectorAll('.tab-pill');
+    tabPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const tab = pill.getAttribute('data-tab');
+        if (tab && tab !== this._activeTab) {
+          this._activeTab = tab;
+          safeStorage.set('miner_active_tab', tab);
+          this.render();
+        }
       });
     });
   }

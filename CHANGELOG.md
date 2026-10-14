@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Tabbed Workspace Switcher & Zero-Scroll Aero-Glass Dashboard Layout** ([#18](https://github.com/everyday3d/home-miner-studio/issues/18)):
+  - Built segmented Aero-Glass **Workspace Tab Bar** (`.workspace-tab-bar`) featuring dynamic pill tabs with live telemetry badges:
+    - `🖥️ Fleet & Hardware` (live blade count badge)
+    - `⚡ Yield Matrix & Stratum` (live #1 top yield coin badge)
+    - `🎯 Solo Block Radar` (live expected time odds badge)
+    - `📈 Market Intelligence` (live 24h market move badge)
+    - `🌐 Overview (All)` (full kiosk-mode stacked layout)
+  - Pinned Header Command Bar, quick action buttons, and Hero Radial Gauges (Hashrate, Watts/Efficiency, Thermal Core) permanently across all workspaces.
+  - Implemented responsive 2-column `.workstations-grid` for desktop/tablet viewports to eliminate vertical scroll fatigue.
+  - Added smooth CSS transition animations (`tabFadeIn`) on tab changes with aero-glass frosted backgrounds (`backdrop-filter: blur(16px)`).
+  - Persisted user's active tab selection across page refreshes and browser sessions using `safeStorage` (`miner_active_tab`).
 - **Multi-Coin Live Yield Matrix & 1-Click Stratum Pool Switcher** ([#17](https://github.com/everyday3d/home-miner-studio/issues/17)):
   - Built real-time **Multi-Coin SHA-256 Profitability & Yield Leaderboard** matrix comparing top SHA-256 and micro-cap mineable cryptocurrencies (`WOJAK`, `BELLS`, `DGB`, `BCH`, `PEPE`, `BTC`) ranked dynamically by net 24h profitability (`#1 TOP YIELD 👑`).
   - Added real-time coin mathematics calculating network difficulty, block reward value, estimated daily coin production based on fleet hashrate, gross USD revenue, fleet power cost deduction, and net daily/monthly profit.
