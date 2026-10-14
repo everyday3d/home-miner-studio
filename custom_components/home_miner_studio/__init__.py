@@ -38,6 +38,7 @@ from .const import (
     SERVICE_RESTART_MINING,
     SERVICE_SET_AXEOS_PROFILE,
     SERVICE_SET_AXEOS_TUNING,
+    SERVICE_SWITCH_STRATUM,
     TYPE_BITAXE,
 )
 from .coordinator import MinerDataUpdateCoordinator
@@ -49,6 +50,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up Home Miner Studio component, APIs, and serve Lovelace card."""
     hass.data.setdefault(DOMAIN, {})
+    if hass.data[DOMAIN].get("_setup_complete"):
+        return True
+    hass.data[DOMAIN]["_setup_complete"] = True
 
     # Register static path to serve home-miner-cards.js
     card_path = os.path.join(os.path.dirname(__file__), CARD_FILE)
@@ -149,6 +153,41 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         SERVICE_REBOOT_MINER,
         handle_reboot_service,
         schema=vol.Schema({
+            vol.Optional("host"): cv.string,
+        }),
+    )
+
+    async def handle_switch_stratum_service(call: ServiceCall) -> None:
+        """Handle stratum pool switching service call."""
+        stratum_url = call.data.get("stratum_url")
+        stratum_port = call.data.get("stratum_port")
+        stratum_user = call.data.get("stratum_user")
+        stratum_password = call.data.get("stratum_password", "x")
+        coin = call.data.get("coin")
+
+        if not stratum_url or not stratum_port:
+            _LOGGER.error("switch_stratum requires stratum_url and stratum_port")
+            return
+
+        for coord in _get_target_coordinators(call):
+            await coord.async_switch_stratum(
+                stratum_url=stratum_url,
+                stratum_port=int(stratum_port),
+                stratum_user=stratum_user,
+                stratum_password=stratum_password,
+                coin=coin,
+            )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SWITCH_STRATUM,
+        handle_switch_stratum_service,
+        schema=vol.Schema({
+            vol.Required("stratum_url"): cv.string,
+            vol.Required("stratum_port"): cv.port,
+            vol.Optional("stratum_user"): cv.string,
+            vol.Optional("stratum_password", default="x"): cv.string,
+            vol.Optional("coin"): cv.string,
             vol.Optional("host"): cv.string,
         }),
     )
@@ -299,6 +338,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Home Miner Studio from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
+    if not hass.data[DOMAIN].get("_setup_complete"):
+        await async_setup(hass, {})
+
     coordinator = MinerDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
@@ -328,6 +370,14 @@ class HomeMinerMarketView(HomeAssistantView):
         """Return coin price and historical timeseries."""
         from .market import async_get_coin_market_data
         hass: HomeAssistant = request.app["hass"]
+        coins_param = request.query.get("coins")
+        if coins_param:
+            coin_list = [c.strip().upper() for c in coins_param.split(",") if c.strip()]
+            results = {}
+            for c in coin_list:
+                results[c] = await async_get_coin_market_data(hass, c)
+            return self.json({"coins": results})
+
         coin = request.query.get("coin", "BTC")
         data = await async_get_coin_market_data(hass, coin)
         return self.json(data)

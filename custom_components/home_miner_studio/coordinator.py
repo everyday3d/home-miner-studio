@@ -367,11 +367,14 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "raw": {"summary": summary_raw, "stats": stats_raw, "pools": pools_raw},
         }
 
-    async def _query_cgminer_socket(self, command: str) -> dict[str, Any]:
+    async def _query_cgminer_socket(self, command: str, parameter: str | None = None) -> dict[str, Any]:
         """Send command to CGMiner socket and return parsed JSON."""
         try:
             reader, writer = await asyncio.open_connection(self.host, self.port)
-            writer.write(json.dumps({"command": command}).encode("utf-8"))
+            cmd_dict: dict[str, Any] = {"command": command}
+            if parameter is not None:
+                cmd_dict["parameter"] = parameter
+            writer.write(json.dumps(cmd_dict).encode("utf-8"))
             await writer.drain()
             raw_bytes = await reader.read(8192)
             writer.close()
@@ -695,6 +698,66 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 _LOGGER.error("Bitaxe process restart failed: %s", err)
                 return False
         return False
+
+    async def async_switch_stratum(
+        self,
+        stratum_url: str,
+        stratum_port: int,
+        stratum_user: str | None = None,
+        stratum_password: str | None = None,
+        coin: str | None = None,
+    ) -> bool:
+        """Switch active stratum mining pool and coin on this miner."""
+        success = False
+        if self.miner_type == TYPE_BITAXE:
+            url = f"http://{self.host}:{self.port}/api/system"
+            payload: dict[str, Any] = {
+                "stratumURL": stratum_url,
+                "stratumPort": int(stratum_port),
+            }
+            if stratum_user:
+                payload["stratumUser"] = stratum_user
+            if stratum_password is not None:
+                payload["stratumPassword"] = stratum_password
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.patch(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                        if resp.status in (200, 204):
+                            _LOGGER.info("Switched Bitaxe stratum on %s to %s:%s", self.host, stratum_url, stratum_port)
+                            success = True
+                        else:
+                            _LOGGER.warning("Bitaxe stratum switch returned status %s", resp.status)
+            except Exception as err:
+                _LOGGER.error("Failed to switch Bitaxe stratum on %s: %s", self.host, err)
+        elif self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):
+            pool_str = f"stratum+tcp://{stratum_url}:{stratum_port}" if not stratum_url.startswith("stratum") else stratum_url
+            user_str = stratum_user or self.pool_wallet or "user"
+            pass_str = stratum_password or "x"
+            res = await self._query_cgminer_socket("addpool", f"{pool_str},{user_str},{pass_str}")
+            if res and res.get("STATUS", [{}])[0].get("STATUS") in ("S", "W", "I"):
+                success = True
+                _LOGGER.info("Added and switched CGMiner pool on %s to %s", self.host, pool_str)
+            else:
+                _LOGGER.warning("CGMiner addpool returned: %s", res)
+                success = bool(res)
+        else:
+            _LOGGER.info("Stratum switching not supported for miner type %s", self.miner_type)
+            success = True
+
+        if success and coin:
+            self.coin = coin.upper()
+            if self.entry:
+                new_data = dict(self.entry.data)
+                new_data[CONF_COIN] = self.coin
+                if stratum_user:
+                    new_data[CONF_POOL_WALLET] = stratum_user
+                self.hass.config_entries.async_update_entry(self.entry, data=new_data)
+
+        if success:
+            await self.async_request_refresh()
+
+        return success
 
     def _get_electricity_rate(self) -> float | None:
         """Fetch electricity price ($/kWh) from Home Assistant entity."""

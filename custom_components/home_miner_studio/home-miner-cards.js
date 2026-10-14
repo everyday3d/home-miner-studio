@@ -43,6 +43,10 @@ class HomeMinerFleetCard extends HTMLElement {
     this._minerPools = {};
     this._minerWallets = {};
     this._minerCoins = {};
+    this._liveCoinPrices = {};
+    this._lastYieldFetch = 0;
+    this._fetchingPrices = false;
+    this._currentMiners = [];
   }
 
   static getStubConfig() {
@@ -633,6 +637,184 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 8px;
         }
 
+        /* --- MULTI-COIN LIVE YIELD MATRIX & STRATUM SWITCHER --- */
+        .yield-matrix-console {
+          margin-bottom: 24px;
+          padding: 20px 22px;
+          border: 1px solid rgba(56, 189, 248, 0.25);
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(8, 47, 73, 0.45));
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-radius: 16px;
+          position: relative;
+          overflow: hidden;
+        }
+        .yield-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+        .yield-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .yield-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(56, 189, 248, 0.15);
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+        .yield-title {
+          font-size: 15px;
+          font-weight: 800;
+          color: #f8fafc;
+          letter-spacing: -0.01em;
+          font-family: 'Inter', -apple-system, sans-serif;
+        }
+        .yield-table-wrap {
+          overflow-x: auto;
+          margin-top: 8px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(15, 23, 42, 0.5);
+        }
+        .yield-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 12px;
+          text-align: left;
+        }
+        .yield-table th {
+          background: rgba(30, 41, 59, 0.85);
+          color: #94a3b8;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 10px 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          white-space: nowrap;
+        }
+        .yield-table td {
+          padding: 12px 14px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+        .yield-table tr:last-child td {
+          border-bottom: none;
+        }
+        .yield-table tr:hover td {
+          background: rgba(56, 189, 248, 0.06);
+        }
+        .yield-table tr.top-yield-row {
+          background: rgba(16, 185, 129, 0.07);
+        }
+        .yield-rank-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 6px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .yield-rank-1 {
+          background: linear-gradient(135deg, #f59e0b, #fbbf24);
+          color: #0f172a;
+          box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+        .yield-rank-other {
+          background: rgba(255, 255, 255, 0.08);
+          color: #94a3b8;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .yield-coin-cell {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .yield-coin-icon {
+          font-size: 18px;
+        }
+        .yield-coin-symbol {
+          font-weight: 800;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+        }
+        .yield-coin-name {
+          font-size: 11px;
+          color: #94a3b8;
+        }
+        .yield-profit-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 8px;
+          border-radius: 6px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        .profit-positive {
+          background: rgba(16, 185, 129, 0.18);
+          border: 1px solid rgba(16, 185, 129, 0.45);
+          color: #34d399;
+          box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+        }
+        .profit-negative {
+          background: rgba(244, 63, 94, 0.15);
+          border: 1px solid rgba(244, 63, 94, 0.4);
+          color: #fb7185;
+        }
+        .stratum-btn-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 12px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          background: rgba(56, 189, 248, 0.15);
+          color: #38bdf8;
+        }
+        .stratum-btn-action:hover {
+          background: rgba(56, 189, 248, 0.3);
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+          transform: translateY(-1px);
+        }
+        .stratum-active-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 10px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(16, 185, 129, 0.2);
+          border: 1px solid #10b981;
+          color: #34d399;
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
       </style>
       <canvas id="celebration-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
       <div id="card-root"></div>
@@ -745,6 +927,67 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="modal-footer">
               <button class="glass-btn" id="delete-cancel-btn">Cancel</button>
               <button class="glass-btn danger" id="delete-confirm-btn">Confirm Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-CLICK STRATUM SWITCHER GLASS MODAL -->
+        <div id="stratum-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 520px; width: 95%;">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 22px;">⚡</span>
+                <div>
+                  <span class="modal-title" id="stratum-modal-title" style="color: #38bdf8;">1-Click Stratum Pool Switcher</span>
+                  <div class="mono" style="font-size: 11px; color: #94a3b8;" id="stratum-modal-sub">
+                    Direct hardware pool & coin switching
+                  </div>
+                </div>
+              </div>
+              <button class="glass-btn" id="stratum-modal-close" style="padding: 4px 8px;">✕</button>
+            </div>
+            <div class="modal-grid" style="margin-top: 14px;">
+              <div class="modal-field full">
+                <label class="modal-label">Target Miner</label>
+                <select id="stratum-target-miner" class="modal-select">
+                  <option value="" style="background-color: #0f172a; color: #f8fafc;">🌐 Entire Fleet (All Compatible Miners)</option>
+                </select>
+              </div>
+              <div class="modal-field full">
+                <label class="modal-label">Coin & Algo Preset</label>
+                <select id="stratum-coin-preset" class="modal-select">
+                  <option value="WOJAK" data-port="9995" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🎭 WOJAK (WJK) • Mining-Dutch (Port 9995)</option>
+                  <option value="BTC" data-port="3333" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin (BTC) • Mining-Dutch (Port 3333)</option>
+                  <option value="BTC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">☀️ Bitcoin (BTC) • Helios Pool Solo (Port 3333)</option>
+                  <option value="BTC_PUBLIC" data-port="2142" data-host="public-pool.io" style="background-color: #0f172a; color: #f8fafc;">🎯 Bitcoin (BTC) • Public-Pool.io (Port 2142)</option>
+                  <option value="BCH" data-port="3334" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Mining-Dutch (Port 3334)</option>
+                  <option value="DGB" data-port="3338" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte SHA256 (DGB) • Mining-Dutch (Port 3338)</option>
+                  <option value="BELLS" data-port="9997" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔔 Bellcoin (BELLS) • Mining-Dutch (Port 9997)</option>
+                  <option value="PEPE" data-port="9998" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🐸 Pepecoin (PEPE) • Mining-Dutch (Port 9998)</option>
+                  <option value="CUSTOM" data-port="" data-host="" style="background-color: #0f172a; color: #f8fafc;">⚙️ Custom Stratum Endpoint...</option>
+                </select>
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Stratum Pool Host</label>
+                <input type="text" id="stratum-input-host" class="modal-input" value="americas.mining-dutch.nl" placeholder="americas.mining-dutch.nl" autocomplete="off" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Stratum Port</label>
+                <input type="number" id="stratum-input-port" class="modal-input" value="9995" placeholder="9995" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Worker / Pool Username</label>
+                <input type="text" id="stratum-input-user" class="modal-input" placeholder="e.g. Everyday3D.Bitaxe or wallet" autocomplete="off" />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">Password</label>
+                <input type="text" id="stratum-input-pass" class="modal-input" value="x" placeholder="x" autocomplete="off" />
+              </div>
+            </div>
+            <div id="stratum-status-banner" style="display: none; margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace;"></div>
+            <div class="modal-footer" style="margin-top: 16px;">
+              <button class="glass-btn" id="stratum-cancel-btn">Cancel</button>
+              <button class="glass-btn primary" id="stratum-submit-btn" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8; color: #fff;">⚡ Switch Stratum Now</button>
             </div>
           </div>
         </div>
@@ -973,16 +1216,197 @@ class HomeMinerFleetCard extends HTMLElement {
         }
       });
     }
+
+    // --- STRATUM MODAL EVENT LISTENERS ---
+    const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
+    if (stratumModal) {
+      ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+        stratumModal.addEventListener(eventType, stopPropagation);
+      });
+
+      stratumModal.querySelectorAll('.modal-box').forEach(box => {
+        box.addEventListener('click', (e) => e.stopPropagation());
+      });
+
+      stratumModal.addEventListener('click', (e) => {
+        if (e.target === stratumModal) {
+          this._closeModals();
+        }
+      });
+
+      const stratumCloseBtn = this.shadowRoot.querySelector('#stratum-modal-close');
+      const stratumCancelBtn = this.shadowRoot.querySelector('#stratum-cancel-btn');
+      if (stratumCloseBtn) stratumCloseBtn.addEventListener('click', () => this._closeModals());
+      if (stratumCancelBtn) stratumCancelBtn.addEventListener('click', () => this._closeModals());
+
+      const stratumCoinPreset = this.shadowRoot.querySelector('#stratum-coin-preset');
+      if (stratumCoinPreset) {
+        stratumCoinPreset.addEventListener('change', () => {
+          const opt = stratumCoinPreset.selectedOptions[0];
+          const hostInput = this.shadowRoot.querySelector('#stratum-input-host');
+          const portInput = this.shadowRoot.querySelector('#stratum-input-port');
+          if (opt && opt.dataset.host && hostInput) hostInput.value = opt.dataset.host;
+          if (opt && opt.dataset.port && portInput) portInput.value = opt.dataset.port;
+        });
+      }
+
+      const stratumSubmitBtn = this.shadowRoot.querySelector('#stratum-submit-btn');
+      if (stratumSubmitBtn) {
+        stratumSubmitBtn.addEventListener('click', async () => {
+          const targetHost = this.shadowRoot.querySelector('#stratum-target-miner')?.value || '';
+          const stratumHost = this.shadowRoot.querySelector('#stratum-input-host')?.value?.trim();
+          const stratumPort = parseInt(this.shadowRoot.querySelector('#stratum-input-port')?.value || '0');
+          const stratumUser = this.shadowRoot.querySelector('#stratum-input-user')?.value?.trim();
+          const stratumPass = this.shadowRoot.querySelector('#stratum-input-pass')?.value?.trim() || 'x';
+          const coinPreset = this.shadowRoot.querySelector('#stratum-coin-preset')?.value || '';
+          const statusBanner = this.shadowRoot.querySelector('#stratum-status-banner');
+
+          if (!stratumHost || !stratumPort) {
+            alert('Stratum host and port are required.');
+            return;
+          }
+
+          stratumSubmitBtn.disabled = true;
+          stratumSubmitBtn.textContent = '⚡ Switching Stratum...';
+          if (statusBanner) {
+            statusBanner.style.display = 'block';
+            statusBanner.style.background = 'rgba(56, 189, 248, 0.15)';
+            statusBanner.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+            statusBanner.style.color = '#38bdf8';
+            statusBanner.textContent = 'Transmitting stratum switch payload to hardware...';
+          }
+
+          try {
+            let cleanCoin = coinPreset.split('_')[0];
+            if (cleanCoin === 'CUSTOM') cleanCoin = undefined;
+
+            await this._hass.callService('home_miner_studio', 'switch_stratum', {
+              host: targetHost || undefined,
+              stratum_url: stratumHost,
+              stratum_port: stratumPort,
+              stratum_user: stratumUser || undefined,
+              stratum_password: stratumPass,
+              coin: cleanCoin
+            });
+
+            if (statusBanner) {
+              statusBanner.style.background = 'rgba(16, 185, 129, 0.2)';
+              statusBanner.style.border = '1px solid #10b981';
+              statusBanner.style.color = '#34d399';
+              statusBanner.textContent = `✓ Stratum switched to ${stratumHost}:${stratumPort}! Miner reconnecting...`;
+            }
+
+            setTimeout(() => {
+              this._closeModals();
+              this.render();
+            }, 1200);
+          } catch (err) {
+            stratumSubmitBtn.disabled = false;
+            stratumSubmitBtn.textContent = '⚡ Switch Stratum Now';
+            if (statusBanner) {
+              statusBanner.style.background = 'rgba(244, 63, 94, 0.2)';
+              statusBanner.style.border = '1px solid #f43f5e';
+              statusBanner.style.color = '#fb7185';
+              statusBanner.textContent = '❌ Stratum switch error: ' + err.message;
+            }
+          }
+        });
+      }
+    }
   }
 
   _closeModals() {
     this._modalOpen = false;
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
     const deleteModal = this.shadowRoot.querySelector('#delete-modal');
+    const discModal = this.shadowRoot.querySelector('#discovery-modal');
+    const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
     if (minerModal) minerModal.style.display = 'none';
     if (deleteModal) deleteModal.style.display = 'none';
-    const discModal = this.shadowRoot.querySelector('#discovery-modal');
     if (discModal) discModal.style.display = 'none';
+    if (stratumModal) stratumModal.style.display = 'none';
+  }
+
+  _openStratumModal(targetHost = '', targetCoin = '') {
+    this._ensureDom();
+    this._modalOpen = true;
+    const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
+    const targetSelect = this.shadowRoot.querySelector('#stratum-target-miner');
+    const coinSelect = this.shadowRoot.querySelector('#stratum-coin-preset');
+    const hostInput = this.shadowRoot.querySelector('#stratum-input-host');
+    const portInput = this.shadowRoot.querySelector('#stratum-input-port');
+    const userInput = this.shadowRoot.querySelector('#stratum-input-user');
+    const passInput = this.shadowRoot.querySelector('#stratum-input-pass');
+    const statusBanner = this.shadowRoot.querySelector('#stratum-status-banner');
+    const submitBtn = this.shadowRoot.querySelector('#stratum-submit-btn');
+
+    if (statusBanner) statusBanner.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '⚡ Switch Stratum Now';
+    }
+
+    // Populate miner target select
+    if (targetSelect) {
+      const miners = this._currentMiners || [];
+      targetSelect.innerHTML = `<option value="" style="background-color: #0f172a; color: #f8fafc;">🌐 Entire Fleet (All Compatible Miners)</option>` +
+        miners.map(m => {
+          const isSel = m.host === targetHost;
+          return `<option value="${m.host}" ${isSel ? 'selected' : ''} style="background-color: #0f172a; color: #f8fafc;">${m.name} (${m.host}) - ${(m.type || 'miner').toUpperCase()}</option>`;
+        }).join('');
+    }
+
+    // Pre-select coin preset if specified
+    if (coinSelect && targetCoin) {
+      const opt = Array.from(coinSelect.options).find(o => o.value === targetCoin);
+      if (opt) {
+        coinSelect.value = targetCoin;
+        if (hostInput && opt.dataset.host) hostInput.value = opt.dataset.host;
+        if (portInput && opt.dataset.port) portInput.value = opt.dataset.port;
+      }
+    } else if (coinSelect && !targetCoin) {
+      coinSelect.value = 'WOJAK';
+      if (hostInput) hostInput.value = 'americas.mining-dutch.nl';
+      if (portInput) portInput.value = '9995';
+    }
+
+    // Set default user if known
+    if (userInput) {
+      const defUser = (targetHost && this._minerWallets && this._minerWallets[targetHost]) || '';
+      userInput.value = defUser;
+    }
+
+    if (passInput) passInput.value = 'x';
+    if (stratumModal) stratumModal.style.display = 'flex';
+  }
+
+  async _fetchYieldMarketPrices() {
+    if (this._fetchingPrices) return;
+    this._fetchingPrices = true;
+    try {
+      let data = null;
+      if (this._hass && this._hass.callApi) {
+        try {
+          data = await this._hass.callApi('GET', 'home_miner_studio/market?coins=BTC,WOJAK,BCH,BELLS,DGB,PEPE');
+        } catch (e) {}
+      }
+      if (!data && this._hass && this._hass.fetchWithAuth) {
+        const resp = await this._hass.fetchWithAuth('/api/home_miner_studio/market?coins=BTC,WOJAK,BCH,BELLS,DGB,PEPE');
+        data = await resp.json();
+      }
+      if (data && data.coins) {
+        this._liveCoinPrices = {};
+        Object.entries(data.coins).forEach(([c, info]) => {
+          if (info && info.price_usd) {
+            this._liveCoinPrices[c] = info.price_usd;
+          }
+        });
+      }
+    } catch (e) {
+      console.debug('Error fetching yield matrix prices:', e);
+    } finally {
+      this._fetchingPrices = false;
+    }
   }
 
 
@@ -2775,6 +3199,12 @@ class HomeMinerFleetCard extends HTMLElement {
     const blipY = (80 - blipDist * 0.707).toFixed(1);
     const blipColor = isBlockSolved ? '#34d399' : (fleetBestDiff >= 1e9 ? '#fbbf24' : '#38bdf8');
     
+    this._currentMiners = miners;
+    if (!this._lastYieldFetch || (Date.now() - this._lastYieldFetch > 60000)) {
+      this._lastYieldFetch = Date.now();
+      this._fetchYieldMarketPrices();
+    }
+
     // Extract Global & Per-Rig Market Data
     const defaultMarketPrices = {
       '24h': [
@@ -2942,6 +3372,140 @@ class HomeMinerFleetCard extends HTMLElement {
     const tempOffset = Math.max(0, 264 - Math.min(1, avgTempNum / tempTarget) * 264);
     const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
     const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
+
+    // --- MULTI-COIN LIVE YIELD MATRIX & 1-CLICK STRATUM SWITCHER ---
+    const yieldCoinsDef = [
+      {
+        coin: 'WOJAK',
+        name: 'Wojak Coin',
+        sign: '🎭',
+        algo: 'SHA-256d',
+        reward: 10000,
+        diff: 3500,
+        diffStr: '3.50 K',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 9995,
+        poolName: 'Mining-Dutch'
+      },
+      {
+        coin: 'BTC',
+        name: 'Bitcoin',
+        sign: '₿',
+        algo: 'SHA-256d',
+        reward: 3.125,
+        diff: 85e12,
+        diffStr: '85.00 T',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 3333,
+        poolName: 'Mining-Dutch'
+      },
+      {
+        coin: 'BCH',
+        name: 'Bitcoin Cash',
+        sign: '₿',
+        algo: 'SHA-256d',
+        reward: 3.125,
+        diff: 500e9,
+        diffStr: '500.00 G',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 3334,
+        poolName: 'Mining-Dutch'
+      },
+      {
+        coin: 'DGB',
+        name: 'DigiByte',
+        sign: 'Ɗ',
+        algo: 'SHA-256d',
+        reward: 420,
+        diff: 45e6,
+        diffStr: '45.00 M',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 3338,
+        poolName: 'Mining-Dutch'
+      },
+      {
+        coin: 'BELLS',
+        name: 'Bellcoin',
+        sign: '🔔',
+        algo: 'SHA-256d',
+        reward: 500,
+        diff: 250e6,
+        diffStr: '250.00 M',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 9997,
+        poolName: 'Mining-Dutch'
+      },
+      {
+        coin: 'PEPE',
+        name: 'Pepecoin',
+        sign: '🐸',
+        algo: 'SHA-256d',
+        reward: 10000,
+        diff: 85e6,
+        diffStr: '85.00 M',
+        stratumHost: 'americas.mining-dutch.nl',
+        stratumPort: 9998,
+        poolName: 'Mining-Dutch'
+      }
+    ];
+
+    const fallbackSpotPrices = {
+      WOJAK: 0.000024,
+      WJK: 0.000024,
+      BTC: 83467.0,
+      BCH: 385.0,
+      DGB: 0.0085,
+      BELLS: 0.45,
+      PEPE: 0.0000095
+    };
+
+    let estElectricityRate = 0.12;
+    Object.keys(states).forEach(eid => {
+      if ((eid.includes('electricity_rate') || eid.includes('energy_cost') || eid.includes('power_cost')) && states[eid]?.state) {
+        const r = parseFloat(states[eid].state);
+        if (!isNaN(r) && r > 0 && r < 10) estElectricityRate = r;
+      }
+    });
+
+    const fleetDailyPowerCost = (totalWatts / 1000) * 24 * estElectricityRate;
+    const fleetHashesDay = activeHashThs * 1e12 * 86400;
+
+    const yieldRows = yieldCoinsDef.map(item => {
+      const livePrice = (this._liveCoinPrices && (this._liveCoinPrices[item.coin] || (item.coin === 'WOJAK' && this._liveCoinPrices['WJK'])))
+        || (this._selectedCoin === item.coin ? activeCoinPrice : null)
+        || fallbackSpotPrices[item.coin]
+        || 1.0;
+
+      const hashesPerBlock = item.diff * 4294967296;
+      let dailyCoins = hashesPerBlock > 0 ? (fleetHashesDay / hashesPerBlock) * item.reward : 0;
+      
+      // Cap at total theoretical daily blocks for smaller network difficulty coins
+      if (item.coin === 'WOJAK') {
+        const networkBlocksDay = 1440;
+        dailyCoins = Math.min(dailyCoins, networkBlocksDay * item.reward);
+      }
+
+      const grossDailyUsd = dailyCoins * livePrice;
+      const netDailyProfit = grossDailyUsd - fleetDailyPowerCost;
+      const monthlyProfit = netDailyProfit * 30.5;
+
+      const isMining = fleetCoins.includes(item.coin)
+        || (item.coin === 'WOJAK' && fleetCoins.includes('WJK'))
+        || miners.some(m => (m.coin || '').toUpperCase() === item.coin);
+
+      return {
+        ...item,
+        price: livePrice,
+        dailyCoins,
+        grossDailyUsd,
+        netDailyProfit,
+        monthlyProfit,
+        isMining
+      };
+    });
+
+    // Sort by netDailyProfit descending
+    yieldRows.sort((a, b) => b.netDailyProfit - a.netDailyProfit);
 
     const cardRoot = this.shadowRoot.querySelector('#card-root');
     if (!cardRoot) return;
@@ -3318,6 +3882,107 @@ class HomeMinerFleetCard extends HTMLElement {
               <span class="tile-unit">diff</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- MULTI-COIN LIVE YIELD MATRIX & 1-CLICK STRATUM SWITCHER -->
+      <div class="glass-card yield-matrix-console">
+        <div class="yield-header-row">
+          <div class="yield-title-cluster">
+            <div class="yield-icon-box">⚡</div>
+            <div>
+              <div class="yield-title">Multi-Coin Live Yield Matrix & 1-Click Stratum Switcher</div>
+              <div class="mono" style="font-size: 11px; color: #94a3b8;">
+                Real-Time SHA-256 Profitability Leaderboard • Fleet Hashrate: ${activeHashThs.toFixed(2)} TH/s • Power: ${totalWatts.toFixed(1)} W ($${fleetDailyPowerCost.toFixed(2)}/day @ $${estElectricityRate.toFixed(2)}/kWh)
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="glass-btn primary" id="open-stratum-modal-btn" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8; color: #fff; font-size: 12px; padding: 6px 14px;">
+              ⚡ Quick Stratum Switcher
+            </button>
+          </div>
+        </div>
+
+        <div class="yield-table-wrap">
+          <table class="yield-table">
+            <thead>
+              <tr>
+                <th style="width: 48px;">Rank</th>
+                <th>Coin & Algorithm</th>
+                <th>Spot Price</th>
+                <th>Network Difficulty</th>
+                <th>Est. Daily Coins</th>
+                <th>Gross 24h USD</th>
+                <th>Net 24h Profit</th>
+                <th>Stratum Endpoint</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${yieldRows.map((row, idx) => {
+                const isTop = idx === 0;
+                const isProfitable = row.netDailyProfit >= 0;
+                const rankClass = isTop ? 'yield-rank-1' : 'yield-rank-other';
+                const formattedPrice = row.price >= 1
+                  ? '$' + row.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                  : '$' + row.price.toFixed(6);
+                const formattedDailyCoins = row.dailyCoins >= 1000
+                  ? Math.round(row.dailyCoins).toLocaleString()
+                  : (row.dailyCoins >= 1 ? row.dailyCoins.toFixed(2) : row.dailyCoins.toFixed(8));
+                const formattedGross = '$' + (row.grossDailyUsd >= 1 ? row.grossDailyUsd.toFixed(2) : row.grossDailyUsd.toFixed(4));
+                const formattedNet = (isProfitable ? '+$' : '-$') + Math.abs(row.netDailyProfit).toFixed(2);
+                const formattedMonthly = (row.monthlyProfit >= 0 ? '+$' : '-$') + Math.abs(row.monthlyProfit).toFixed(2);
+
+                return `
+                  <tr class="${isTop ? 'top-yield-row' : ''}">
+                    <td>
+                      <span class="yield-rank-badge ${rankClass}">#${idx + 1}</span>
+                    </td>
+                    <td>
+                      <div class="yield-coin-cell">
+                        <span class="yield-coin-icon">${row.sign}</span>
+                        <div>
+                          <div class="yield-coin-symbol">
+                            ${row.name} (${row.coin})
+                            ${isTop ? '<span class="badge-glass-pill" style="margin-left: 6px; color: #fbbf24; border-color: #fbbf24; font-size: 9px; padding: 2px 6px;">TOP YIELD 👑</span>' : ''}
+                          </div>
+                          <div class="yield-coin-name">${row.algo} • Reward: ${row.reward.toLocaleString()} ${row.coin}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="mono" style="font-weight: 700; color: #f8fafc;">${formattedPrice}</td>
+                    <td class="mono" style="color: #94a3b8;">${row.diffStr}</td>
+                    <td class="mono" style="color: #38bdf8; font-weight: 700;">${formattedDailyCoins} <span style="font-size: 10px; color: #64748b;">${row.coin}</span></td>
+                    <td class="mono" style="color: #cbd5e1;">${formattedGross} <span style="font-size: 10px; color: #64748b;">/ day</span></td>
+                    <td>
+                      <span class="yield-profit-badge ${isProfitable ? 'profit-positive' : 'profit-negative'}">
+                        ${formattedNet} / day
+                      </span>
+                      <div class="mono" style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                        ${formattedMonthly} / mo
+                      </div>
+                    </td>
+                    <td class="mono" style="font-size: 11px; color: #94a3b8;">
+                      ${row.stratumHost}:${row.stratumPort}
+                    </td>
+                    <td style="text-align: right;">
+                      ${row.isMining ? `
+                        <span class="stratum-active-badge">
+                          <span class="status-orb" style="background: #34d399; box-shadow: 0 0 8px #34d399;"></span>
+                          Active (Mining)
+                        </span>
+                      ` : `
+                        <button class="stratum-btn-action switch-coin-row-btn" data-coin="${row.coin}" data-host="${row.stratumHost}" data-port="${row.stratumPort}">
+                          ⚡ Switch Stratum
+                        </button>
+                      `}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -3950,6 +4615,22 @@ class HomeMinerFleetCard extends HTMLElement {
         const host = btn.getAttribute('data-host');
         const name = btn.getAttribute('data-name');
         this._openDeleteModal(host, name);
+      });
+    });
+
+    // 1-Click Stratum Switcher Buttons
+    const openStratumBtn = this.shadowRoot.querySelector('#open-stratum-modal-btn');
+    if (openStratumBtn) {
+      openStratumBtn.addEventListener('click', () => {
+        this._openStratumModal();
+      });
+    }
+
+    const switchCoinRowBtns = this.shadowRoot.querySelectorAll('.switch-coin-row-btn');
+    switchCoinRowBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const coin = btn.getAttribute('data-coin') || '';
+        this._openStratumModal('', coin);
       });
     });
   }

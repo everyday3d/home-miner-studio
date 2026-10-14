@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Coin Live Yield Matrix & 1-Click Stratum Pool Switcher** ([#17](https://github.com/everyday3d/home-miner-studio/issues/17)):
+  - Built real-time **Multi-Coin SHA-256 Profitability & Yield Leaderboard** matrix comparing top SHA-256 and micro-cap mineable cryptocurrencies (`WOJAK`, `BELLS`, `DGB`, `BCH`, `PEPE`, `BTC`) ranked dynamically by net 24h profitability (`#1 TOP YIELD 👑`).
+  - Added real-time coin mathematics calculating network difficulty, block reward value, estimated daily coin production based on fleet hashrate, gross USD revenue, fleet power cost deduction, and net daily/monthly profit.
+  - Implemented backend Home Assistant service `home_miner_studio.switch_stratum` supporting live pool re-targeting across AxeOS Bitaxes (`PATCH /api/system`) and CGMiner RPC ASICs (`addpool` socket command).
+  - Designed an Aero-Glass **1-Click Stratum Switcher Modal** (`#stratum-modal`) with pre-configured pool presets (Mining-Dutch, Helios Pool, Public-Pool) and target rig targeting (Entire Fleet or individual miners).
+  - Extended `/api/home_miner_studio/market` backend HTTP view with multi-coin query support (`?coins=BTC,WOJAK,BCH,BELLS,DGB,PEPE`) and fallback pricing engine.
+  - Added auto-reconnect fallback and domain setup hooks ensuring custom HTTP endpoints and services initialize seamlessly without `configuration.yaml` declarations.
 - **Multi-Coin Solo Block Lottery Radar & Dynamic Coin Selector** ([#16](https://github.com/everyday3d/home-miner-studio/issues/16)):
   - Added an interactive **Track Coin** selector dropdown (`#lottery-coin-select`) in the Radar header row, allowing users to dynamically switch the tracked cryptocurrency across active fleet coins (e.g. `WOJAK (Mining ⛏️)`, `BTC (Mining ⛏️)`) and popular mineable coins (`BCH`, `BELLS`, `DGB`, `LTC`, `DOGE`, `PEPE`, `KAS`).
   - Automatically defaults the radar to the coin currently being mined by the fleet (e.g. Wojak) rather than forcibly defaulting to Bitcoin.

@@ -25,6 +25,20 @@ COIN_DEFINITIONS: dict[str, dict[str, str]] = {
     "DGB": {"id": "digibyte", "name": "DigiByte", "sign": "Ɗ"},
     "WOJAK": {"id": "wojak", "name": "Wojak", "sign": "🎭"},
     "WJK": {"id": "wojak", "name": "Wojak", "sign": "🎭"},
+    "PEPE": {"id": "pepe", "name": "Pepe", "sign": "🐸"},
+}
+
+FALLBACK_PRICES: dict[str, float] = {
+    "BTC": 68000.0,
+    "BCH": 480.0,
+    "LTC": 85.0,
+    "DOGE": 0.14,
+    "KAS": 0.12,
+    "BELLS": 0.85,
+    "DGB": 0.0092,
+    "WOJAK": 0.000024,
+    "WJK": 0.000024,
+    "PEPE": 0.0000095,
 }
 
 # 15-minute cache TTL (900 seconds)
@@ -156,7 +170,7 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
             price = _GLOBAL_MARKET_CACHE[coin_clean].get("price_usd", 68000.0)
             change_24h = _GLOBAL_MARKET_CACHE[coin_clean].get("change_24h_pct", 0.0)
         else:
-            price = 68000.0 if coin_clean == "BTC" else (85.0 if coin_clean == "LTC" else 1.0)
+            price = FALLBACK_PRICES.get(coin_clean, 1.0)
 
     # 2. Fetch 24H intraday price curve
     try:

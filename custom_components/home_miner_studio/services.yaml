@@ -218,3 +218,52 @@ delete_miner:
       example: 192.168.1.91
       selector:
         text:
+
+switch_stratum:
+  name: Switch Stratum Mining Pool
+  description: 1-Click Stratum switcher to change active mining pool URL, port, worker, and coin on Bitaxe (AxeOS) or CGMiner ASICs.
+  fields:
+    stratum_url:
+      name: Stratum Pool Host
+      description: Stratum pool hostname or IP (e.g. americas.mining-dutch.nl, pool.heliosmining.io).
+      required: true
+      example: americas.mining-dutch.nl
+      selector:
+        text:
+    stratum_port:
+      name: Stratum Port
+      description: Stratum pool port number (e.g. 9995 for Wojak, 3333 for BTC, 3334 for BCH).
+      required: true
+      example: 9995
+      selector:
+        number:
+          min: 1
+          max: 65535
+    stratum_user:
+      name: Stratum Worker / Wallet
+      description: Worker username or wallet address passed to stratum pool.
+      required: false
+      example: Everyday3D.Bitaxe
+      selector:
+        text:
+    stratum_password:
+      name: Stratum Password
+      description: Stratum password (default 'x').
+      required: false
+      default: "x"
+      selector:
+        text:
+    coin:
+      name: Mined Coin
+      description: Cryptocurrency coin ticker (WOJAK, BTC, BCH, BELLS, DGB, PEPE).
+      required: false
+      example: WOJAK
+      selector:
+        text:
+    host:
+      name: Miner Host
+      description: Target miner IP or hostname (switches entire fleet if omitted).
+      required: false
+      example: 192.168.1.91
+      selector:
+        text:
