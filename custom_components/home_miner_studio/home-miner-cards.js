@@ -2617,7 +2617,7 @@ class HomeMinerFleetCard extends HTMLElement {
         .workspace-tab-bar {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           padding: 5px;
           background: rgba(15, 23, 42, 0.65);
           backdrop-filter: blur(24px) saturate(160%);
@@ -2630,12 +2630,16 @@ class HomeMinerFleetCard extends HTMLElement {
           top: 10px;
           z-index: 50;
           overflow-x: auto;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
         }
 
         .workspace-tab-bar::-webkit-scrollbar {
-          display: none;
+          height: 3px;
+        }
+        .workspace-tab-bar::-webkit-scrollbar-thumb {
+          background: rgba(56, 189, 248, 0.25);
+          border-radius: 3px;
         }
 
         .tab-pill {
@@ -2644,10 +2648,10 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 8px 12px;
+          gap: 5px;
+          padding: 7px 10px;
           border-radius: 10px;
-          font-size: 12px;
+          font-size: 11.5px;
           font-weight: 700;
           font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
           color: #94a3b8;
@@ -2658,7 +2662,18 @@ class HomeMinerFleetCard extends HTMLElement {
           user-select: none;
           text-align: center;
           white-space: nowrap;
-          flex-shrink: 0;
+        }
+
+        @media (max-width: 950px) {
+          .tab-pill {
+            padding: 6px 7px;
+            font-size: 11px;
+            gap: 3px;
+          }
+          .tab-pill .tab-badge {
+            font-size: 9.5px;
+            padding: 1px 5px;
+          }
         }
 
         .tab-pill:hover {

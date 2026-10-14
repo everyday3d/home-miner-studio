@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Lovelace In-Memory Resource Cache Busting & Responsive 6-Tab Bar** ([#24](https://github.com/everyday3d/home-miner-studio/issues/24)):
+  - Resolved Home Assistant in-memory Lovelace resource caching where disk-level edits to `.storage/lovelace_resources` were ignored by the running HA Core daemon, forcing browsers to continually request stale pre-RPG JavaScript bundles (`?v=1792014129710`) with 31-day HTTP caching headers (`max-age=2678400`).
+  - Executed live `lovelace/resources/update` through Home Assistant's WebSocket API to ensure instant, forced cache busting across all browser sessions upon page reload or Ctrl+F5.
+  - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
+
 ### Added
 - **Prestige Theme Engine & 5 Milestone Aesthetic Glass Themes (Lvl 100-500 Unlocks)** ([#23](https://github.com/everyday3d/home-miner-studio/issues/23)):
   - Built the **Prestige Theme Engine** which automatically unlocks when the fleet reaches **Level 100 (*Volt Tamer*)**, featuring a teaser progress bar before Level 100 and a 6-theme luxury selection console once unlocked.
