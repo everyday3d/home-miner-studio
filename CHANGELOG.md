@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Synthesized Web Audio Share Geiger Counter & Acoustic Telemetry** ([#20](https://github.com/everyday3d/home-miner-studio/issues/20)):
+  - Built pure synthesized in-browser Web Audio API sound generator with zero external media files or CDN dependencies.
+  - Added **Geiger Counter mode**: simulates hardware hash crunching with bandpass-filtered acoustic clicks (1800Hz-2400Hz, 15ms) on newly accepted mining shares.
+  - Added **Milestone Chimes mode**: synthesizes dual-tone harmonic sci-fi bell chords for high-difficulty share submissions (>10M, >100M, >1G).
+  - Designed interactive Aero-Glass Sound Controller Pill in top command bar with 3 toggle states (`🔇 Audio: OFF`, `🔊 Geiger: ON`, `✨ Chimes: ON`), defaulting to **Muted** to respect user privacy.
+  - Integrated `[🔊 Test Share Audio]` preview trigger on Solo Block Radar console to test sound bursts without waiting for live pool shares.
+  - Persisted user sound mode preference across browser sessions using `safeStorage` (`miner_sound_mode`).
 - **Tabbed Workspace Switcher & Zero-Scroll Aero-Glass Dashboard Layout** ([#18](https://github.com/everyday3d/home-miner-studio/issues/18)):
   - Built segmented Aero-Glass **Workspace Tab Bar** (`.workspace-tab-bar`) featuring dynamic pill tabs with live telemetry badges:
     - `🖥️ Fleet & Hardware` (live blade count badge)

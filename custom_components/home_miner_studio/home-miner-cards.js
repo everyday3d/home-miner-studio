@@ -49,6 +49,11 @@ class HomeMinerFleetCard extends HTMLElement {
     this._currentMiners = [];
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
     this._lastRenderSig = null;
+    this._soundMode = safeStorage.get('miner_sound_mode') || 'off'; // 'off' | 'geiger' | 'chimes'
+    this._soundVolume = parseFloat(safeStorage.get('miner_sound_vol') || '0.35');
+    this._lastTotalShares = null;
+    this._lastBestDiff = null;
+    this._audioCtx = null;
   }
 
   static getStubConfig() {
@@ -83,6 +88,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const states = hass.states;
     const parts = [
       this._activeTab || 'hardware',
+      this._soundMode || 'off',
       this._selectedCoin || '',
       this._selectedLotteryCoin || '',
       this._selectedTimeframe || '24h'
@@ -1885,6 +1891,19 @@ class HomeMinerFleetCard extends HTMLElement {
           box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
         }
 
+        .sound-toggle-btn {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sound-toggle-btn.active-audio {
+          color: #38bdf8;
+          border-color: rgba(56, 189, 248, 0.45);
+          background: rgba(56, 189, 248, 0.16);
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+
         .glass-btn.danger {
           background: rgba(251, 113, 133, 0.12);
           border-color: rgba(251, 113, 133, 0.35);
@@ -2975,6 +2994,7 @@ class HomeMinerFleetCard extends HTMLElement {
         inAmps,
         profile,
         accepted: bitaxeAccepted.toLocaleString(),
+        acceptedRaw: bitaxeAccepted,
         rejected: bitaxeRejected.toLocaleString(),
         hwErrors: bitaxeHw,
         bestDiffNum: parseFloat(bitaxeBestDiff) || 0,
@@ -3051,6 +3071,7 @@ class HomeMinerFleetCard extends HTMLElement {
         fan,
         freq,
         accepted: accepted.toLocaleString(),
+        acceptedRaw: accepted,
         rejected: rejected.toLocaleString(),
         hwErrors,
         bestDiffNum: parseFloat(bestShare) || 0,
@@ -3118,6 +3139,31 @@ class HomeMinerFleetCard extends HTMLElement {
         fleetBestMinerName = 'My Bitaxe Supra';
       }
     }
+
+    // Calculate total fleet accepted shares
+    let totalFleetAccepted = 0;
+    miners.forEach(m => {
+      totalFleetAccepted += (m.acceptedRaw || 0);
+    });
+
+    // Acoustic Telemetry Trigger (Geiger Clicks & Harmonic Chimes)
+    if (this._soundMode && this._soundMode !== 'off') {
+      if (this._lastTotalShares !== null && totalFleetAccepted > this._lastTotalShares) {
+        const shareDiff = totalFleetAccepted - this._lastTotalShares;
+        if (shareDiff > 0 && shareDiff < 100) {
+          if (this._lastBestDiff !== null && fleetBestDiff > this._lastBestDiff && fleetBestDiff >= 1e7) {
+            this._playShareChime(fleetBestDiff >= 1e9 ? 1000 : 100);
+          } else {
+            const clicksToPlay = Math.min(3, shareDiff);
+            for (let i = 0; i < clicksToPlay; i++) {
+              setTimeout(() => this._playGeigerClick(), i * 35);
+            }
+          }
+        }
+      }
+    }
+    this._lastTotalShares = totalFleetAccepted;
+    this._lastBestDiff = fleetBestDiff;
 
     // Multi-Coin Profiles & Network Difficulties for Solo Block Lottery Radar
     const coinRadarProfiles = {
@@ -3662,6 +3708,9 @@ class HomeMinerFleetCard extends HTMLElement {
         </div>
 
         <div class="top-actions">
+          <button class="glass-btn sound-toggle-btn ${this._soundMode !== 'off' ? 'active-audio' : ''}" id="sound-btn" title="Toggle Acoustic Share Feedback (Click to Cycle: Off / Geiger Clicks / Chimes)">
+            ${this._soundMode === 'off' ? '🔇 Audio: OFF' : (this._soundMode === 'geiger' ? '🔊 Geiger: ON' : '✨ Chimes: ON')}
+          </button>
           <button class="glass-btn primary" id="add-miner-btn">➕ Add Miner</button>
           <button class="glass-btn" id="import-btn">⚡ 1-Click Discovery</button>
           <button class="glass-btn" id="reload-btn">🔄 Refresh Fleet</button>
@@ -3862,6 +3911,9 @@ class HomeMinerFleetCard extends HTMLElement {
             </span>
             <button class="glass-btn primary" id="test-celebration-btn" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.5); color: #fbbf24;">
               🎉 Test Win Celebration
+            </button>
+            <button class="glass-btn" id="test-audio-btn" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Test Synthesized Share Acoustic Feedback">
+              🔊 Test Share Audio
             </button>
           </div>
         </div>
@@ -4467,14 +4519,81 @@ class HomeMinerFleetCard extends HTMLElement {
     }
   }
 
+  _getAudioContext() {
+    if (!this._audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        this._audioCtx = new AudioCtx();
+      }
+    }
+    if (this._audioCtx && this._audioCtx.state === 'suspended') {
+      this._audioCtx.resume();
+    }
+    return this._audioCtx;
+  }
+
+  _playGeigerClick(volumeMultiplier = 1.0) {
+    if (this._soundMode === 'off') return;
+    try {
+      const ctx = this._getAudioContext();
+      if (!ctx) return;
+      const vol = (this._soundVolume || 0.35) * volumeMultiplier;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      // Bandpass click for authentic high-frequency Geiger/relay tick
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2200 + (Math.random() - 0.5) * 400, ctx.currentTime);
+      filter.Q.setValueAtTime(4.5, ctx.currentTime);
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800 + Math.random() * 600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.012);
+
+      gain.gain.setValueAtTime(vol * 0.45, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.015);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.018);
+    } catch (e) {
+      // Audio playback caught
+    }
+  }
+
+  _playShareChime(diffMultiplier = 100) {
+    if (this._soundMode !== 'chimes') return;
+    try {
+      const ctx = this._getAudioContext();
+      if (!ctx) return;
+      const vol = (this._soundVolume || 0.35) * 0.6;
+      // High harmonic crystal bells (C6 / E6 / G6 chord)
+      const baseFreq = diffMultiplier >= 1000 ? 1174.66 : (diffMultiplier >= 100 ? 880 : 659.25);
+      [baseFreq, baseFreq * 1.5].forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, ctx.currentTime);
+        gain.gain.setValueAtTime(vol * (idx === 0 ? 0.35 : 0.2), ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+      });
+    } catch (e) {
+      // Audio playback caught
+    }
+  }
+
   _playVictoryFanfare() {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      const ctx = this._getAudioContext();
+      if (!ctx) return;
       // 4-note victory arpeggio: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
       const notes = [
         { f: 523.25, d: 0.12, t: 0 },
@@ -4612,6 +4731,40 @@ class HomeMinerFleetCard extends HTMLElement {
     if (celebrateBtn) {
       celebrateBtn.addEventListener('click', () => {
         this._triggerCelebration(this._activeRadarCoin || 'WOJAK', this._activeRadarReward || 10000);
+      });
+    }
+
+    // Acoustic Telemetry Test Button
+    const testAudioBtn = this.shadowRoot.querySelector('#test-audio-btn');
+    if (testAudioBtn) {
+      testAudioBtn.addEventListener('click', () => {
+        const origMode = this._soundMode;
+        this._soundMode = 'chimes';
+        // Play rapid 3-click geiger burst then milestone chime
+        this._playGeigerClick(1.0);
+        setTimeout(() => this._playGeigerClick(1.1), 50);
+        setTimeout(() => this._playGeigerClick(1.2), 100);
+        setTimeout(() => this._playShareChime(1000), 160);
+        this._soundMode = origMode;
+      });
+    }
+
+    // Acoustic Share Feedback Toggle Button
+    const soundBtn = this.shadowRoot.querySelector('#sound-btn');
+    if (soundBtn) {
+      soundBtn.addEventListener('click', () => {
+        if (this._soundMode === 'off') {
+          this._soundMode = 'geiger';
+          this._playGeigerClick(1.2);
+        } else if (this._soundMode === 'geiger') {
+          this._soundMode = 'chimes';
+          this._playShareChime(100);
+        } else {
+          this._soundMode = 'off';
+        }
+        safeStorage.set('miner_sound_mode', this._soundMode);
+        this._lastRenderSig = null;
+        this.render();
       });
     }
     
