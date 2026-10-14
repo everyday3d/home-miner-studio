@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Built pure in-browser celebration system with zero CDN dependencies: HTML5 canvas particle burst physics and Web Audio API synthesized 4-note victory fanfare chime (`🎉 Test Win Celebration`).
 
 ### Fixed
+- **Dashboard Screen Flashing on State Telemetry Updates** ([#19](https://github.com/everyday3d/home-miner-studio/issues/19)):
+  - Removed unconditional `tabFadeIn` (`from { opacity: 0 }`) CSS keyframe animation from `.tab-pane` to eliminate whole-screen flashing whenever DOM re-renders.
+  - Implemented entity signature change-detection helper (`_computeMinerStateSignature`) inside `set hass(hass)` that filters out non-mining entities (3D printers, lights, weather, media players, automations) and skips re-rendering when mining/market states are identical.
+  - Ensured manual user interactions (tab changes, timeframe toggles, coin selections) immediately invalidate signature cache and render seamlessly.
 - **Desktop Lovelace Configuration Error & Lifecycle Guards** ([#15](https://github.com/everyday3d/home-miner-studio/issues/15)):
   - Added `safeStorage` helper (`get`, `set`, `remove`) with `try...catch` guards replacing all naked `localStorage` accesses, preventing desktop browsers with strict privacy partition policies or iframe sandboxes from throwing uncaught `SecurityError`.
   - Guarded `customElements.define('home-miner-fleet-card')` registration with `if (!customElements.get('home-miner-fleet-card'))`, eliminating uncaught `NotSupportedError` / `DOMException` upon re-evaluating or hot-reloading Lovelace cards.

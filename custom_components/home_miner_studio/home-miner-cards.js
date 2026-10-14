@@ -48,6 +48,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._fetchingPrices = false;
     this._currentMiners = [];
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
+    this._lastRenderSig = null;
   }
 
   static getStubConfig() {
@@ -77,11 +78,65 @@ class HomeMinerFleetCard extends HTMLElement {
     this._config = config || {};
   }
 
+  _computeMinerStateSignature(hass) {
+    if (!hass || !hass.states) return '';
+    const states = hass.states;
+    const parts = [
+      this._activeTab || 'hardware',
+      this._selectedCoin || '',
+      this._selectedLotteryCoin || '',
+      this._selectedTimeframe || '24h'
+    ];
+
+    for (const eid in states) {
+      const lower = eid.toLowerCase();
+      // Skip high-frequency non-mining domains immediately (< 0.2ms performance)
+      if (lower.startsWith('light.') || lower.startsWith('media_player.') ||
+          lower.startsWith('weather.') || lower.startsWith('camera.') ||
+          lower.startsWith('device_tracker.') || lower.startsWith('person.') ||
+          lower.startsWith('zone.') || lower.startsWith('sun.') ||
+          lower.startsWith('automation.') || lower.startsWith('script.') ||
+          lower.startsWith('update.') || lower.startsWith('tts.') ||
+          lower.includes('bambu')) {
+        continue;
+      }
+
+      if (lower.includes('bitaxe') ||
+          lower.includes('avalon') ||
+          lower.includes('cgminer') ||
+          lower.includes('miner') ||
+          lower.includes('hashrate') ||
+          lower.includes('coin_price') ||
+          lower.includes('bitcoin_price') ||
+          lower.includes('best_difficulty') ||
+          lower.includes('best_share') ||
+          lower.includes('electricity_rate') ||
+          lower.includes('power_cost') ||
+          lower.includes('energy_cost') ||
+          lower.includes('power_profile') ||
+          lower.includes('power_draw') ||
+          lower.includes('chip_temperature') ||
+          lower.includes('pool_') ||
+          lower.includes('192_168_1_')) {
+        const s = states[eid];
+        if (s) {
+          parts.push(`${eid}:${s.state}:${s.attributes?.change_24h_pct ?? ''}`);
+        }
+      }
+    }
+    return parts.join('|');
+  }
+
   set hass(hass) {
     this._hass = hass;
     if (this._modalOpen) {
       return; // Freeze rendering so typing focus and open dialogs are NEVER disturbed
     }
+    const sig = this._computeMinerStateSignature(hass);
+    if (this._lastRenderSig && sig === this._lastRenderSig) {
+      return; // Skip re-render: no relevant mining/market state changed
+    }
+    this._lastRenderSig = sig;
     this.render();
   }
 
@@ -2124,12 +2179,7 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .tab-pane {
-          animation: tabFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes tabFadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
+          width: 100%;
         }
 
         .workstations-grid {
@@ -2825,6 +2875,7 @@ class HomeMinerFleetCard extends HTMLElement {
     if (!this._hass || !this._hass.states) return;
     this._ensureDom();
     if (this._modalOpen) return;
+    this._lastRenderSig = this._computeMinerStateSignature(this._hass);
 
     try {
       const states = this._hass.states;
@@ -4776,6 +4827,7 @@ class HomeMinerFleetCard extends HTMLElement {
         const tab = pill.getAttribute('data-tab');
         if (tab && tab !== this._activeTab) {
           this._activeTab = tab;
+          this._lastRenderSig = null;
           safeStorage.set('miner_active_tab', tab);
           this.render();
         }
