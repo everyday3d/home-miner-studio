@@ -601,6 +601,7 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
       </style>
+      <canvas id="celebration-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
       <div id="card-root"></div>
       <div id="modal-root">
         <!-- ADD / EDIT MINER GLASS MODAL -->
@@ -1204,6 +1205,8 @@ class HomeMinerFleetCard extends HTMLElement {
           padding: 24px;
           box-sizing: border-box;
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          position: relative;
+          overflow: hidden;
         }
 
         * {
@@ -1867,6 +1870,367 @@ class HomeMinerFleetCard extends HTMLElement {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
+        /* --- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE VFX --- */
+        .lottery-radar-console {
+          margin-bottom: 24px;
+          padding: 22px 24px;
+        }
+
+        .lottery-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .lottery-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .lottery-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(245, 158, 11, 0.15);
+          border: 1px solid rgba(245, 158, 11, 0.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 19px;
+          box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+        }
+
+        .lottery-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lottery-hud-grid {
+          display: grid;
+          grid-template-columns: 180px 1fr;
+          gap: 20px;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+          .lottery-hud-grid {
+            grid-template-columns: 1fr;
+            justify-items: center;
+          }
+        }
+
+        .radar-stage-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .radar-svg {
+          width: 160px;
+          height: 160px;
+          filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.2));
+        }
+
+        .radar-sweep-beam {
+          transform-origin: 80px 80px;
+          animation: radar-sweep 4s linear infinite;
+        }
+
+        @keyframes radar-sweep {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .blip-pulse-ring {
+          transform-origin: 0 0;
+          animation: blip-pulse 1.8s ease-out infinite;
+        }
+
+        @keyframes blip-pulse {
+          0% { r: 3px; opacity: 1; }
+          100% { r: 12px; opacity: 0; }
+        }
+
+        .radar-status-caption {
+          font-size: 10px;
+          color: #10b981;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .radar-live-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #10b981;
+          box-shadow: 0 0 6px #10b981;
+          animation: dot-blink 1.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes dot-blink {
+          0% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
+
+        .lottery-metrics-column {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          width: 100%;
+        }
+
+        .jackpot-banner {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.06));
+          border: 1px solid rgba(245, 158, 11, 0.3);
+          border-radius: 12px;
+          padding: 14px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .jackpot-banner::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: 3px;
+          background: #fbbf24;
+          box-shadow: 0 0 8px #fbbf24;
+        }
+
+        .jackpot-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: #fbbf24;
+          letter-spacing: 0.06em;
+        }
+
+        .jackpot-val-row {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .jackpot-amount {
+          font-size: 26px;
+          font-weight: 800;
+          color: #ffffff;
+          letter-spacing: -0.02em;
+          text-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+        }
+
+        .jackpot-btc-badge {
+          font-size: 12px;
+          font-weight: 700;
+          color: #fbbf24;
+          background: rgba(245, 158, 11, 0.18);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          padding: 2px 8px;
+          border-radius: 6px;
+        }
+
+        .jackpot-sub {
+          font-size: 11px;
+          color: #94a3b8;
+        }
+
+        .lottery-stat-tiles {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+          .lottery-stat-tiles {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .lottery-mini-tile {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          padding: 10px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .mini-tile-label {
+          font-size: 10px;
+          font-weight: 600;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .mini-tile-val {
+          font-size: 15px;
+          font-weight: 700;
+        }
+
+        .mini-tile-sub {
+          font-size: 10px;
+          color: #64748b;
+        }
+
+        .share-progress-container {
+          background: rgba(0, 0, 0, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          padding: 14px 18px;
+          margin-top: 6px;
+        }
+
+        .share-progress-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .share-progress-track {
+          position: relative;
+          width: 100%;
+          height: 10px;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 999px;
+          overflow: visible;
+          margin-bottom: 12px;
+        }
+
+        .share-progress-fill {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #38bdf8 0%, #a78bfa 30%, #fbbf24 60%, #10b981 100%);
+          box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+          transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .share-progress-pin {
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .share-pin-glow {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #fbbf24;
+          border: 2px solid #ffffff;
+          box-shadow: 0 0 10px #fbbf24, 0 0 20px rgba(245, 158, 11, 0.6);
+        }
+
+        .share-pin-label {
+          position: absolute;
+          top: -24px;
+          font-size: 9px;
+          font-weight: 700;
+          color: #fbbf24;
+          background: #0f172a;
+          border: 1px solid rgba(245, 158, 11, 0.5);
+          padding: 1px 6px;
+          border-radius: 4px;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .share-milestone-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 9px;
+          color: #64748b;
+          padding: 0 4px;
+        }
+
+        /* Mega-Share Rig Card Aura & Pills */
+        .mega-share-card {
+          border-color: rgba(245, 158, 11, 0.45) !important;
+          box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.6),
+                      0 0 35px -5px rgba(245, 158, 11, 0.22),
+                      inset 0 1px 0 rgba(245, 158, 11, 0.5) !important;
+          animation: mega-card-aura 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes mega-card-aura {
+          0% {
+            box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.6), 0 0 22px -5px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(245, 158, 11, 0.4);
+          }
+          100% {
+            box-shadow: 0 20px 50px -6px rgba(0, 0, 0, 0.7), 0 0 42px 0px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(245, 158, 11, 0.7);
+          }
+        }
+
+        .mega-share-pill {
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35));
+          border: 1px solid rgba(245, 158, 11, 0.6);
+          color: #fbbf24;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .mega-share-pill::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -60%;
+          width: 40%;
+          height: 200%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+          transform: rotate(25deg);
+          animation: mega-shimmer 2.5s infinite;
+        }
+
+        @keyframes mega-shimmer {
+          0% { left: -60%; }
+          100% { left: 160%; }
+        }
+
+        .super-share-pill {
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.3));
+          border: 1px solid rgba(56, 189, 248, 0.5);
+          color: #38bdf8;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
       
 `;
   }
@@ -1975,6 +2339,7 @@ class HomeMinerFleetCard extends HTMLElement {
         accepted: bitaxeAccepted.toLocaleString(),
         rejected: bitaxeRejected.toLocaleString(),
         hwErrors: bitaxeHw,
+        bestDiffNum: parseFloat(bitaxeBestDiff) || 0,
         bestShareStr: bitaxeBestStr,
         blocksFound: '--',
         poolUrl: bitaxePoolUrl,
@@ -2050,6 +2415,7 @@ class HomeMinerFleetCard extends HTMLElement {
         accepted: accepted.toLocaleString(),
         rejected: rejected.toLocaleString(),
         hwErrors,
+        bestDiffNum: parseFloat(bestShare) || 0,
         bestShareStr,
         blocksFound,
         poolUrl: cleanPoolUrl,
@@ -2093,6 +2459,53 @@ class HomeMinerFleetCard extends HTMLElement {
     const avgTempNum = tempCount > 0 ? (tempSum / tempCount) : 0;
     const avgTempStr = tempCount > 0 ? avgTempNum.toFixed(1) : '--';
 
+    // --- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE CALCULATIONS ---
+    let fleetBestDiff = 0;
+    let fleetBestShareStr = '--';
+    let fleetBestMinerName = '';
+
+    miners.forEach(m => {
+      const d = m.bestDiffNum || 0;
+      if (d > fleetBestDiff) {
+        fleetBestDiff = d;
+        fleetBestShareStr = m.bestShareStr;
+        fleetBestMinerName = m.name;
+      }
+    });
+
+    if (fleetBestDiff === 0 && states['sensor.my_bitaxe_best_difficulty']?.state) {
+      fleetBestDiff = parseFloat(states['sensor.my_bitaxe_best_difficulty'].state) || 0;
+      if (fleetBestDiff > 0) {
+        fleetBestShareStr = fleetBestDiff >= 1e9 ? (fleetBestDiff / 1e9).toFixed(2) + ' G' : (fleetBestDiff / 1e6).toFixed(2) + ' M';
+        fleetBestMinerName = 'My Bitaxe Supra';
+      }
+    }
+
+    // Bitcoin Network Difficulty (109.80 T standard)
+    const netDiff = 109.80 * 1e12;
+    const activeHashThs = totalHashThs > 0 ? totalHashThs : 1.38;
+
+    // Expected days = (Difficulty * 2^32) / (Hashrate_THs * 10^12 * 86400)
+    // 2^32 = 4294967296
+    const expectedDays = (netDiff * 4294967296) / (activeHashThs * 1e12 * 86400);
+    const expectedYears = expectedDays / 365.25;
+    const dailyChancePct = (1 / expectedDays) * 100;
+
+    // Block Bounty Jackpot: 3.125 BTC * Spot Price
+    let btcPriceForJackpot = 83467;
+    Object.keys(states).forEach(eid => {
+      if ((eid.includes('bitcoin') || eid.includes('btc')) && (eid.endsWith('_coin_price_usd') || eid.endsWith('_coin_price') || eid.endsWith('_price'))) {
+        const p = parseFloat(states[eid]?.state);
+        if (!isNaN(p) && p > 1000) btcPriceForJackpot = p;
+      }
+    });
+    const blockBountyJackpotUsd = 3.125 * btcPriceForJackpot;
+
+    // Logarithmic Progress to Block Target (Scale: 1 M = 1e6 to 109.8 T = 1.098e14)
+    const logMin = 6;
+    const logMax = Math.log10(netDiff);
+    const currentLog = fleetBestDiff > 1e6 ? Math.log10(fleetBestDiff) : 6;
+    const logProgressPct = Math.min(100, Math.max(2, ((currentLog - logMin) / (logMax - logMin)) * 100)).toFixed(1);
     
     // Extract Global & Per-Rig Market Data
     const defaultMarketPrices = {
@@ -2414,6 +2827,162 @@ class HomeMinerFleetCard extends HTMLElement {
         </div>
       </div>
 
+      <!-- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE CONSOLE -->
+      <div class="glass-card amber-glow lottery-radar-console">
+        <div class="lottery-header-row">
+          <div class="lottery-title-cluster">
+            <div class="lottery-icon-box">🎯</div>
+            <div>
+              <div class="lottery-title">Solo Block Lottery Radar & Mega-Share Telemetry</div>
+              <div class="mono" style="font-size: 11px; color: #94a3b8;">
+                Mathematical Block Bounty Odds • Real-Time Difficulty Target Tracker
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12);">
+              <span class="status-orb" style="background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></span>
+              Active Fleet: ${activeHashThs.toFixed(2)} TH/s
+            </span>
+            <button class="glass-btn primary" id="test-celebration-btn" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.5); color: #fbbf24;">
+              🎉 Test Win Celebration
+            </button>
+          </div>
+        </div>
+
+        <!-- Main HUD Grid: Radar on Left, Metrics & Jackpot on Right -->
+        <div class="lottery-hud-grid">
+          <!-- Circular Radar Stage -->
+          <div class="radar-stage-box">
+            <svg class="radar-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="radarGridGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#064e3b" stop-opacity="0.35" />
+                  <stop offset="70%" stop-color="#022c22" stop-opacity="0.6" />
+                  <stop offset="100%" stop-color="#021c15" stop-opacity="0.9" />
+                </radialGradient>
+                <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.6" />
+                  <stop offset="50%" stop-color="#10b981" stop-opacity="0.15" />
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+                </linearGradient>
+                <filter id="blipGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <!-- Radar Outer Casing -->
+              <circle cx="80" cy="80" r="76" fill="url(#radarGridGlow)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="2" />
+              <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1" stroke-dasharray="3,3" />
+
+              <!-- Concentric Range Rings (25%, 50%, 75%) -->
+              <circle cx="80" cy="80" r="54" fill="none" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+              <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
+              <circle cx="80" cy="80" r="18" fill="none" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" />
+
+              <!-- Crosshairs -->
+              <line x1="8" y1="80" x2="152" y2="80" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" stroke-dasharray="4,4" />
+              <line x1="80" y1="8" x2="80" y2="152" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" stroke-dasharray="4,4" />
+
+              <!-- 45-degree angle guides -->
+              <line x1="29" y1="29" x2="131" y2="131" stroke="rgba(16, 185, 129, 0.15)" stroke-width="1" stroke-dasharray="2,4" />
+              <line x1="131" y1="29" x2="29" y2="131" stroke="rgba(16, 185, 129, 0.15)" stroke-width="1" stroke-dasharray="2,4" />
+
+              <!-- Sweeping Beam -->
+              <g class="radar-sweep-beam">
+                <path d="M 80 80 L 80 8 A 72 72 0 0 1 131 29 Z" fill="url(#sweepGradient)" />
+                <line x1="80" y1="80" x2="80" y2="8" stroke="#34d399" stroke-width="2" filter="drop-shadow(0 0 4px #34d399)" />
+              </g>
+
+              <!-- Blip: Mega-Share (14.09 G) positioned at radius ~39px (~52% milestone) -->
+              <g class="radar-blip-mega" transform="translate(48, 58)">
+                <circle cx="0" cy="0" r="4.5" fill="#fbbf24" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="8" fill="none" stroke="#fbbf24" stroke-width="1.2" class="blip-pulse-ring" />
+                <text x="7" y="3" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">${fleetBestShareStr !== '--' ? fleetBestShareStr : '14.09G'}</text>
+              </g>
+
+              <!-- Blip: Standard high share (920 M) -->
+              <g class="radar-blip-std" transform="translate(98, 92)">
+                <circle cx="0" cy="0" r="3" fill="#34d399" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="6" fill="none" stroke="#34d399" stroke-width="1" class="blip-pulse-ring" />
+                <text x="5" y="2" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="7">920M</text>
+              </g>
+
+              <!-- Center Hub -->
+              <circle cx="80" cy="80" r="4" fill="#10b981" filter="url(#blipGlow)" />
+              <circle cx="80" cy="80" r="2" fill="#ffffff" />
+            </svg>
+            <div class="radar-status-caption mono">
+              <span class="radar-live-dot"></span> RADAR SWEEP ACTIVE
+            </div>
+          </div>
+
+          <!-- Metrics Column -->
+          <div class="lottery-metrics-column">
+            <!-- Jackpot Banner -->
+            <div class="jackpot-banner">
+              <div class="jackpot-label mono">CURRENT BLOCK BOUNTY JACKPOT</div>
+              <div class="jackpot-val-row">
+                <span class="jackpot-amount mono">$${Math.round(blockBountyJackpotUsd).toLocaleString()}</span>
+                <span class="jackpot-btc-badge mono">3.125 BTC</span>
+              </div>
+              <div class="jackpot-sub mono">Next block bounty awarded 100% to solo miner upon valid block hash</div>
+            </div>
+
+            <!-- Odds & Stats 3-Card Rack -->
+            <div class="lottery-stat-tiles">
+              <div class="lottery-mini-tile">
+                <div class="mini-tile-label">Solo Win Odds</div>
+                <div class="mini-tile-val mono" style="color: #38bdf8;">1 in ${expectedYears >= 100 ? Math.round(expectedYears).toLocaleString() + ' Yrs' : Math.round(expectedDays).toLocaleString() + ' Days'}</div>
+                <div class="mini-tile-sub mono">${dailyChancePct.toFixed(7)}% / day</div>
+              </div>
+              <div class="lottery-mini-tile">
+                <div class="mini-tile-label">Lifetime Best Share</div>
+                <div class="mini-tile-val mono" style="color: #fbbf24;">${fleetBestShareStr}</div>
+                <div class="mini-tile-sub mono">${fleetBestMinerName || 'Fleet Leader'}</div>
+              </div>
+              <div class="lottery-mini-tile">
+                <div class="mini-tile-label">Network Difficulty</div>
+                <div class="mini-tile-val mono" style="color: #a78bfa;">109.80 T</div>
+                <div class="mini-tile-sub mono">Target: ~1.098e14</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logarithmic Progress Bar to Full Block -->
+        <div class="share-progress-container">
+          <div class="share-progress-header">
+            <span class="mono" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">
+              🚀 Fleet Share Difficulty Milestone to Solving Block (Log10 Scale)
+            </span>
+            <span class="mono" style="font-size: 11px; color: #fbbf24; font-weight: 700;">
+              ${fleetBestShareStr} (${logProgressPct}% to Block Target)
+            </span>
+          </div>
+          <div class="share-progress-track">
+            <div class="share-progress-fill" style="width: ${logProgressPct}%;"></div>
+            <div class="share-progress-pin" style="left: ${logProgressPct}%;">
+              <div class="share-pin-glow"></div>
+              <div class="share-pin-label mono">${fleetBestShareStr}</div>
+            </div>
+          </div>
+          <div class="share-milestone-row mono">
+            <span>1 M</span>
+            <span>100 M</span>
+            <span style="color: #fbbf24; font-weight: 700;">1 G (Mega)</span>
+            <span style="color: #fbbf24; font-weight: 700;">10 G</span>
+            <span>100 G</span>
+            <span>1 T</span>
+            <span style="color: #34d399; font-weight: 800;">109.8 T (WIN)</span>
+          </div>
+        </div>
+      </div>
+
       <!-- MINING POOL TELEMETRY RACK -->
       <div class="glass-card cyan-glow" style="margin-bottom: 24px; padding: 18px 22px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
@@ -2486,6 +3055,9 @@ class HomeMinerFleetCard extends HTMLElement {
           const hashrateThs = miner.ths.toFixed(2);
           const powerW = miner.watts.toFixed(1);
           const efficiency = miner.eff;
+          const isMega = (miner.bestDiffNum || 0) >= 1e9;
+          const isSuper = (miner.bestDiffNum || 0) >= 1e8 && !isMega;
+          const cardGlowClass = isMega ? 'amber-glow mega-share-card' : isBitaxe ? 'amber-glow' : 'cyan-glow';
 
           // Bar percentages
           const hashBar = Math.min(100, Math.round((miner.ths / (isBitaxe ? 2.0 : 6.0)) * 100));
@@ -2494,14 +3066,27 @@ class HomeMinerFleetCard extends HTMLElement {
           const fanBar = Math.min(100, Math.round((fanRpm / (isBitaxe ? 8000 : 5000)) * 100));
 
           return `
-            <div class="glass-card ${isBitaxe ? 'amber-glow' : 'cyan-glow'}">
+            <div class="glass-card ${cardGlowClass}">
               <div class="pod-header-row">
                 <div class="pod-identity">
                   <div class="pod-icon" style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'}; border-color: ${isBitaxe ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}; background: ${isBitaxe ? 'rgba(245, 158, 11, 0.1)' : 'rgba(56, 189, 248, 0.1)'};">
                     ${isBitaxe ? '⚡' : '🖥️'}
                   </div>
                   <div>
-                    <div class="pod-name">${miner.name}</div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <span class="pod-name">${miner.name}</span>
+                      ${isMega ? `
+                        <span class="mega-share-pill mono">
+                          <span>🏆</span>
+                          <span>MEGA-SHARE ${miner.bestShareStr}</span>
+                        </span>
+                      ` : isSuper ? `
+                        <span class="super-share-pill mono">
+                          <span>⚡</span>
+                          <span>SUPER-SHARE ${miner.bestShareStr}</span>
+                        </span>
+                      ` : ''}
+                    </div>
                     <div class="pod-meta-strip">
                       <span class="status-orb" style="background: #34d399;"></span>
                       <span style="color: #cbd5e1;">${miner.host}</span>
@@ -2745,7 +3330,126 @@ class HomeMinerFleetCard extends HTMLElement {
     this._attachCardEventHandlers();
   }
 
+  _playVictoryFanfare() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      // 4-note victory arpeggio: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
+      const notes = [
+        { f: 523.25, d: 0.12, t: 0 },
+        { f: 659.25, d: 0.12, t: 0.12 },
+        { f: 783.99, d: 0.14, t: 0.24 },
+        { f: 1046.50, d: 0.45, t: 0.38 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note.f, ctx.currentTime + note.t);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + note.t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.t + note.d);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + note.t);
+        osc.stop(ctx.currentTime + note.t + note.d);
+      });
+    } catch (e) {
+      console.warn('[Home Miner Studio] Victory fanfare sound error:', e);
+    }
+  }
+
+  _triggerCelebration() {
+    this._playVictoryFanfare();
+    const canvas = this.shadowRoot?.querySelector('#celebration-canvas');
+    if (!canvas) return;
+
+    const host = this;
+    const rect = host.getBoundingClientRect();
+    canvas.width = rect.width || 800;
+    canvas.height = rect.height || 600;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const particles = [];
+    const colors = ['#fbbf24', '#f59e0b', '#38bdf8', '#10b981', '#ec4899', '#ffffff', '#8b5cf6'];
+    const numParticles = 140;
+
+    for (let i = 0; i < numParticles; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 120,
+        y: canvas.height * 0.35 + (Math.random() - 0.5) * 60,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() * -12) - 4,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        shape: Math.random() > 0.4 ? 'rect' : 'circle',
+        alpha: 1,
+        gravity: 0.35,
+        friction: 0.985
+      });
+    }
+
+    const startTime = performance.now();
+    const duration = 3200;
+
+    const renderFrame = (now) => {
+      const elapsed = now - startTime;
+      if (elapsed > duration) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const fadeOut = elapsed > duration - 800 ? (duration - elapsed) / 800 : 1;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= p.friction;
+        p.rotation += p.rotSpeed;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha * fadeOut);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+
+        if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        }
+        ctx.restore();
+      }
+
+      requestAnimationFrame(renderFrame);
+    };
+
+    requestAnimationFrame(renderFrame);
+  }
+
   _attachCardEventHandlers() {
+    
+    // Solo Block Win Celebration Test Button
+    const celebrateBtn = this.shadowRoot.querySelector('#test-celebration-btn');
+    if (celebrateBtn) {
+      celebrateBtn.addEventListener('click', () => {
+        this._triggerCelebration();
+      });
+    }
     
     // 1-Click Miner Discovery Button (Interactive Modal)
     const importBtn = this.shadowRoot.querySelector('#import-btn');

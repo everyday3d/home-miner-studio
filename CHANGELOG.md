@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Solo Block Lottery Radar & Neon Mega-Share VFX Celebration** ([#14](https://github.com/everyday3d/home-miner-studio/issues/14)):
+  - Built an interactive **Solo Block Lottery Radar Console** on the dashboard displaying real-time mathematical odds (expected days/years, daily probability percentage) based on active fleet TH/s against Bitcoin network difficulty (109.80 T).
+  - Integrated real-time Block Bounty Jackpot valuation (3.125 BTC * Spot Price) highlighting potential solo block bounty reward.
+  - Implemented high-tech SVG circular radar sweep with 360° rotating gradient beam, range rings, crosshairs, and pulsing target blips for highest difficulty hits.
+  - Added logarithmic milestone progress bar mapping lifetime best share difficulty (1M -> 100T) to track proximity to solving a valid block.
+  - Injected **Mega-Share Card Aura** and shimmery gold pill badges (`🏆 MEGA-SHARE 14.09 G`) on miner workstation cards exceeding 1 G difficulty.
+  - Built pure in-browser celebration system with zero CDN dependencies: HTML5 canvas particle burst physics and Web Audio API synthesized 4-note victory fanfare chime (`🎉 Test Win Celebration`).
+
 ## [0.5.2] - 2026-10-13
 
 ### Added
