@@ -31,6 +31,7 @@ from .const import (
     PLATFORMS,
     SERVICE_ADD_MINER,
     SERVICE_APPLY_SOLAR_CURTAILMENT,
+    SERVICE_BUST_CARD_CACHE,
     SERVICE_DELETE_MINER,
     SERVICE_EDIT_MINER,
     SERVICE_IMPORT_EXISTING,
@@ -330,6 +331,57 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.http.register_view(HomeMinerImportView)
     hass.http.register_view(HomeMinerManagerView)
     hass.http.register_view(HomeMinerMarketView)
+
+    # Automatic Lovelace Resource Cache-Buster Synchronization
+    async def _async_sync_lovelace_card_resource(call: ServiceCall | None = None) -> None:
+        """Ensure Lovelace resource points to current version with cache buster."""
+        try:
+            manifest_file = os.path.join(os.path.dirname(__file__), "manifest.json")
+            version_str = "0.5.2"
+            if os.path.exists(manifest_file):
+                import json
+                try:
+                    with open(manifest_file, "r", encoding="utf-8") as mf:
+                        version_str = json.load(mf).get("version", version_str)
+                except Exception:
+                    pass
+
+            mtime = int(os.path.getmtime(card_path)) if os.path.exists(card_path) else 0
+            cache_url = f"/local/home-miner-cards.js?v={version_str}.{mtime}"
+
+            lovelace = hass.data.get("lovelace")
+            if not lovelace:
+                return
+            resources = getattr(lovelace, "resources", None)
+            if not resources or not hasattr(resources, "async_get_items"):
+                return
+
+            items = resources.async_get_items()
+            matched = None
+            for item in items:
+                u = item.get("url", "")
+                if "home-miner-cards.js" in u:
+                    matched = item
+                    break
+
+            if matched:
+                if matched.get("url") != cache_url:
+                    _LOGGER.info("Updating Home Miner Studio Lovelace resource: %s -> %s", matched.get("url"), cache_url)
+                    await resources.async_update_item(matched["id"], {"res_type": "module", "url": cache_url})
+            else:
+                _LOGGER.info("Registering Home Miner Studio Lovelace resource: %s", cache_url)
+                await resources.async_create_item({"res_type": "module", "url": cache_url})
+        except Exception as err:
+            _LOGGER.debug("Could not automatically synchronize Lovelace card resource: %s", err)
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_BUST_CARD_CACHE,
+        _async_sync_lovelace_card_resource,
+        schema=vol.Schema({}),
+    )
+
+    hass.async_create_task(_async_sync_lovelace_card_resource())
 
     return True
 

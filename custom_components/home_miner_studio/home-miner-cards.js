@@ -6,6 +6,13 @@
  * Production Telemetry: 100% real entity data, Celsius-only units, frosted glassmorphism layers, SVG radial ring gauges.
  */
 
+console.info(
+  '%c⛏️ HOME MINER STUDIO %c v0.5.3-rpg %c Build 2026.10.14 ',
+  'background: #0ea5e9; color: #fff; font-weight: bold; border-radius: 4px 0 0 4px; padding: 2px 6px;',
+  'background: #0f172a; color: #38bdf8; font-weight: bold; padding: 2px 6px;',
+  'background: #1e293b; color: #94a3b8; border-radius: 0 4px 4px 0; padding: 2px 6px;'
+);
+
 const safeStorage = {
   get(key) {
     try {
@@ -4879,7 +4886,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'}
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.5.3-rpg 🔄</span>
             </div>
           </div>
         </div>
@@ -4890,7 +4897,7 @@ class HomeMinerFleetCard extends HTMLElement {
           </button>
           <button class="glass-btn primary" id="add-miner-btn">➕ Add Miner</button>
           <button class="glass-btn" id="import-btn">⚡ 1-Click Discovery</button>
-          <button class="glass-btn" id="reload-btn">🔄 Refresh Fleet</button>
+          <button class="glass-btn" id="reload-btn" title="Refresh Fleet Telemetry (Shift+Click to Force-Purge Browser Cache & Reload)">🔄 Refresh Fleet</button>
         </div>
       </div>
 
@@ -6173,12 +6180,37 @@ class HomeMinerFleetCard extends HTMLElement {
       });
     }
 
-    // Refresh Button
+    // Refresh Button & Hard Cache Purge
+    const triggerHardCachePurge = async () => {
+      try {
+        if (window.caches) {
+          const keys = await window.caches.keys();
+          await Promise.all(keys.map(k => window.caches.delete(k)));
+        }
+      } catch (e) {}
+      if (this._hass) {
+        try {
+          await this._hass.callService('home_miner_studio', 'bust_card_cache', {});
+        } catch (e) {}
+      }
+      window.location.reload(true);
+    };
+
     const reloadBtn = this.shadowRoot.querySelector('#reload-btn');
     if (reloadBtn) {
-      reloadBtn.addEventListener('click', () => {
+      reloadBtn.addEventListener('click', (e) => {
+        if (e.shiftKey) {
+          triggerHardCachePurge();
+          return;
+        }
+        this._lastRenderSig = null;
         this.render();
       });
+    }
+
+    const purgeBtn = this.shadowRoot.querySelector('#cache-purge-btn');
+    if (purgeBtn) {
+      purgeBtn.addEventListener('click', triggerHardCachePurge);
     }
 
     // Power Profile Buttons
