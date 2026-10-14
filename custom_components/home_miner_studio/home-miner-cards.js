@@ -26,6 +26,379 @@ const safeStorage = {
   }
 };
 
+// --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap, 21 Rank Milestones) ---
+const RPG_TITLES = [
+  { level: 500, title: 'Satoshi Slayer (MAX)', badge: '👑' },
+  { level: 475, title: 'Blockchain Demiurge', badge: '🪐' },
+  { level: 450, title: 'Celestial Hasher', badge: '🌌' },
+  { level: 425, title: 'Genesis Archon', badge: '🗝️' },
+  { level: 400, title: 'Consensus Sovereign', badge: '🏛️' },
+  { level: 375, title: 'Sub-Zero Cryomancer', badge: '❄️' },
+  { level: 350, title: 'Quantum Proofmaster', badge: '⚛️' },
+  { level: 325, title: 'Zero-Latency Phantom', badge: '⚡' },
+  { level: 300, title: 'Crypto Colossus', badge: '🗿' },
+  { level: 275, title: 'ASIC Architect', badge: '📐' },
+  { level: 250, title: 'Megahash Overlord', badge: '🔱' },
+  { level: 225, title: 'Silicon Alchemist', badge: '🧪' },
+  { level: 200, title: 'Thermal Dominator', badge: '🔥' },
+  { level: 175, title: 'Difficulty Crusher', badge: '🔨' },
+  { level: 150, title: 'Hashrate Vanguard', badge: '🛡️' },
+  { level: 125, title: 'Heatsink Warden', badge: '🌪️' },
+  { level: 100, title: 'Volt Tamer', badge: '⚡' },
+  { level: 75,  title: 'Frequency Enthusiast', badge: '📈' },
+  { level: 50,  title: 'Stratum Journeyman', badge: '🌐' },
+  { level: 25,  title: 'Silicon Apprentice', badge: '🔌' },
+  { level: 1,   title: 'Novice Breadboarder', badge: '🌱' }
+];
+
+function xpForRpgLevel(l) {
+  if (l <= 1) return 0;
+  return Math.floor(60 * Math.pow(l - 1, 1.85));
+}
+
+function rpgLevelForXp(xp) {
+  if (xp <= 0) return 1;
+  let low = 1, high = 500, ans = 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (xpForRpgLevel(mid) <= xp) {
+      ans = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return ans;
+}
+
+function getRpgTitle(lvl) {
+  for (const t of RPG_TITLES) {
+    if (lvl >= t.level) return t;
+  }
+  return RPG_TITLES[RPG_TITLES.length - 1];
+}
+
+function getNextRpgMilestone(lvl) {
+  for (let i = RPG_TITLES.length - 1; i >= 0; i--) {
+    if (RPG_TITLES[i].level > lvl) return RPG_TITLES[i];
+  }
+  return null;
+}
+
+function getRpgBadges(stats) {
+  const totalShares = stats.totalShares || 0;
+  const bestDiff = stats.bestDiff || 0;
+  const maxFreq = stats.maxFreq || 0;
+  const minTemp = stats.minTemp || 0;
+  const efficiency = stats.efficiency || 0;
+  const maxFan = stats.maxFan || 0;
+  const rigCount = stats.rigCount || 0;
+  const hasStratum = !!stats.hasStratum;
+  const coin = stats.coin || 'BTC';
+  const soundMode = stats.soundMode || 'off';
+  const level = stats.level || 1;
+  const blocksSolved = stats.blocksSolved || false;
+
+  const diffStr = (d) => {
+    if (d >= 1e9) return (d / 1e9).toFixed(2) + ' G';
+    if (d >= 1e6) return (d / 1e6).toFixed(2) + ' M';
+    if (d >= 1e3) return (d / 1e3).toFixed(1) + ' k';
+    return d.toString();
+  };
+
+  return [
+    // 1. Shares & Nonces
+    {
+      id: 'first_nonce',
+      cat: 'shares',
+      catLabel: 'Nonces & Shares',
+      name: 'First Nonce',
+      icon: '🥉',
+      desc: 'Submit your first verified accepted share to the network pool.',
+      unlocked: totalShares >= 1,
+      currVal: totalShares,
+      targetVal: 1,
+      progressPct: Math.min(100, Math.round((totalShares / 1) * 100)),
+      statStr: `${totalShares.toLocaleString()} / 1`,
+      remStr: 'Completed'
+    },
+    {
+      id: 'shares_10k',
+      cat: 'shares',
+      catLabel: 'Nonces & Shares',
+      name: 'Ten K Club',
+      icon: '🥈',
+      desc: 'Reach 10,000 accepted shares across your mining fleet.',
+      unlocked: totalShares >= 10000,
+      currVal: totalShares,
+      targetVal: 10000,
+      progressPct: Math.min(100, Math.round((totalShares / 10000) * 100)),
+      statStr: `${totalShares.toLocaleString()} / 10,000`,
+      remStr: totalShares >= 10000 ? 'Completed' : `${(10000 - totalShares).toLocaleString()} left`
+    },
+    {
+      id: 'shares_100k',
+      cat: 'shares',
+      catLabel: 'Nonces & Shares',
+      name: 'Century Miner',
+      icon: '🥇',
+      desc: 'Reach 100,000 accepted shares across your mining fleet.',
+      unlocked: totalShares >= 100000,
+      currVal: totalShares,
+      targetVal: 100000,
+      progressPct: Math.min(100, Math.round((totalShares / 100000) * 100)),
+      statStr: `${totalShares.toLocaleString()} / 100,000`,
+      remStr: totalShares >= 100000 ? 'Completed' : `${(100000 - totalShares).toLocaleString()} left`
+    },
+    {
+      id: 'shares_1m',
+      cat: 'shares',
+      catLabel: 'Nonces & Shares',
+      name: 'Mega Miner',
+      icon: '💎',
+      desc: 'Submit 1,000,000 lifetime shares to the blockchain.',
+      unlocked: totalShares >= 1000000,
+      currVal: totalShares,
+      targetVal: 1000000,
+      progressPct: Math.min(100, Math.round((totalShares / 1000000) * 100)),
+      statStr: `${totalShares.toLocaleString()} / 1,000,000`,
+      remStr: totalShares >= 1000000 ? 'Completed' : `${(1000000 - totalShares).toLocaleString()} left`
+    },
+
+    // 2. Difficulty & Luck
+    {
+      id: 'diff_1m',
+      cat: 'difficulty',
+      catLabel: 'Difficulty & Luck',
+      name: 'Millionaire Hit',
+      icon: '🎯',
+      desc: 'Submit a share with difficulty greater than 1,000,000 (1M).',
+      unlocked: bestDiff >= 1e6,
+      currVal: bestDiff,
+      targetVal: 1e6,
+      progressPct: Math.min(100, Math.round((bestDiff / 1e6) * 100)),
+      statStr: `${diffStr(bestDiff)} / 1.00 M`,
+      remStr: bestDiff >= 1e6 ? 'Completed' : `${diffStr(1e6 - bestDiff)} left`
+    },
+    {
+      id: 'diff_100m',
+      cat: 'difficulty',
+      catLabel: 'Difficulty & Luck',
+      name: 'High Roller',
+      icon: '⚡',
+      desc: 'Submit a share with difficulty exceeding 100,000,000 (100M).',
+      unlocked: bestDiff >= 1e8,
+      currVal: bestDiff,
+      targetVal: 1e8,
+      progressPct: Math.min(100, Math.round((bestDiff / 1e8) * 100)),
+      statStr: `${diffStr(bestDiff)} / 100.00 M`,
+      remStr: bestDiff >= 1e8 ? 'Completed' : `${diffStr(1e8 - bestDiff)} left`
+    },
+    {
+      id: 'diff_1g',
+      cat: 'difficulty',
+      catLabel: 'Difficulty & Luck',
+      name: 'Gigahash Titan',
+      icon: '🏆',
+      desc: 'Hit a legendary Mega-Share with difficulty exceeding 1,000,000,000 (1G).',
+      unlocked: bestDiff >= 1e9,
+      currVal: bestDiff,
+      targetVal: 1e9,
+      progressPct: Math.min(100, Math.round((bestDiff / 1e9) * 100)),
+      statStr: `${diffStr(bestDiff)} / 1.00 G`,
+      remStr: bestDiff >= 1e9 ? 'Completed' : `${diffStr(1e9 - bestDiff)} left`
+    },
+    {
+      id: 'block_bounty',
+      cat: 'difficulty',
+      catLabel: 'Difficulty & Luck',
+      name: 'Solo Block Bounty',
+      icon: '👑',
+      desc: 'Solve a valid Bitcoin or Alt-Coin block on solo stratum.',
+      unlocked: !!blocksSolved,
+      currVal: blocksSolved ? 1 : 0,
+      targetVal: 1,
+      progressPct: blocksSolved ? 100 : 0,
+      statStr: blocksSolved ? '1 / 1 Block' : '0 / 1 Block',
+      remStr: blocksSolved ? 'SOLVED!' : 'Awaiting Solved Block'
+    },
+
+    // 3. Tuning & Hardware
+    {
+      id: 'oc_speed',
+      cat: 'hardware',
+      catLabel: 'Tuning & Hardware',
+      name: 'Speed Demon',
+      icon: '🏎️',
+      desc: 'Overclock ASIC core frequency to 600 MHz or higher.',
+      unlocked: maxFreq >= 600,
+      currVal: maxFreq,
+      targetVal: 600,
+      progressPct: Math.min(100, Math.round((maxFreq / 600) * 100)),
+      statStr: `${maxFreq.toFixed(0)} MHz / 600 MHz`,
+      remStr: maxFreq >= 600 ? 'Completed' : `${(600 - maxFreq).toFixed(0)} MHz to go`
+    },
+    {
+      id: 'oc_redline',
+      cat: 'hardware',
+      catLabel: 'Tuning & Hardware',
+      name: 'Redline Turbo',
+      icon: '🚀',
+      desc: 'Overclock ASIC core frequency to 700 MHz extreme tier.',
+      unlocked: maxFreq >= 700,
+      currVal: maxFreq,
+      targetVal: 700,
+      progressPct: Math.min(100, Math.round((maxFreq / 700) * 100)),
+      statStr: `${maxFreq.toFixed(0)} MHz / 700 MHz`,
+      remStr: maxFreq >= 700 ? 'Completed' : `${(700 - maxFreq).toFixed(0)} MHz to go`
+    },
+    {
+      id: 'temp_cryo',
+      cat: 'hardware',
+      catLabel: 'Tuning & Hardware',
+      name: 'Cryo Core',
+      icon: '❄️',
+      desc: 'Maintain core operating temperature under 56°C under active load.',
+      unlocked: minTemp > 0 && minTemp <= 56,
+      currVal: minTemp,
+      targetVal: 56,
+      progressPct: (minTemp > 0 && minTemp <= 56) ? 100 : Math.max(0, Math.round((1 - (minTemp - 56) / 20) * 100)),
+      statStr: minTemp > 0 ? `${minTemp.toFixed(1)}°C ≤ 56°C` : '--',
+      remStr: (minTemp > 0 && minTemp <= 56) ? 'Completed' : 'Cooling needed'
+    },
+    {
+      id: 'eff_green',
+      cat: 'hardware',
+      catLabel: 'Tuning & Hardware',
+      name: 'Green Hash',
+      icon: '🔋',
+      desc: 'Tune fleet to achieve electrical efficiency ≤ 25.0 J/TH.',
+      unlocked: efficiency > 0 && efficiency <= 25,
+      currVal: efficiency,
+      targetVal: 25,
+      progressPct: (efficiency > 0 && efficiency <= 25) ? 100 : 60,
+      statStr: efficiency > 0 ? `${efficiency.toFixed(1)} J/TH ≤ 25 J/TH` : '--',
+      remStr: (efficiency > 0 && efficiency <= 25) ? 'Completed' : 'Tune efficiency'
+    },
+    {
+      id: 'fan_tornado',
+      cat: 'hardware',
+      catLabel: 'Tuning & Hardware',
+      name: 'Tornado Turbine',
+      icon: '🌪️',
+      desc: 'Drive cooling fan at 5,000+ RPM high-velocity cooling.',
+      unlocked: maxFan >= 5000,
+      currVal: maxFan,
+      targetVal: 5000,
+      progressPct: Math.min(100, Math.round((maxFan / 5000) * 100)),
+      statStr: `${maxFan.toLocaleString()} RPM / 5,000`,
+      remStr: maxFan >= 5000 ? 'Completed' : `${(5000 - maxFan).toLocaleString()} RPM to go`
+    },
+
+    // 4. Stratum & Operations
+    {
+      id: 'rigs_dual',
+      cat: 'operations',
+      catLabel: 'Stratum & Ops',
+      name: 'Dual Rig Dynasty',
+      icon: '🖥️',
+      desc: 'Operate 2 or more active ASIC blades simultaneously.',
+      unlocked: rigCount >= 2,
+      currVal: rigCount,
+      targetVal: 2,
+      progressPct: Math.min(100, Math.round((rigCount / 2) * 100)),
+      statStr: `${rigCount} / 2 Rigs`,
+      remStr: rigCount >= 2 ? 'Completed' : '1 more rig needed'
+    },
+    {
+      id: 'pool_stratum',
+      cat: 'operations',
+      catLabel: 'Stratum & Ops',
+      name: 'Stratum Navigator',
+      icon: '🌐',
+      desc: 'Connect to an active Stratum mining pool provider.',
+      unlocked: hasStratum,
+      currVal: hasStratum ? 1 : 0,
+      targetVal: 1,
+      progressPct: hasStratum ? 100 : 0,
+      statStr: hasStratum ? 'Stratum Online' : 'No Stratum',
+      remStr: hasStratum ? 'Connected' : 'Offline'
+    },
+    {
+      id: 'coin_alt',
+      cat: 'operations',
+      catLabel: 'Stratum & Ops',
+      name: 'Alt-Coin Alchemist',
+      icon: '🎭',
+      desc: 'Mine or track an alternative SHA-256 coin like WOJAK.',
+      unlocked: coin && coin !== 'BTC',
+      currVal: coin && coin !== 'BTC' ? 1 : 0,
+      targetVal: 1,
+      progressPct: coin && coin !== 'BTC' ? 100 : 0,
+      statStr: `${coin || 'BTC'} Active`,
+      remStr: coin && coin !== 'BTC' ? 'Completed' : 'Mine an alt-coin'
+    },
+    {
+      id: 'audio_on',
+      cat: 'operations',
+      catLabel: 'Stratum & Ops',
+      name: 'Sonic Rig',
+      icon: '🔊',
+      desc: 'Enable synthesized acoustic Geiger clicks or crystal chimes.',
+      unlocked: soundMode !== 'off',
+      currVal: soundMode !== 'off' ? 1 : 0,
+      targetVal: 1,
+      progressPct: soundMode !== 'off' ? 100 : 0,
+      statStr: soundMode !== 'off' ? `${soundMode.toUpperCase()} Active` : 'Muted',
+      remStr: soundMode !== 'off' ? 'Enabled' : 'Audio muted'
+    },
+
+    // 5. Prestige Tiers
+    {
+      id: 'lvl_100',
+      cat: 'prestige',
+      catLabel: 'Prestige Tiers',
+      name: 'Centurion',
+      icon: '🌟',
+      desc: 'Ascend to Fleet Level 100 (Volt Tamer).',
+      unlocked: level >= 100,
+      currVal: level,
+      targetVal: 100,
+      progressPct: Math.min(100, Math.round((level / 100) * 100)),
+      statStr: `Lvl ${level} / Lvl 100`,
+      remStr: level >= 100 ? 'Completed' : `${100 - level} levels left`
+    },
+    {
+      id: 'lvl_250',
+      cat: 'prestige',
+      catLabel: 'Prestige Tiers',
+      name: 'Master of Silicon',
+      icon: '🔱',
+      desc: 'Ascend to Fleet Level 250 (Megahash Overlord).',
+      unlocked: level >= 250,
+      currVal: level,
+      targetVal: 250,
+      progressPct: Math.min(100, Math.round((level / 250) * 100)),
+      statStr: `Lvl ${level} / Lvl 250`,
+      remStr: level >= 250 ? 'Completed' : `${250 - level} levels left`
+    },
+    {
+      id: 'lvl_400',
+      cat: 'prestige',
+      catLabel: 'Prestige Tiers',
+      name: 'Celestial Sovereign',
+      icon: '🌌',
+      desc: 'Ascend to Fleet Level 400 (Consensus Sovereign).',
+      unlocked: level >= 400,
+      currVal: level,
+      targetVal: 400,
+      progressPct: Math.min(100, Math.round((level / 400) * 100)),
+      statStr: `Lvl ${level} / Lvl 400`,
+      remStr: level >= 400 ? 'Completed' : `${400 - level} levels left`
+    }
+  ];
+}
+
 class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
@@ -48,6 +421,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._fetchingPrices = false;
     this._currentMiners = [];
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
+    this._trophyFilter = safeStorage.get('miner_trophy_filter') || 'all';
     this._lastRenderSig = null;
     this._soundMode = safeStorage.get('miner_sound_mode') || 'off'; // 'off' | 'geiger' | 'chimes'
     this._soundVolume = parseFloat(safeStorage.get('miner_sound_vol') || '0.35');
@@ -88,6 +462,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const states = hass.states;
     const parts = [
       this._activeTab || 'hardware',
+      this._trophyFilter || 'all',
       this._soundMode || 'off',
       this._selectedCoin || '',
       this._selectedLotteryCoin || '',
@@ -2895,6 +3270,374 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 5px;
           box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
         }
+
+        /* --- RPG PROGRESSION & TROPHY CABINET STYLES --- */
+        .glass-card.gold-glow {
+          border-color: rgba(245, 158, 11, 0.35);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(245, 158, 11, 0.22);
+        }
+
+        .rpg-hero-banner {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 24px;
+          padding: 24px;
+          margin-bottom: 24px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .rpg-hero-banner { grid-template-columns: 1fr; text-align: center; }
+        }
+
+        .level-orb-box {
+          position: relative;
+          width: 124px;
+          height: 124px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          margin: 0 auto;
+        }
+        .level-orb-svg {
+          width: 124px;
+          height: 124px;
+          transform: rotate(-90deg);
+        }
+        .level-orb-inner {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+        .level-orb-num {
+          font-size: 34px;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          color: #fbbf24;
+          line-height: 1;
+          text-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+        }
+        .level-orb-sub {
+          font-size: 9px;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-top: 2px;
+        }
+
+        .rpg-hero-main {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .rpg-rank-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .rpg-rank-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.35));
+          border: 1px solid rgba(245, 158, 11, 0.5);
+          border-radius: 999px;
+          font-size: 15px;
+          font-weight: 800;
+          color: #fde68a;
+          box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        .rpg-tier-label {
+          font-size: 12px;
+          color: #94a3b8;
+          font-weight: 600;
+        }
+
+        .rpg-progress-track {
+          width: 100%;
+          height: 14px;
+          background: rgba(0, 0, 0, 0.5);
+          border-radius: 999px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          position: relative;
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .rpg-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #38bdf8, #f59e0b, #fbbf24);
+          border-radius: 999px;
+          position: relative;
+          box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
+          transition: width 0.4s ease;
+        }
+        .rpg-xp-stats-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          color: #cbd5e1;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .rpg-meta-chips {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 4px;
+        }
+        .rpg-meta-chip {
+          padding: 5px 12px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          font-size: 11px;
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .rpg-meta-chip b { color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
+
+        /* Trophy Filter Bar */
+        .trophy-filter-bar {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 20px;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding-bottom: 4px;
+        }
+        .trophy-filter-bar::-webkit-scrollbar {
+          display: none;
+        }
+        .trophy-filter-pill {
+          padding: 6px 14px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #94a3b8;
+          white-space: nowrap;
+          transition: all 0.2s;
+        }
+        .trophy-filter-pill:hover {
+          color: #f8fafc;
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .trophy-filter-pill.active {
+          background: rgba(245, 158, 11, 0.2);
+          border-color: #fbbf24;
+          color: #fde68a;
+          box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Trophy Grid */
+        .trophy-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+          gap: 16px;
+          margin-bottom: 28px;
+        }
+
+        .trophy-card {
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          border-radius: 16px;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .trophy-card:hover {
+          transform: translateY(-2px);
+        }
+        .trophy-card.unlocked {
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.65));
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          box-shadow: 0 8px 24px -6px rgba(0,0,0,0.4), 0 0 20px -6px rgba(245, 158, 11, 0.18);
+        }
+        .trophy-card.locked {
+          background: rgba(15, 23, 42, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          opacity: 0.72;
+        }
+
+        .trophy-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .trophy-icon-box {
+          width: 46px;
+          height: 46px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          flex-shrink: 0;
+        }
+        .trophy-card.unlocked .trophy-icon-box {
+          background: rgba(245, 158, 11, 0.15);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+        }
+        .trophy-card.locked .trophy-icon-box {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          filter: grayscale(1);
+          opacity: 0.5;
+        }
+
+        .trophy-title-wrap {
+          flex: 1;
+        }
+        .trophy-category {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #94a3b8;
+        }
+        .trophy-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #f8fafc;
+          margin-top: 2px;
+        }
+        .trophy-status-pill {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 999px;
+          font-family: 'JetBrains Mono', monospace;
+          white-space: nowrap;
+        }
+        .trophy-status-pill.unlocked {
+          background: rgba(16, 185, 129, 0.2);
+          border: 1px solid #10b981;
+          color: #34d399;
+        }
+        .trophy-status-pill.locked {
+          background: rgba(148, 163, 184, 0.1);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          color: #94a3b8;
+        }
+
+        .trophy-desc {
+          font-size: 12px;
+          color: #94a3b8;
+          line-height: 1.4;
+        }
+
+        .trophy-micro-bar {
+          width: 100%;
+          height: 6px;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 999px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          margin-top: 4px;
+        }
+        .trophy-micro-fill {
+          height: 100%;
+          border-radius: 999px;
+        }
+        .trophy-micro-fill.complete {
+          background: #10b981;
+          box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+        .trophy-micro-fill.pending {
+          background: #38bdf8;
+          box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+        }
+
+        .trophy-footer-val {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #cbd5e1;
+        }
+
+        /* Milestone Roadmap Strip */
+        .roadmap-section-title {
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #94a3b8;
+          margin-bottom: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .roadmap-strip {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+          padding-bottom: 12px;
+        }
+        .roadmap-strip::-webkit-scrollbar {
+          height: 6px;
+        }
+        .roadmap-strip::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.5);
+          border-radius: 999px;
+        }
+        .roadmap-strip::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 999px;
+        }
+        .roadmap-strip::-webkit-scrollbar-thumb:hover {
+          background: rgba(245, 158, 11, 0.5);
+        }
+        .roadmap-item {
+          min-width: 170px;
+          padding: 14px;
+          border-radius: 12px;
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          position: relative;
+          flex-shrink: 0;
+        }
+        .roadmap-item.current {
+          border-color: #fbbf24;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.8));
+          box-shadow: 0 0 18px rgba(245, 158, 11, 0.25);
+        }
+        .roadmap-item.unlocked {
+          border-color: rgba(16, 185, 129, 0.4);
+          background: rgba(16, 185, 129, 0.08);
+        }
+        .roadmap-lvl-pill {
+          font-size: 10px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+        }
+        .roadmap-title {
+          font-size: 13px;
+          font-weight: 700;
+        }
+        .roadmap-xp {
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
+        }
       
 `;
   }
@@ -3700,6 +4443,54 @@ class HomeMinerFleetCard extends HTMLElement {
       ? '🎉 WIN!'
       : (expectedDays < 365 ? (expectedDays.toFixed(1) + 'd Odds') : (expectedYears.toFixed(0) + 'y Odds'));
 
+    // --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap) ---
+    const totalFleetXp = (totalFleetAccepted * 15) + Math.floor(fleetBestDiff / 50000);
+    const fleetLevel = rpgLevelForXp(totalFleetXp);
+    const fleetTitle = getRpgTitle(fleetLevel);
+    const nextMilestone = getNextRpgMilestone(fleetLevel);
+    const currLvlBaseXp = xpForRpgLevel(fleetLevel);
+    const nextLvlReqXp = fleetLevel < 500 ? xpForRpgLevel(fleetLevel + 1) : currLvlBaseXp;
+    const lvlProgressPct = fleetLevel >= 500 ? 100 : Math.min(100, Math.max(0, ((totalFleetXp - currLvlBaseXp) / Math.max(1, nextLvlReqXp - currLvlBaseXp)) * 100));
+    const xpRemaining = fleetLevel >= 500 ? 0 : Math.max(0, nextLvlReqXp - totalFleetXp);
+    const orbOffset = Math.round(264 - (264 * (lvlProgressPct / 100)));
+
+    // Hardware aggregates for badges
+    let maxFreq = 0;
+    let minTemp = 999;
+    let maxFan = 0;
+    let hasStratum = false;
+    let activeCoinMined = 'BTC';
+
+    miners.forEach(m => {
+      const f = parseFloat(m.freq) || 0;
+      if (f > maxFreq) maxFreq = f;
+      if (m.temp > 0 && m.temp < minTemp) minTemp = m.temp;
+      const fan = parseInt(m.fan) || 0;
+      if (fan > maxFan) maxFan = fan;
+      if (m.poolUrl && m.poolUrl !== '--') hasStratum = true;
+      if (m.coin && m.coin !== 'BTC') activeCoinMined = m.coin;
+    });
+    if (minTemp === 999) minTemp = 0;
+
+    const rpgBadges = getRpgBadges({
+      totalShares: totalFleetAccepted,
+      bestDiff: fleetBestDiff,
+      maxFreq,
+      minTemp,
+      efficiency: parseFloat(fleetEfficiency) || 0,
+      maxFan,
+      rigCount: miners.length,
+      hasStratum,
+      coin: activeCoinMined,
+      soundMode: this._soundMode || 'off',
+      level: fleetLevel,
+      blocksSolved: isBlockSolved
+    });
+
+    const unlockedBadgesCount = rpgBadges.filter(b => b.unlocked).length;
+    const currentTrophyFilter = this._trophyFilter || 'all';
+    const displayedBadges = currentTrophyFilter === 'all' ? rpgBadges : rpgBadges.filter(b => b.cat === currentTrophyFilter);
+
     const cardRoot = this.shadowRoot.querySelector('#card-root');
     if (!cardRoot) return;
     cardRoot.innerHTML = `
@@ -3815,11 +4606,143 @@ class HomeMinerFleetCard extends HTMLElement {
           <span>Market</span>
           <span class="tab-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">${currentStats.change_pct >= 0 ? '+' : ''}${currentStats.change_pct.toFixed(1)}%</span>
         </div>
+        <div class="tab-pill ${activeTab === 'trophies' ? 'active' : ''}" data-tab="trophies">
+          <span>🏆</span>
+          <span>Trophies</span>
+          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">Lvl ${fleetLevel} ⚔️</span>
+        </div>
         <div class="tab-pill ${activeTab === 'all' ? 'active' : ''}" data-tab="all">
           <span>🌐</span>
           <span>Overview</span>
         </div>
       </div>
+
+      ${(activeTab === 'trophies' || activeTab === 'all') ? `
+      <!-- RPG PROGRESSION & TROPHY CABINET CONSOLE -->
+      <div class="tab-pane">
+        <!-- Hero Level Banner -->
+        <div class="glass-card gold-glow rpg-hero-banner">
+          <!-- Level Orb -->
+          <div class="level-orb-box">
+            <svg class="level-orb-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="8"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#fbbf24" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="${orbOffset}" stroke-linecap="round" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));"/>
+            </svg>
+            <div class="level-orb-inner">
+              <div class="level-orb-num">${fleetLevel}</div>
+              <div class="level-orb-sub">LEVEL / 500</div>
+            </div>
+          </div>
+
+          <!-- Hero Main -->
+          <div class="rpg-hero-main">
+            <div class="rpg-rank-badge-row">
+              <div class="rpg-rank-pill">
+                <span>${fleetTitle.badge}</span>
+                <span>${fleetTitle.title}</span>
+              </div>
+              <span class="rpg-tier-label">Rank Milestone • Unlocked at Level ${fleetTitle.level}</span>
+              ${nextMilestone ? `
+                <span class="mono" style="font-size: 11px; color: #38bdf8; margin-left: auto;">
+                  Next Rank: ${nextMilestone.badge} ${nextMilestone.title} (Lvl ${nextMilestone.level})
+                </span>
+              ` : `
+                <span class="mono" style="font-size: 11px; color: #fbbf24; margin-left: auto;">
+                  👑 APEX RANK REACHED!
+                </span>
+              `}
+            </div>
+
+            <!-- XP Progress Bar -->
+            <div class="rpg-progress-track">
+              <div class="rpg-progress-fill" style="width: ${lvlProgressPct.toFixed(1)}%;"></div>
+            </div>
+
+            <div class="rpg-xp-stats-row">
+              <span><b>${totalFleetXp.toLocaleString()}</b> / ${nextLvlReqXp.toLocaleString()} Total XP (<span class="mono" style="color: #fbbf24;">${lvlProgressPct.toFixed(1)}% to Lvl ${Math.min(500, fleetLevel + 1)}</span>)</span>
+              <span class="mono" style="color: #38bdf8;">${fleetLevel >= 500 ? 'Max Level Cap Achieved' : `+${xpRemaining.toLocaleString()} XP remaining for next level`}</span>
+            </div>
+
+            <div class="rpg-meta-chips">
+              <div class="rpg-meta-chip">
+                <span>⛏️</span>
+                <span>Accepted Shares: <b>+${(totalFleetAccepted * 15).toLocaleString()} XP</b> (${totalFleetAccepted.toLocaleString()} × 15)</span>
+              </div>
+              <div class="rpg-meta-chip">
+                <span>🎯</span>
+                <span>Mega-Diff: <b>+${Math.floor(fleetBestDiff / 50000).toLocaleString()} XP</b> (${fleetBestShareStr} / 50k)</span>
+              </div>
+              <div class="rpg-meta-chip">
+                <span>🏆</span>
+                <span>Trophy Cabinet: <b style="color: #34d399;">${unlockedBadgesCount} / ${rpgBadges.length} Badges Unlocked (${Math.round((unlockedBadgesCount / rpgBadges.length) * 100)}%)</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trophy Filter Bar -->
+        <div class="trophy-filter-bar">
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'all' ? 'active' : ''}" data-filter="all">All Badges (${rpgBadges.length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'shares' ? 'active' : ''}" data-filter="shares">⛏️ Nonces & Shares (${rpgBadges.filter(b => b.cat === 'shares').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'difficulty' ? 'active' : ''}" data-filter="difficulty">🎯 Difficulty & Luck (${rpgBadges.filter(b => b.cat === 'difficulty').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'hardware' ? 'active' : ''}" data-filter="hardware">⚙️ Tuning & Hardware (${rpgBadges.filter(b => b.cat === 'hardware').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'operations' ? 'active' : ''}" data-filter="operations">🌐 Stratum & Ops (${rpgBadges.filter(b => b.cat === 'operations').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'prestige' ? 'active' : ''}" data-filter="prestige">🌟 Prestige Tiers (${rpgBadges.filter(b => b.cat === 'prestige').length})</button>
+        </div>
+
+        <!-- Trophy Cabinet Grid -->
+        <div class="trophy-grid">
+          ${displayedBadges.map(badge => `
+            <div class="glass-card trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
+              <div class="trophy-header">
+                <div class="trophy-icon-box">${badge.icon}</div>
+                <div class="trophy-title-wrap">
+                  <div class="trophy-category">${badge.catLabel}</div>
+                  <div class="trophy-name">${badge.name}</div>
+                </div>
+                <span class="trophy-status-pill ${badge.unlocked ? 'unlocked' : 'locked'}">
+                  ${badge.unlocked ? '✅ UNLOCKED' : `🔒 ${badge.progressPct}%`}
+                </span>
+              </div>
+              <div class="trophy-desc">${badge.desc}</div>
+              <div class="trophy-micro-bar">
+                <div class="trophy-micro-fill ${badge.unlocked ? 'complete' : 'pending'}" style="width: ${badge.progressPct}%;"></div>
+              </div>
+              <div class="trophy-footer-val">
+                <span>${badge.statStr}</span>
+                <span style="color: ${badge.unlocked ? '#34d399' : '#38bdf8'};">${badge.remStr}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Milestone Roadmap Strip -->
+        <div class="roadmap-section-title">
+          <span>🗺️</span>
+          <span>Fleet Rank Progression Roadmap (Every 25th Level • Cap: 500)</span>
+        </div>
+        <div class="roadmap-strip">
+          ${RPG_TITLES.slice().reverse().map(tier => {
+            const isUnlocked = fleetLevel >= tier.level;
+            const isCurrent = fleetTitle.level === tier.level;
+            const tierXp = xpForRpgLevel(tier.level);
+            return `
+              <div class="roadmap-item ${isCurrent ? 'current' : isUnlocked ? 'unlocked' : ''}">
+                <div class="roadmap-lvl-pill" style="${isCurrent ? 'color: #fbbf24;' : isUnlocked ? 'color: #34d399;' : 'color: #94a3b8;'}">
+                  LEVEL ${tier.level}${tier.level === 500 ? ' (MAX)' : ''}${isCurrent ? ' ⚔️ ACTIVE' : ''}
+                </div>
+                <div class="roadmap-title" style="${isCurrent ? 'color: #fde68a;' : isUnlocked ? 'color: #f8fafc;' : 'color: #94a3b8;'}">
+                  ${tier.badge} ${tier.title}
+                </div>
+                <div class="roadmap-xp mono" style="${isCurrent ? 'color: #fbbf24;' : isUnlocked ? 'color: #34d399;' : 'color: #64748b;'}">
+                  ${tierXp.toLocaleString()} XP • ${isCurrent ? 'Current Rank' : isUnlocked ? 'Unlocked' : 'Locked'}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+      ` : ''}
 
       ${(activeTab === 'market' || activeTab === 'all') ? `
       <!-- MARKET INTELLIGENCE CONSOLE & HISTORICAL COIN PRICE CHART -->
@@ -4258,6 +5181,13 @@ class HomeMinerFleetCard extends HTMLElement {
           const tempBar = Math.min(100, Math.round((chipTemp / 80.0) * 100));
           const fanBar = Math.min(100, Math.round((fanRpm / (isBitaxe ? 8000 : 5000)) * 100));
 
+          // Workstation RPG Tier
+          const minerAccepted = miner.acceptedRaw || 0;
+          const minerBestDiff = miner.bestDiffNum || 0;
+          const minerXp = (minerAccepted * 15) + Math.floor(minerBestDiff / 50000);
+          const minerLvl = rpgLevelForXp(minerXp);
+          const minerRank = getRpgTitle(minerLvl);
+
           return `
             <div class="glass-card ${cardGlowClass}">
               <div class="pod-header-row">
@@ -4268,6 +5198,9 @@ class HomeMinerFleetCard extends HTMLElement {
                   <div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span class="pod-name">${miner.name}</span>
+                      <span class="badge-glass-pill" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; font-weight: 700; font-size: 10px;">
+                        ${minerRank.badge} Lvl ${minerLvl} • ${minerRank.title}
+                      </span>
                       ${isMega ? `
                         <span class="mega-share-pill mono">
                           <span>🏆</span>
@@ -5008,6 +5941,20 @@ class HomeMinerFleetCard extends HTMLElement {
           this._activeTab = tab;
           this._lastRenderSig = null;
           safeStorage.set('miner_active_tab', tab);
+          this.render();
+        }
+      });
+    });
+
+    // Trophy Filter Navigation
+    const trophyFilterPills = this.shadowRoot.querySelectorAll('.trophy-filter-pill');
+    trophyFilterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const cat = pill.getAttribute('data-filter') || 'all';
+        if (cat !== this._trophyFilter) {
+          this._trophyFilter = cat;
+          this._lastRenderSig = null;
+          safeStorage.set('miner_trophy_filter', cat);
           this.render();
         }
       });

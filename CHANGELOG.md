@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **RPG Fleet Gamification System (Lvl 500 Cap) & Expanded Trophy Cabinet** ([#22](https://github.com/everyday3d/home-miner-studio/issues/22)):
+  - Built an Aero-Glass RPG Progression System with mathematical leveling formula ($XP = 15 \times \text{Shares} + \lfloor\text{Diff}/50,000\rfloor$) scaling from Level 1 up to **Level 500 Cap**.
+  - Created 21 distinct milestone rank titles awarded at every 25th level: Level 1 (*Novice Breadboarder*), Level 25 (*Silicon Apprentice*), Level 50 (*Stratum Journeyman*), Level 75 (*Frequency Enthusiast*), Level 100 (*Volt Tamer*), Level 125 (*Heatsink Warden*), Level 150 (*Hashrate Vanguard*), Level 175 (*Difficulty Crusher*), Level 200 (*Thermal Dominator*), Level 225 (*Silicon Alchemist*), Level 250 (*Megahash Overlord*), Level 275 (*ASIC Architect*), Level 300 (*Crypto Colossus*), Level 325 (*Zero-Latency Phantom*), Level 350 (*Quantum Proofmaster*), Level 375 (*Sub-Zero Cryomancer*), Level 400 (*Consensus Sovereign*), Level 425 (*Genesis Archon*), Level 450 (*Celestial Hasher*), Level 475 (*Blockchain Demiurge*), up to Level 500 (*Satoshi Slayer [MAX]*).
+  - Integrated dedicated `🏆 Trophies` tab into the Aero-Glass workspace tab bar with live badge `Lvl <level> ⚔️`.
+  - Designed an Aero-Glass **Hero Level Banner** featuring a 124px glowing circular Level Orb with radial SVG circular progress ring, rank badge, gradient XP track, and telemetry breakdown chips.
+  - Implemented 20 achievement trophy milestone cards with category filter pills (`All`, `⛏️ Nonces & Shares`, `🎯 Difficulty & Luck`, `⚙️ Tuning & Hardware`, `🌐 Stratum & Ops`, `🌟 Prestige Tiers`) featuring real-time percentage progress bars and lock/unlock indicators.
+  - Added horizontal **Fleet Rank Progression Roadmap** strip rendering all 21 milestone tiers with custom dark-glass scrollbars.
+  - Injected individual miner workstation level and title pills (`⚔️ Lvl <level> • <Rank Title>`) onto each hardware pod card.
 - **Synthesized Web Audio Share Geiger Counter & Acoustic Telemetry** ([#20](https://github.com/everyday3d/home-miner-studio/issues/20)):
   - Built pure synthesized in-browser Web Audio API sound generator with zero external media files or CDN dependencies.
   - Added **Geiger Counter mode**: simulates hardware hash crunching with bandpass-filtered acoustic clicks (1800Hz-2400Hz, 15ms) on newly accepted mining shares.
