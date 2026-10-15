@@ -20,4 +20,5 @@ scratch/
 *.png
 !assets/*.png
 !assets/**/*.png
+!custom_components/**/brand/*.png
 .codegraph/

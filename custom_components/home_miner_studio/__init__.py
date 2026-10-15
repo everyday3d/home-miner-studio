@@ -47,6 +47,8 @@ from .discovery import async_auto_import_miners, async_discover_existing_miners
 
 _LOGGER = logging.getLogger(__name__)
 
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up Home Miner Studio component, APIs, and serve Lovelace card."""

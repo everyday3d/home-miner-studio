@@ -11,7 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Official HACS Default Directory Submission Preparation** ([#43](https://github.com/everyday3d/home-miner-studio/issues/43)):
   - Added `.github/workflows/validate.yaml` executing HACS Action (`hacs/action@main`) and Home Assistant Hassfest (`home-assistant/actions/hassfest@master`) validation on push and pull requests.
   - Added repository `info.md` following HACS in-app store markdown standards, providing overview, feature highlights, supported hardware matrix, and YAML card configuration guides.
+  - Added official brand assets (`icon.png`, `icon@2x.png`, `logo.png`, `logo@2x.png`) under `custom_components/home_miner_studio/brand/`.
   - Aligned `custom_components/home_miner_studio/services.yaml` by registering `nerdqaxe` under `add_miner` service miner type options.
+  - Fixed Hassfest schema compliance by defining `CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)` in `__init__.py` and stripping Home Assistant core `aiohttp` from `manifest.json` requirements.
+  - Configured repository discovery topics on GitHub (`hacs`, `home-assistant`, `integration`, `lovelace`, `crypto`, `mining`, `bitaxe`, `asic`).
 
 ## [0.7.2] - 2026-10-15
 
