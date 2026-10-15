@@ -297,32 +297,6 @@ class HomeMinerSensor(CoordinatorEntity[MinerDataUpdateCoordinator], SensorEntit
                 "pool_user": cdata.get("pool_user"),
                 "pool_is_active": bool(prov and prov != POOL_NONE),
             }
-        if self.entity_description.key in ("hashrate_ths", "hashrate_ghs"):
-            cdata = self.coordinator.data or {}
-            hr_th = float(cdata.get("hashrate_ths") or (float(cdata.get("hashrate_ghs", 0) or 0) / 1000.0))
-            watts = float(cdata.get("power_w") or 0.0)
-            temp = float(cdata.get("chip_temp") or cdata.get("vr_temp") or 0.0)
-            profit = float(cdata.get("profit_24h_usd") or 0.0)
-            best_share = cdata.get("best_share") or cdata.get("pool_best_share") or "0"
-            nominal = float(cdata.get("nominal_hashrate_ths") or (5.0 if hr_th > 1.0 else 0.5))
-            gauge_pct = min(100, max(0, int((hr_th / nominal * 100) if nominal > 0 else 0)))
-
-            short_txt = f"{hr_th:.1f}T" if hr_th >= 1.0 else f"{hr_th * 1000:.0f}G"
-            corner_txt = f"{hr_th:.2f} TH/s" if hr_th >= 1.0 else f"{hr_th * 1000:.0f} GH/s"
-            mod_l1 = f"{corner_txt} • {int(watts)}W" if watts > 0 else corner_txt
-            mod_l2 = f"{'+' if profit >= 0 else ''}${profit:.2f}/d • {int(temp)}°C" if temp > 0 else f"{'+' if profit >= 0 else ''}${profit:.2f}/d"
-
-            return {
-                "watch_short_text": short_txt,
-                "watch_corner_text": corner_txt,
-                "watch_modular_line1": mod_l1,
-                "watch_modular_line2": mod_l2,
-                "watch_gauge_pct": gauge_pct,
-                "watch_temp_c": int(temp) if temp > 0 else None,
-                "watch_power_w": int(watts) if watts > 0 else None,
-                "watch_profit_24h": round(profit, 2),
-                "watch_best_share": str(best_share),
-            }
         if self.entity_description.key in ("btc_price_usd", "coin_price_usd"):
             cdata = self.coordinator.data or {}
             return {

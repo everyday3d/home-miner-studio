@@ -9,17 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1] - 2026-10-15
 
+### Removed
+- **Reverted Apple Watch Companion HUD & Wrist Complications** ([#40](https://github.com/everyday3d/home-miner-studio/issues/40)):
+  - Reverted dedicated watchOS wrist mode (`view_mode: watch` / `<= 280px`), pure-black OLED dial layout, and haptic wrist action buttons from `home-miner-cards.js`.
+  - Removed watch complication attributes (`watch_short_text`, `watch_corner_text`, `watch_modular_line1`, `watch_modular_line2`, `watch_gauge_pct`) from `sensor.py`.
+  - Removed Apple Watch configuration guides from `README.md`.
+
 ### Added
-- **Apple Watch Companion Wrist HUD & Complications Integration** ([#39](https://github.com/everyday3d/home-miner-studio/issues/39)):
-  - Added dedicated ultra-compact, high-contrast, pure-black OLED (`#000000`) watchOS layout in `home-miner-cards.js` automatically triggered on viewport widths `<= 280px` or via card configuration (`view_mode: watch` or `display_mode: watch`).
-  - Implemented Micro Orbit Hashrate Ring Dial with real-time SVG neon progress ring, bold TH/s or GH/s readout, and live power wattage and hottest chip thermals.
-  - Added 2x2 Wrist Glance Grid surfacing Net 24h Profit (`+$X.XX/d`), Fleet Electrical Efficiency (`J/TH`), Solo Block Best Share, and active hardware rig count.
-  - Integrated Solo Block Target Radar progress bar indicating logarithmic milestone proximity to the target block difficulty.
-  - Engineered oversized 1-tap haptic touch actions (minimum 40px touch targets with active press compression and `navigator.vibrate` haptic pulses):
-    - 🌱 **Eco**: Applies Eco power curtailment profile across the fleet.
-    - 🔥 **Turbo**: Triggers Turbo clock and voltage performance overclocking.
-    - 🔄 **Reboot**: Reboots target miner or fleet hardware controllers.
-  - Exposed formatted watchOS complication sensor attributes on `hashrate_ths` and `hashrate_ghs` sensors (`watch_short_text`, `watch_corner_text`, `watch_modular_line1`, `watch_modular_line2`, `watch_gauge_pct`, `watch_temp_c`, `watch_power_w`, `watch_profit_24h`, `watch_best_share`) for seamless Home Assistant iOS Companion watch face complications (Circular, Corner, Modular, Graphic Rectangular).
 - **Native Support for NerdQaxe (Quad-ASIC Desktop Miner)** ([#38](https://github.com/everyday3d/home-miner-studio/issues/38)):
   - Added native integration support for the open-source **NerdQaxe** (Quad-ASIC BM1366 / BM1368 / BM1370 desktop solo miner running AxeOS).
   - Registered `TYPE_NERDQAXE = "nerdqaxe"` in core constants, discovery subsystem, config flow, button, number, and select platforms.

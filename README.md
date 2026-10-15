@@ -143,12 +143,6 @@ Home Miner Studio is architected from the ground up to support the full spectrum
 * ☀️ **Solar Curtailment & Smart Automation**:
   * Automatically throttle or pause miners when solar battery state-of-charge (SoC) drops or grid tariffs spike.
   * Thermal watchdog automations for smart plug kill switches when ambient/chassis temperatures rise.
-* ⌚ **Apple Watch Companion Wrist HUD & Complications**:
-  * **Dedicated Pure-Black OLED Wrist HUD**: Ultra-compact, high-contrast `#000000` watchOS dashboard mode designed specifically for Apple Watch 40mm, 41mm, 44mm, 45mm, and 49mm Ultra viewports (`view_mode: watch`).
-  * **Micro Orbit Hashrate Ring Dial**: SVG neon progress ring showing real-time TH/s (or GH/s), electrical wattage, and hottest chip thermals at a glance.
-  * **2x2 Wrist Glance Grid**: Real-time Net 24h Profit (`+$X.XX/d`), fleet electrical efficiency (`J/TH`), solo block best share, and active rig count.
-  * **1-Tap Haptic Wrist Actions**: Instant 40px touch buttons with tactile press compression and `navigator.vibrate` haptic pulses (🌱 Eco mode, 🔥 Turbo mode, 🔄 Hardware Reboot).
-  * **Native watchOS Complication Telemetry**: Sensor attributes pre-formatted for Home Assistant iOS Companion watch faces (Circular, Corner, Modular, Graphic Rectangular).
 
 ---
 
@@ -205,44 +199,11 @@ home-miner-studio/
 
 ### Lovelace Dashboard Card
 
-#### Desktop & Tablet Fleet View
 Add the custom card to any Lovelace dashboard view:
 
 ```yaml
 type: custom:home-miner-fleet-card
 ```
-
-#### ⌚ Apple Watch Companion Wrist HUD
-To dedicate a Lovelace dashboard or subview specifically to Apple Watch screens, set `view_mode: watch` (this mode is also automatically activated on viewports `<= 280px`):
-
-```yaml
-type: custom:home-miner-fleet-card
-view_mode: watch
-```
-
-#### ⌚ Apple Watch Complications Setup (Home Assistant iOS Companion)
-Home Miner Studio hashrate sensors automatically export pre-formatted watchOS complication attributes on `sensor.<miner>_hashrate_ths` and `sensor.<miner>_hashrate_ghs`:
-
-* **Circular / Small Modular**:
-  ```jinja2
-  {{ state_attr('sensor.my_bitaxe_hashrate_ths', 'watch_short_text') }}
-  ```
-  *(Outputs: `3.8T` or `450G`)*
-
-* **Infograph Corner**:
-  ```jinja2
-  {{ state_attr('sensor.my_bitaxe_hashrate_ths', 'watch_corner_text') }}
-  ```
-  *(Outputs: `3.82 TH/s`)*
-
-* **Modular Large / Graphic Rectangular**:
-  * Line 1: `{{ state_attr('sensor.my_bitaxe_hashrate_ths', 'watch_modular_line1') }}` *(e.g. `3.82 TH/s • 128W`)*
-  * Line 2: `{{ state_attr('sensor.my_bitaxe_hashrate_ths', 'watch_modular_line2') }}` *(e.g. `+$1.24/d • 58°C`)*
-
-* **Gauge Complication (0–100%)**:
-  ```jinja2
-  {{ state_attr('sensor.my_bitaxe_hashrate_ths', 'watch_gauge_pct') }}
-  ```
 
 ---
 
