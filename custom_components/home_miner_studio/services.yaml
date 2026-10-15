@@ -132,6 +132,7 @@ add_miner:
         select:
           options:
             - bitaxe
+            - nerdqaxe
             - cgminer_rpc
             - whatsminer
             - antminer

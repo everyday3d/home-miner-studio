@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Official HACS Default Directory Submission Preparation** ([#43](https://github.com/everyday3d/home-miner-studio/issues/43)):
+  - Added `.github/workflows/validate.yaml` executing HACS Action (`hacs/action@main`) and Home Assistant Hassfest (`home-assistant/actions/hassfest@master`) validation on push and pull requests.
+  - Added repository `info.md` following HACS in-app store markdown standards, providing overview, feature highlights, supported hardware matrix, and YAML card configuration guides.
+  - Aligned `custom_components/home_miner_studio/services.yaml` by registering `nerdqaxe` under `add_miner` service miner type options.
+
 ## [0.7.2] - 2026-10-15
 
 ### Fixed
