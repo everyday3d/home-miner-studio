@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-15
+
 ### Fixed
 - **Dropdown & Modal Premature Close Resolution** ([#34](https://github.com/everyday3d/home-miner-studio/issues/34)):
   - Fixed an issue where clicking on dropdown selectors (`#pipeline-coin-select`, `#lottery-coin-select`, `#stratum-coin-preset`, `#stratum-target-miner`, `#modal-type`, and `#modal-pool`) caused the menu or dialog to abruptly close when attempting to select an option.
