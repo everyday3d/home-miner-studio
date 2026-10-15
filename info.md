@@ -1,6 +1,6 @@
-# ⚡ Home Miner Studio `v0.7.2`
+# ⚡ Home Miner Studio `v0.7.3`
 
-[![Release v0.7.2](https://img.shields.io/badge/Release-v0.7.2%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
+[![Release v0.7.3](https://img.shields.io/badge/Release-v0.7.3%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg?style=flat-square&logo=home-assistant)](https://www.home-assistant.io/)
 

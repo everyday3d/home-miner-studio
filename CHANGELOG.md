@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-15
+
 ### Added
 - **Official HACS Default Directory Submission Preparation** ([#43](https://github.com/everyday3d/home-miner-studio/issues/43)):
   - Added `.github/workflows/validate.yaml` executing HACS Action (`hacs/action@main`) and Home Assistant Hassfest (`home-assistant/actions/hassfest@master`) validation on push and pull requests.
