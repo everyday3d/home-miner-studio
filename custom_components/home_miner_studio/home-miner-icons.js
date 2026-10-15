@@ -29,6 +29,10 @@
       path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
       keywords: ['nerdminer', 'nerdaxe', 'esp32', 't-display', 'miner']
     },
+    nerdqaxe: {
+      path: 'M2 2h8v8H2V2zm12 0h8v8h-8V2zM2 14h8v8H2V14zm12 0h8v8h-8V14zm2-10v4h4V4h-4zm-12 0v4h4V4H4zm0 12v4h4v-4H4zm12 0v4h4v-4h-4zm-5-3.5a2.5 2.5 0 1 1-1.5 2.3V16h2v-1.2a2.5 2.5 0 0 1-.5-4.3z',
+      keywords: ['nerdqaxe', 'nerdaxe', 'quad', 'axeos', 'miner']
+    },
     nerdaxe: {
       path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
       keywords: ['nerdaxe', 'nerdminer', 'miner']
@@ -74,6 +78,7 @@
   window.customIcons['bitaxe'] = minerIconProvider;
   window.customIcons['avalon'] = minerIconProvider;
   window.customIcons['nerdminer'] = minerIconProvider;
+  window.customIcons['nerdqaxe'] = minerIconProvider;
   window.customIcons['futurebit'] = minerIconProvider;
   window.customIcons['luckyminer'] = minerIconProvider;
   window.customIconsets['miner'] = minerIconProvider;

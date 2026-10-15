@@ -21,6 +21,7 @@ from .const import (
     DOMAIN,
     TYPE_BITAXE,
     TYPE_CGMINER_RPC,
+    TYPE_NERDQAXE,
 )
 from .coordinator import MinerDataUpdateCoordinator
 
@@ -88,14 +89,14 @@ class HomeMinerButton(CoordinatorEntity[MinerDataUpdateCoordinator], ButtonEntit
         host = self._entry.data.get(CONF_HOST)
         port = self._entry.data.get(CONF_PORT, 80)
 
-        if miner_type == TYPE_BITAXE:
+        if miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{host}:{port}/api/system/restart"
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url) as resp:
-                        _LOGGER.info("Bitaxe reboot command sent to %s (status %s)", host, resp.status)
+                        _LOGGER.info("Bitaxe/NerdQaxe reboot command sent to %s (status %s)", host, resp.status)
             except Exception as err:
-                _LOGGER.error("Failed to reboot Bitaxe at %s: %s", host, err)
+                _LOGGER.error("Failed to reboot Bitaxe/NerdQaxe at %s: %s", host, err)
 
         elif miner_type == TYPE_CGMINER_RPC:
             cmd = "restart" if self.entity_description.key == "reboot" else "stats"

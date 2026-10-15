@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Native Support for NerdQaxe (Quad-ASIC Desktop Miner)** ([#38](https://github.com/everyday3d/home-miner-studio/issues/38)):
+  - Added native integration support for the open-source **NerdQaxe** (Quad-ASIC BM1366 / BM1368 / BM1370 desktop solo miner running AxeOS).
+  - Registered `TYPE_NERDQAXE = "nerdqaxe"` in core constants, discovery subsystem, config flow, button, number, and select platforms.
+  - Enabled full AxeOS HTTP REST telemetry ingestion on default port 80 (`/api/system/info`), including quad-die aggregate hashrate (2.0–4.8 TH/s), power draw (50–110 W), chip thermals, fan RPM, and voltage monitoring.
+  - Added full interactive tuning support: target frequency (`MHz`) and core voltage (`mV`) number sliders, power profile select (`Eco`, `Standard`, `Turbo`), and instant hardware reboot (`/api/system/restart`).
+  - Added dedicated `miner:nerdqaxe` authentic vector SVG machine icon depicting a 2x2 quad-chip die cluster and cooling turbine across `home-miner-icons.js` and `home-miner-cards.js`.
+  - Added dynamic miner discovery in Lovelace cards to automatically detect and display any additional configured miners from Home Assistant sensor entities.
+  - Added `#modal-type` dropdown selection and automated port 80 defaulting in the 1-click Add/Edit Miner modal.
+  - Documented technical specifications and tuning profiles in the Supported Hardware Matrix and Spotlight Profiles in `README.md`.
+
 ## [0.7.0] - 2026-10-15
 
 ### Fixed

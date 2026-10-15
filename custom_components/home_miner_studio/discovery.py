@@ -23,6 +23,7 @@ from .const import (
     TYPE_CGMINER_RPC,
     TYPE_HIVEOS,
     TYPE_NERDMINER,
+    TYPE_NERDQAXE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ KNOWN_MINER_DOMAINS = {
     "bitaxe": TYPE_BITAXE,
     "ha_bitaxe": TYPE_BITAXE,
     "axeos": TYPE_BITAXE,
+    "nerdqaxe": TYPE_NERDQAXE,
     "avalon_nano3s": TYPE_CGMINER_RPC,
     "avalon_nano_3s": TYPE_CGMINER_RPC,
     "antminer": TYPE_CGMINER_RPC,
@@ -101,11 +103,12 @@ async def async_discover_existing_miners(hass: HomeAssistant, include_all: bool 
         manufacturer = device.manufacturer or ""
         combined_text = f"{name} {model} {manufacturer}".lower()
 
-        is_bitaxe = "bitaxe" in combined_text or "axeos" in combined_text
+        is_nerdqaxe = "nerdqaxe" in combined_text or "qaxe" in combined_text
+        is_bitaxe = ("bitaxe" in combined_text or "axeos" in combined_text) and not is_nerdqaxe
         is_nerdminer = "nerdminer" in combined_text
         is_asic = any(k in combined_text for k in ("antminer", "whatsminer", "avalon", "braiins"))
 
-        if not (is_bitaxe or is_nerdminer or is_asic):
+        if not (is_bitaxe or is_nerdqaxe or is_nerdminer or is_asic):
             continue
 
         host: str | None = None
@@ -116,7 +119,7 @@ async def async_discover_existing_miners(hass: HomeAssistant, include_all: bool 
             parsed = urlparse(device.configuration_url)
             if parsed.hostname and parsed.hostname != "hacs":
                 host = parsed.hostname
-                port = parsed.port or (DEFAULT_PORT_BITAXE if is_bitaxe or is_nerdminer else DEFAULT_PORT_CGMINER)
+                port = parsed.port or (DEFAULT_PORT_BITAXE if is_bitaxe or is_nerdqaxe or is_nerdminer else DEFAULT_PORT_CGMINER)
 
         # Fallback: check device connections (e.g. IP tuples)
         if not host:
@@ -137,7 +140,7 @@ async def async_discover_existing_miners(hass: HomeAssistant, include_all: bool 
                 continue
             seen_hosts.add(host_clean.lower())
 
-            inferred_type = TYPE_BITAXE if is_bitaxe else (TYPE_NERDMINER if is_nerdminer else TYPE_CGMINER_RPC)
+            inferred_type = TYPE_NERDQAXE if is_nerdqaxe else (TYPE_BITAXE if is_bitaxe else (TYPE_NERDMINER if is_nerdminer else TYPE_CGMINER_RPC))
             discovered.append({
                 CONF_NAME: name or f"{inferred_type.title()} ({host_clean})",
                 CONF_MINER_TYPE: inferred_type,

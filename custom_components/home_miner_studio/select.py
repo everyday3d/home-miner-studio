@@ -10,7 +10,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, TUNING_PROFILES, TYPE_BITAXE
+from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, TUNING_PROFILES, TYPE_BITAXE, TYPE_NERDQAXE
 from .coordinator import MinerDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ async def async_setup_entry(
     """Set up Home Miner Studio select entities."""
     coordinator: MinerDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    if coordinator.miner_type != TYPE_BITAXE:
+    if coordinator.miner_type not in (TYPE_BITAXE, TYPE_NERDQAXE):
         return
 
     async_add_entities([HomeMinerProfileSelect(coordinator, entry)])

@@ -31,6 +31,10 @@ const MINER_CUSTOM_ICONS = {
     path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
     keywords: ['nerdminer', 'nerdaxe', 'esp32', 't-display', 'miner']
   },
+  nerdqaxe: {
+    path: 'M2 2h8v8H2V2zm12 0h8v8h-8V2zM2 14h8v8H2V14zm12 0h8v8h-8V14zm2-10v4h4V4h-4zm-12 0v4h4V4H4zm0 12v4h4v-4H4zm12 0v4h4v-4h-4zm-5-3.5a2.5 2.5 0 1 1-1.5 2.3V16h2v-1.2a2.5 2.5 0 0 1-.5-4.3z',
+    keywords: ['nerdqaxe', 'nerdaxe', 'quad', 'axeos', 'miner']
+  },
   nerdaxe: {
     path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
     keywords: ['nerdaxe', 'nerdminer', 'miner']
@@ -77,6 +81,7 @@ if (typeof window !== 'undefined') {
   window.customIcons['bitaxe'] = minerIconProvider;
   window.customIcons['avalon'] = minerIconProvider;
   window.customIcons['nerdminer'] = minerIconProvider;
+  window.customIcons['nerdqaxe'] = minerIconProvider;
   window.customIcons['futurebit'] = minerIconProvider;
   window.customIcons['luckyminer'] = minerIconProvider;
   window.customIconsets['miner'] = minerIconProvider;
@@ -1822,6 +1827,20 @@ class HomeMinerFleetCard extends HTMLElement {
         </svg>
       `;
     }
+    if (type.includes('nerdqaxe') || type.includes('qaxe')) {
+      return `
+        <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="8" width="100" height="54" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5" />
+          <rect x="20" y="15" width="18" height="18" rx="3" fill="#1e293b" stroke="#38bdf8" stroke-width="1" />
+          <rect x="44" y="15" width="18" height="18" rx="3" fill="#1e293b" stroke="#38bdf8" stroke-width="1" />
+          <rect x="20" y="37" width="18" height="18" rx="3" fill="#1e293b" stroke="#38bdf8" stroke-width="1" />
+          <rect x="44" y="37" width="18" height="18" rx="3" fill="#1e293b" stroke="#38bdf8" stroke-width="1" />
+          <circle cx="86" cy="35" r="16" fill="#1e1e2e" stroke="#fbbf24" stroke-width="1.5" />
+          <circle cx="86" cy="35" r="5" fill="#fbbf24" />
+          <path d="M86 21 L86 49 M72 35 L100 35" stroke="#fbbf24" stroke-width="1.2" stroke-linecap="round" />
+        </svg>
+      `;
+    }
     if (type.includes('nerdminer')) {
       return `
         <svg viewBox="0 0 120 70" class="miner-graphic-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1859,6 +1878,13 @@ class HomeMinerFleetCard extends HTMLElement {
       return `
         <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon avalon-icon">
           <path d="M12 1.5L1.5 22.5H7.2L12 10.8L16.8 22.5H22.5L12 1.5ZM10 13.2L15.8 17.5L20.2 18.5L13.8 20.4L11.2 18L10 13.2Z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('nerdqaxe') || type.includes('qaxe')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon nerdqaxe-icon">
+          <path d="M2 2h8v8H2V2zm12 0h8v8h-8V2zM2 14h8v8H2V14zm12 0h8v8h-8V14zm2-10v4h4V4h-4zm-12 0v4h4V4H4zm0 12v4h4v-4H4zm12 0v4h4v-4h-4zm-5-3.5a2.5 2.5 0 1 1-1.5 2.3V16h2v-1.2a2.5 2.5 0 0 1-.5-4.3z"/>
         </svg>
       `;
     }
@@ -2575,6 +2601,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 <label class="modal-label">Miner Hardware Type</label>
                 <select id="modal-type" class="modal-select">
                   <option value="bitaxe" style="background-color: #0f172a; color: #f8fafc;">Bitaxe / AxeOS</option>
+                  <option value="nerdqaxe" style="background-color: #0f172a; color: #f8fafc;">NerdQaxe (Quad-ASIC)</option>
                   <option value="cgminer_rpc" style="background-color: #0f172a; color: #f8fafc;">Canaan Avalon / CGMiner</option>
                   <option value="nerdminer" style="background-color: #0f172a; color: #f8fafc;">ESP32 NerdMiner / NerdAxe</option>
                   <option value="futurebit" style="background-color: #0f172a; color: #f8fafc;">FutureBit Apollo II</option>
@@ -2882,7 +2909,7 @@ class HomeMinerFleetCard extends HTMLElement {
     if (modalTypeSelect) {
       this._bindSelectSafety(modalTypeSelect, () => {
         if (modalPortInput) {
-          if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
+          if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdqaxe' || modalTypeSelect.value === 'nerdminer') {
             modalPortInput.value = 80;
           } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
             modalPortInput.value = 4028;
@@ -6384,6 +6411,128 @@ class HomeMinerFleetCard extends HTMLElement {
       });
     }
 
+    // 3. Dynamic Miner Discovery for Additional Configured Miners (NerdQaxe, Bitaxe, Antminer, etc.)
+    const existingHosts = new Set(miners.map(m => m.host));
+    const hashrateEntities = Object.keys(states).filter(eid => 
+      (eid.endsWith('_hashrate_th_s') || eid.endsWith('_hashrate_ths') || eid.endsWith('_hashrate_gh_s') || eid.endsWith('_hashrate_ghs')) &&
+      !isBlacklisted(eid) &&
+      !eid.includes('my_bitaxe') &&
+      !eid.includes('192_168_1_154') &&
+      !eid.includes('avalon_nano_3s')
+    );
+
+    hashrateEntities.forEach(hashEid => {
+      const match = hashEid.match(/^sensor\.(.+?)_hashrate_(th_s|ths|gh_s|ghs)$/);
+      if (!match) return;
+      const prefix = match[1];
+
+      const stateObj = states[hashEid];
+      const hostCandidate = stateObj?.attributes?.host || 
+                            stateObj?.attributes?.ip_address || 
+                            prefix.replace(/_/g, '.');
+      if (existingHosts.has(hostCandidate) || existingHosts.has(prefix)) return;
+
+      const rawThs = match[2].startsWith('th') 
+        ? parseFloat(stateObj?.state || 0) 
+        : (parseFloat(stateObj?.state || 0) / 1000.0);
+      const watts = parseFloat(states[`sensor.${prefix}_power_draw`]?.state || states[`sensor.${prefix}_power_w`]?.state || 0);
+      const eff = rawThs > 0 ? (watts / rawThs).toFixed(1) : (states[`sensor.${prefix}_efficiency`]?.state || states[`sensor.${prefix}_efficiency_j_th`]?.state || '0.0');
+      const temp = toCelsius(states[`sensor.${prefix}_chip_temperature`] || states[`sensor.${prefix}_temp_c`]) ?? 0;
+      const fan = parseInt(states[`sensor.${prefix}_fan_speed`]?.state || states[`sensor.${prefix}_fan_rpm`]?.state || 0);
+      const freq = states[`number.${prefix}_target_frequency`]?.state || states[`sensor.${prefix}_core_frequency`]?.state || states[`sensor.${prefix}_frequency_mhz`]?.state || '500';
+      const volt = states[`number.${prefix}_target_core_voltage`]?.state || states[`sensor.${prefix}_core_voltage_mv`]?.state || '1150';
+      const profile = states[`select.${prefix}_power_profile`]?.state || 'Standard';
+
+      const accepted = parseInt(states[`sensor.${prefix}_shares_accepted`]?.state || 0);
+      const rejected = parseInt(states[`sensor.${prefix}_shares_rejected`]?.state || 0);
+      const hwErrors = parseInt(states[`sensor.${prefix}_hardware_errors`]?.state || 0);
+      const bestDiff = states[`sensor.${prefix}_best_difficulty`]?.state || states[`sensor.${prefix}_pool_best_share`]?.state;
+      const bestDiffNum = parseFloat(bestDiff) || 0;
+      const bestShareStr = bestDiff ? (bestDiffNum >= 1e9 ? (bestDiffNum / 1e9).toFixed(2) + ' G' : (bestDiffNum / 1e6).toFixed(2) + ' M') : '--';
+
+      const poolStatusObj = states[`sensor.${prefix}_pool_connection_status`] || states[`sensor.${prefix}_pool_status`];
+      const poolStatus = poolStatusObj?.state || 'Alive';
+      const poolUrl = poolStatusObj?.attributes?.pool_url || '';
+      const poolUser = poolStatusObj?.attributes?.pool_user || '';
+      const poolProvider = poolStatusObj?.attributes?.pool_provider || 'none';
+      const poolWallet = poolStatusObj?.attributes?.pool_wallet || poolUser;
+      const minerCoin = poolStatusObj?.attributes?.coin || 'BTC';
+
+      const lowerPrefix = prefix.toLowerCase();
+      const fn = (stateObj?.attributes?.friendly_name || '').toLowerCase();
+      let inferredType = 'miner';
+      let asicDesc = 'ASIC Core';
+      let osDesc = 'AxeOS';
+
+      if (lowerPrefix.includes('nerdqaxe') || lowerPrefix.includes('qaxe') || fn.includes('nerdqaxe') || fn.includes('qaxe')) {
+        inferredType = 'nerdqaxe';
+        asicDesc = '4x BM1366/BM1370 Quad-ASIC';
+        osDesc = 'AxeOS v2.13.0';
+      } else if (lowerPrefix.includes('bitaxe') || fn.includes('bitaxe')) {
+        inferredType = 'bitaxe';
+        asicDesc = 'BM1370 ASIC';
+        osDesc = 'AxeOS v2.13.0';
+      } else if (lowerPrefix.includes('nerdminer') || fn.includes('nerdminer')) {
+        inferredType = 'nerdminer';
+        asicDesc = 'ESP32 Hash Engine';
+        osDesc = 'NerdMiner v1.6.3';
+      } else if (lowerPrefix.includes('luckyminer') || fn.includes('luckyminer')) {
+        inferredType = 'luckyminer';
+        asicDesc = 'BM1366 ASIC';
+        osDesc = 'LuckyOS';
+      } else if (lowerPrefix.includes('futurebit') || fn.includes('futurebit') || lowerPrefix.includes('apollo')) {
+        inferredType = 'futurebit';
+        asicDesc = 'Apollo Hash Blades';
+        osDesc = 'ApolloOS';
+      } else if (lowerPrefix.includes('antminer') || fn.includes('antminer')) {
+        inferredType = 'antminer';
+        asicDesc = 'Antminer Blade Array';
+        osDesc = 'Braiins OS';
+      } else if (lowerPrefix.includes('whatsminer') || fn.includes('whatsminer')) {
+        inferredType = 'whatsminer';
+        asicDesc = 'Whatsminer High-Flow Array';
+        osDesc = 'BT-Miner';
+      }
+
+      const minerName = this._getMinerName(hostCandidate, stateObj?.attributes?.friendly_name || `${inferredType.toUpperCase()} (${hostCandidate})`, [hashEid]);
+
+      existingHosts.add(hostCandidate);
+      miners.push({
+        id: prefix,
+        name: minerName,
+        type: inferredType,
+        host: hostCandidate,
+        coin: minerCoin,
+        asic: asicDesc,
+        os: osDesc,
+        ths: rawThs,
+        watts,
+        eff,
+        temp,
+        fan,
+        freq,
+        volt,
+        profile,
+        accepted: accepted.toLocaleString(),
+        acceptedRaw: accepted,
+        rejected: rejected.toLocaleString(),
+        hwErrors,
+        bestDiffNum,
+        bestShareStr,
+        blocksFound: '--',
+        poolUrl,
+        poolUser,
+        poolStatus,
+        poolProvider,
+        poolWallet,
+        rebootEntity: `button.${prefix}_reboot_miner`,
+        restartEntity: `button.${prefix}_restart_mining_process`,
+        freqEntity: `number.${prefix}_target_frequency`,
+        voltEntity: `number.${prefix}_target_core_voltage`,
+        profileEntity: `select.${prefix}_power_profile`
+      });
+    });
+
     const filterType = (this._config?.miner_type || '').toLowerCase();
     const filterHost = this._config?.miner_host || '';
     const isSingleRigView = !!(filterType || filterHost);
@@ -7108,7 +7257,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.6.1 🔄</span>
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.7.0 🔄</span>
             </div>
           </div>
         </div>
@@ -8003,7 +8152,8 @@ class HomeMinerFleetCard extends HTMLElement {
             <div style="font-size: 13px; margin-top: 6px;">Filter: ${filterType || filterHost}</div>
           </div>
         ` : displayedMiners.map(miner => {
-          const isBitaxe = miner.type === 'bitaxe';
+          const isNerdqaxe = miner.type === 'nerdqaxe';
+          const isBitaxe = miner.type === 'bitaxe' || isNerdqaxe;
           const chipTemp = miner.temp;
           const fanRpm = miner.fan;
           const hashrateThs = miner.ths.toFixed(2);
@@ -8014,8 +8164,10 @@ class HomeMinerFleetCard extends HTMLElement {
           const cardGlowClass = isMega ? 'amber-glow mega-share-card' : isBitaxe ? 'amber-glow' : 'cyan-glow';
 
           // Bar percentages
-          const hashBar = Math.min(100, Math.round((miner.ths / (isBitaxe ? 2.0 : 6.0)) * 100));
-          const pwrBar = Math.min(100, Math.round((miner.watts / (isBitaxe ? 30.0 : 140.0)) * 100));
+          const maxThs = isNerdqaxe ? 5.0 : (miner.type === 'bitaxe' ? 2.5 : 6.0);
+          const maxWatts = isNerdqaxe ? 120.0 : (miner.type === 'bitaxe' ? 30.0 : 140.0);
+          const hashBar = Math.min(100, Math.round((miner.ths / maxThs) * 100));
+          const pwrBar = Math.min(100, Math.round((miner.watts / maxWatts) * 100));
           const tempBar = Math.min(100, Math.round((chipTemp / 80.0) * 100));
           const fanBar = Math.min(100, Math.round((fanRpm / (isBitaxe ? 8000 : 5000)) * 100));
 
@@ -8188,8 +8340,8 @@ class HomeMinerFleetCard extends HTMLElement {
               ${isBitaxe ? `
                 <div class="tactile-bay">
                   <div class="bay-header-row">
-                    <span class="bay-title">⚡ Interactive AxeOS Overclocking Console</span>
-                    <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt}V Input | ${miner.inAmps}A Draw</span>
+                    <span class="bay-title">⚡ Interactive ${isNerdqaxe ? 'NerdQaxe' : 'AxeOS'} Overclocking Console</span>
+                    <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt ? miner.inVolt + 'V Input | ' : ''}${miner.inAmps ? miner.inAmps + 'A Draw' : (isNerdqaxe ? 'Quad-ASIC Matrix' : 'Single ASIC')}</span>
                   </div>
 
                   <div class="profile-pill-rack">
@@ -8206,23 +8358,23 @@ class HomeMinerFleetCard extends HTMLElement {
                     <div class="slider-unit-box">
                       <div class="slider-meta-head">
                         <span>Core Frequency</span>
-                        <span class="mono" style="color: #38bdf8; font-weight: 700;" id="freq-disp-bitaxe">${miner.freq} MHz</span>
+                        <span class="mono" style="color: #38bdf8; font-weight: 700;" id="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.freq} MHz</span>
                       </div>
                       <input type="range" min="450" max="800" step="5" value="${miner.freq}" class="cyan-thumb"
                              data-action="freq-slider"
                              data-entity="${miner.freqEntity}"
-                             data-disp="freq-disp-bitaxe">
+                             data-disp="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">
                     </div>
 
                     <div class="slider-unit-box">
                       <div class="slider-meta-head">
                         <span>Core Voltage</span>
-                        <span class="mono" style="color: #fbbf24; font-weight: 700;" id="volt-disp-bitaxe">${miner.volt} mV</span>
+                        <span class="mono" style="color: #fbbf24; font-weight: 700;" id="volt-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.volt} mV</span>
                       </div>
                       <input type="range" min="1000" max="1300" step="10" value="${miner.volt}"
                              data-action="volt-slider"
                              data-entity="${miner.voltEntity}"
-                             data-disp="volt-disp-bitaxe">
+                             data-disp="volt-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">
                     </div>
                   </div>
                 </div>

@@ -47,6 +47,7 @@ from .const import (
     TYPE_CGMINER_RPC,
     TYPE_HIVEOS,
     TYPE_NERDMINER,
+    TYPE_NERDQAXE,
     TYPE_WHATSMINER,
 )
 
@@ -102,7 +103,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch data from hardware, pool, and market APIs."""
         try:
             miner_data: dict[str, Any] = {}
-            if self.miner_type == TYPE_BITAXE:
+            if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 miner_data = await self._fetch_bitaxe_data()
             elif self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):
                 miner_data = await self._fetch_cgminer_data()
@@ -656,31 +657,31 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Apply solar curtailment mode (eco, standard, turbo, pause)."""
         mode_lower = mode.lower()
         if mode_lower == "eco":
-            if self.miner_type == TYPE_BITAXE:
+            if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 return await self.async_set_bitaxe_profile(PROFILE_ECO)
         elif mode_lower == "turbo":
-            if self.miner_type == TYPE_BITAXE:
+            if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 return await self.async_set_bitaxe_profile(PROFILE_TURBO)
         elif mode_lower == "standard":
-            if self.miner_type == TYPE_BITAXE:
+            if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 return await self.async_set_bitaxe_profile(PROFILE_STANDARD)
         elif mode_lower == "pause":
             # Call pause via socket or REST
-            if self.miner_type == TYPE_BITAXE:
+            if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 return await self.async_set_bitaxe_tuning(frequency=300, core_voltage=1000)
             return await self._query_cgminer_socket("pause") is not None
         return False
 
     async def async_reboot_miner(self) -> bool:
         """Send reboot command to miner."""
-        if self.miner_type == TYPE_BITAXE:
+        if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{self.host}:{self.port}/api/system/restart"
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
                         return resp.status in (200, 204)
             except Exception as err:
-                _LOGGER.error("Bitaxe reboot failed: %s", err)
+                _LOGGER.error("Bitaxe/NerdQaxe reboot failed: %s", err)
                 return False
         else:
             res = await self._query_cgminer_socket("restart")
@@ -688,14 +689,14 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def async_restart_mining(self) -> bool:
         """Restart mining process without hardware reboot."""
-        if self.miner_type == TYPE_BITAXE:
+        if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{self.host}:{self.port}/api/system/restart"
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
                         return resp.status in (200, 204)
             except Exception as err:
-                _LOGGER.error("Bitaxe process restart failed: %s", err)
+                _LOGGER.error("Bitaxe/NerdQaxe process restart failed: %s", err)
                 return False
         return False
 
@@ -709,7 +710,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> bool:
         """Switch active stratum mining pool and coin on this miner."""
         success = False
-        if self.miner_type == TYPE_BITAXE:
+        if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{self.host}:{self.port}/api/system"
             payload: dict[str, Any] = {
                 "stratumURL": stratum_url,
