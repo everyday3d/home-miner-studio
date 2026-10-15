@@ -17,12 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integrated desktop mouse-wheel horizontal translation, allowing desktop users to smoothly scroll horizontal tab bars with standard vertical mouse wheels.
   - Added smooth active pill auto-centering (`scrollIntoView({ inline: 'nearest' })`) when tabs are switched without resetting origin scroll position.
 
-### Removed
-- **Reverted Apple Watch Companion HUD & Wrist Complications** ([#40](https://github.com/everyday3d/home-miner-studio/issues/40)):
-  - Reverted dedicated watchOS wrist mode (`view_mode: watch` / `<= 280px`), pure-black OLED dial layout, and haptic wrist action buttons from `home-miner-cards.js`.
-  - Removed watch complication attributes (`watch_short_text`, `watch_corner_text`, `watch_modular_line1`, `watch_modular_line2`, `watch_gauge_pct`) from `sensor.py`.
-  - Removed Apple Watch configuration guides from `README.md`.
-
 ### Added
 - **Native Support for NerdQaxe (Quad-ASIC Desktop Miner)** ([#38](https://github.com/everyday3d/home-miner-studio/issues/38)):
   - Added native integration support for the open-source **NerdQaxe** (Quad-ASIC BM1366 / BM1368 / BM1370 desktop solo miner running AxeOS).
