@@ -6211,6 +6211,267 @@ class HomeMinerFleetCard extends HTMLElement {
             padding: 9px 12px !important;
           }
         }
+
+        /* --- WATCHOS / APPLE WATCH WRIST HUD STYLING (< 280px or view_mode: watch) --- */
+        :host([view-mode="watch"]), :host(.watch-mode) {
+          padding: 6px 4px !important;
+          background: #000000 !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        @media (max-width: 280px) {
+          :host {
+            padding: 6px 4px !important;
+            background: #000000 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+        }
+
+        .watch-hud {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          padding: 2px;
+          background: #000000;
+          color: #f8fafc;
+          width: 100%;
+          box-sizing: border-box;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+
+        .watch-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 3px 4px 5px 4px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .watch-title-wrap {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .watch-badge-pulse {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #10b981;
+          box-shadow: 0 0 6px #10b981;
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        .watch-title {
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Plus Jakarta Sans', sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          color: #f8fafc;
+          letter-spacing: -0.2px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 130px;
+        }
+
+        .watch-dial-stage {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 4px 0 2px 0;
+          position: relative;
+        }
+
+        .watch-gauge-wrap {
+          width: 104px;
+          height: 104px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .watch-gauge-svg {
+          width: 100%;
+          height: 100%;
+          transform: rotate(-90deg);
+        }
+
+        .watch-gauge-bg {
+          fill: none;
+          stroke: rgba(255, 255, 255, 0.1);
+          stroke-width: 8;
+        }
+
+        .watch-gauge-prog {
+          fill: none;
+          stroke: #38bdf8;
+          stroke-width: 8;
+          stroke-linecap: round;
+          filter: drop-shadow(0 0 6px #38bdf8);
+          transition: stroke-dashoffset 0.6s ease;
+        }
+
+        .watch-gauge-center {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .watch-gauge-val {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 19px;
+          font-weight: 800;
+          color: #f8fafc;
+          line-height: 1.1;
+        }
+
+        .watch-gauge-unit {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px;
+          font-weight: 700;
+          color: #38bdf8;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .watch-sub-strip {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 4px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10.5px;
+          color: #cbd5e1;
+          font-weight: 600;
+        }
+
+        .watch-radar-strip {
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          border-radius: 8px;
+          padding: 4px 6px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .watch-radar-meta {
+          display: flex;
+          justify-content: space-between;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px;
+          color: #34d399;
+          font-weight: 700;
+        }
+
+        .watch-radar-bar {
+          width: 100%;
+          height: 4px;
+          background: rgba(0, 0, 0, 0.5);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+
+        .watch-radar-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #34d399);
+          border-radius: 2px;
+          box-shadow: 0 0 6px #10b981;
+        }
+
+        .watch-metric-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 4px;
+        }
+
+        .watch-pill {
+          background: #111827;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 5px 6px;
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+
+        .watch-pill-label {
+          font-family: -apple-system, sans-serif;
+          font-size: 8.5px;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+        }
+
+        .watch-pill-val {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #f8fafc;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .watch-actions-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 4px;
+          margin-top: 2px;
+        }
+
+        .watch-action-btn {
+          min-height: 40px;
+          border-radius: 9px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: #1e293b;
+          color: #f8fafc;
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+          font-size: 10.5px;
+          font-weight: 700;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          cursor: pointer;
+          touch-action: manipulation;
+          transition: all 0.15s ease;
+          padding: 4px;
+        }
+
+        .watch-action-btn:active {
+          transform: scale(0.94);
+          opacity: 0.8;
+        }
+
+        .watch-action-btn.eco {
+          background: rgba(16, 185, 129, 0.2);
+          border-color: rgba(16, 185, 129, 0.45);
+          color: #34d399;
+        }
+        .watch-action-btn.turbo {
+          background: rgba(245, 158, 11, 0.2);
+          border-color: rgba(245, 158, 11, 0.5);
+          color: #fbbf24;
+        }
+        .watch-action-btn.reboot {
+          background: rgba(56, 189, 248, 0.2);
+          border-color: rgba(56, 189, 248, 0.45);
+          color: #38bdf8;
+        }
       
 `;
   }
@@ -7203,6 +7464,36 @@ class HomeMinerFleetCard extends HTMLElement {
     cardRoot.style.setProperty('--theme-pill-gradient', activeTheme.pillGradient);
     cardRoot.style.setProperty('--theme-card-border', activeTheme.cardBorder);
     cardRoot.style.setProperty('--theme-hero-bg', activeTheme.heroBg);
+
+    // WatchOS / Apple Watch Detection & Dedicated Wrist HUD Dispatch
+    const isWatchView = (this._config?.view_mode === 'watch') ||
+                        (this._config?.display_mode === 'watch') ||
+                        (window.innerWidth > 0 && window.innerWidth <= 280);
+
+    if (isWatchView) {
+      this.setAttribute('view-mode', 'watch');
+      this.classList.add('watch-mode');
+      const topProfitRow = yieldRows.find(y => y.isMining) || yieldRows[0];
+      const netDailyProfit = topProfitRow ? topProfitRow.netDailyProfit : 0;
+      this._renderWatchHud(cardRoot, displayedMiners, {
+        totalHashThs,
+        totalWatts,
+        avgTempStr,
+        fleetEfficiency,
+        fleetBestShareStr,
+        netDailyProfit,
+        activeCoinMined,
+        radarCoin,
+        selectedProfile,
+        logProgressStr,
+        isSingleRigView
+      });
+      this._attachWatchEventHandlers();
+      return;
+    } else {
+      this.removeAttribute('view-mode');
+      this.classList.remove('watch-mode');
+    }
 
     // Stratum Pipeline Telemetry & Dynamic Coin Profile Resolution
     const activeFleetCoin = (activeCoinMined || 'BTC').toUpperCase();
@@ -8656,6 +8947,174 @@ class HomeMinerFleetCard extends HTMLElement {
     };
 
     requestAnimationFrame(renderFrame);
+  }
+
+  _renderWatchHud(cardRoot, displayedMiners, data) {
+    const {
+      totalHashThs,
+      totalWatts,
+      avgTempStr,
+      fleetEfficiency,
+      fleetBestShareStr,
+      netDailyProfit,
+      activeCoinMined,
+      radarCoin,
+      selectedProfile,
+      logProgressStr,
+      isSingleRigView
+    } = data;
+
+    // Target hashrate scaling for dial
+    const hashTarget = totalHashThs > 1.0 ? 5.0 : 0.5;
+    const hashPct = Math.min(100, Math.max(0, Math.round((totalHashThs / hashTarget) * 100)));
+    const hashOffset = Math.round(264 - (264 * (hashPct / 100)));
+
+    const title = isSingleRigView
+      ? (displayedMiners[0]?.name || 'Rig HUD')
+      : (this._config?.title || 'Fleet HUD');
+
+    cardRoot.innerHTML = `
+      <div class="watch-hud">
+        <!-- Watch Header -->
+        <div class="watch-header">
+          <div class="watch-title-wrap">
+            <span class="watch-badge-pulse"></span>
+            <span class="watch-title">${title}</span>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #94a3b8; font-weight: 700;">
+            ${(activeCoinMined || 'BTC').toUpperCase()}
+          </span>
+        </div>
+
+        <!-- Micro Orbit Hashrate Ring Dial -->
+        <div class="watch-dial-stage">
+          <div class="watch-gauge-wrap">
+            <svg class="watch-gauge-svg" viewBox="0 0 100 100">
+              <circle class="watch-gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="watch-gauge-prog" cx="50" cy="50" r="42"
+                      stroke-dasharray="264"
+                      stroke-dashoffset="${hashOffset}" />
+            </svg>
+            <div class="watch-gauge-center">
+              <div class="watch-gauge-val">${totalHashThs >= 1.0 ? totalHashThs.toFixed(2) : (totalHashThs * 1000).toFixed(0)}</div>
+              <div class="watch-gauge-unit">${totalHashThs >= 1.0 ? 'TH/s' : 'GH/s'}</div>
+            </div>
+          </div>
+          <div class="watch-sub-strip">
+            <span style="color: #fbbf24;">⚡ ${Math.round(totalWatts)}W</span>
+            <span style="color: rgba(255,255,255,0.2);">•</span>
+            <span style="color: #38bdf8;">🌡️ ${avgTempStr}°C</span>
+          </div>
+        </div>
+
+        <!-- Solo Block Jackpot Target Radar Mini Strip -->
+        <div class="watch-radar-strip">
+          <div class="watch-radar-meta">
+            <span>🎯 ${radarCoin} Solo Target</span>
+            <span>${logProgressStr}%</span>
+          </div>
+          <div class="watch-radar-bar">
+            <div class="watch-radar-fill" style="width: ${Math.max(4, Math.min(100, parseFloat(logProgressStr)))}%;"></div>
+          </div>
+        </div>
+
+        <!-- 2x2 Glance Grid -->
+        <div class="watch-metric-grid">
+          <div class="watch-pill">
+            <span class="watch-pill-label">Net Profit</span>
+            <span class="watch-pill-val" style="color: ${netDailyProfit >= 0 ? '#34d399' : '#fb7185'};">
+              ${netDailyProfit >= 0 ? '+' : ''}$${netDailyProfit.toFixed(2)}/d
+            </span>
+          </div>
+          <div class="watch-pill">
+            <span class="watch-pill-label">Efficiency</span>
+            <span class="watch-pill-val" style="color: #38bdf8;">
+              ${fleetEfficiency} <span style="font-size: 8.5px; color: #94a3b8;">J/T</span>
+            </span>
+          </div>
+          <div class="watch-pill">
+            <span class="watch-pill-label">Best Share</span>
+            <span class="watch-pill-val" style="color: #fbbf24; font-size: 11px;">
+              ${fleetBestShareStr !== '--' ? fleetBestShareStr : '0'}
+            </span>
+          </div>
+          <div class="watch-pill">
+            <span class="watch-pill-label">Hardware</span>
+            <span class="watch-pill-val" style="color: #f8fafc; font-size: 10.5px;">
+              ${displayedMiners.length} ${displayedMiners.length === 1 ? 'Rig' : 'Rigs'}
+            </span>
+          </div>
+        </div>
+
+        <!-- 1-Tap Haptic Wrist Actions -->
+        <div class="watch-actions-grid">
+          <button class="watch-action-btn eco" data-watch-action="eco" title="Apply Eco Power Profile">
+            <span>🌱</span>
+            <span>Eco</span>
+          </button>
+          <button class="watch-action-btn turbo" data-watch-action="turbo" title="Apply Turbo Power Profile">
+            <span>🔥</span>
+            <span>Turbo</span>
+          </button>
+          <button class="watch-action-btn reboot" data-watch-action="reboot" title="Reboot Mining Hardware">
+            <span>🔄</span>
+            <span>Reboot</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  _attachWatchEventHandlers() {
+    const actionBtns = this.shadowRoot.querySelectorAll('.watch-action-btn[data-watch-action]');
+    actionBtns.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const action = btn.getAttribute('data-watch-action');
+        if (navigator.vibrate) {
+          try { navigator.vibrate([40, 20, 40]); } catch (e) {}
+        }
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = `<span>⏳</span><span>...</span>`;
+
+        try {
+          if (action === 'eco' || action === 'turbo') {
+            const mode = action;
+            try {
+              await this._hass.callService('home_miner_studio', 'apply_solar_curtailment', { mode });
+            } catch (err) {
+              const profName = mode === 'eco' ? 'Eco' : 'Turbo';
+              const selects = Object.keys(this._hass.states).filter(eid => eid.startsWith('select.') && eid.endsWith('_power_profile'));
+              for (const sel of selects) {
+                try {
+                  await this._hass.callService('select', 'select_option', { entity_id: sel, option: profName });
+                } catch (e) {}
+              }
+            }
+            btn.innerHTML = `<span>✓</span><span>Set</span>`;
+          } else if (action === 'reboot') {
+            try {
+              await this._hass.callService('home_miner_studio', 'reboot_miner', {});
+            } catch (err) {
+              const buttons = Object.keys(this._hass.states).filter(eid => eid.startsWith('button.') && eid.endsWith('_reboot_miner'));
+              for (const b of buttons) {
+                try {
+                  await this._hass.callService('button', 'press', { entity_id: b });
+                } catch (e) {}
+              }
+            }
+            btn.innerHTML = `<span>✓</span><span>Sent</span>`;
+          }
+        } catch (err) {
+          console.error('[Home Miner Studio] Watch action error:', err);
+          btn.innerHTML = `<span>⚠️</span><span>Err</span>`;
+        } finally {
+          setTimeout(() => {
+            btn.innerHTML = origHtml;
+          }, 2000);
+        }
+      });
+    });
   }
 
   _attachCardEventHandlers() {
