@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dropdown & Modal Premature Close Resolution** ([#34](https://github.com/everyday3d/home-miner-studio/issues/34)):
+  - Fixed an issue where clicking on dropdown selectors (`#pipeline-coin-select`, `#lottery-coin-select`, `#stratum-coin-preset`, `#stratum-target-miner`, `#modal-type`, and `#modal-pool`) caused the menu or dialog to abruptly close when attempting to select an option.
+  - Implemented `_isUserInputActive()` guard in `set hass(hass)` and `render()` to freeze background DOM re-rendering whenever any input or select element has focus or active interaction (`_selectActive` / `shadowRoot.activeElement`).
+  - Hardened modal backdrop dismissal with two-phase click validation (`_bindModalBackdrop`), ensuring dialogs only dismiss if mouse/touch down and up both occur directly on the backdrop, preventing select popup menu dismissals outside `.modal-box` from triggering `_closeModals()`.
+  - Added full pointer/mouse event suppression (`click`, `mousedown`, `pointerdown`, `touchstart`) on `.pipeline-coin-wrap`, `.lottery-coin-wrap`, and all modal selects (`_bindSelectSafety`).
+  - Updated collapsible header toggle handlers with `e.composedPath()` guards preventing accidental collapse when interacting with embedded coin selectors.
+
 ### Added
 - **Mining-Dutch & HeliosPool SHA-256 Ecosystem Expansion** ([#33](https://github.com/everyday3d/home-miner-studio/issues/33)):
   - Expanded the Stratum Visual Pipeline Architecture with comprehensive SHA-256 coin profiles grouped into distinct pool categories (`Mining-Dutch`, `HeliosPool Solo`, and `Auxiliary & Community Networks`):

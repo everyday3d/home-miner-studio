@@ -1687,10 +1687,73 @@ class HomeMinerFleetCard extends HTMLElement {
     return parts.join('|');
   }
 
+  _isUserInputActive() {
+    if (this._modalOpen || this._selectActive) return true;
+    const activeEl = this.shadowRoot?.activeElement;
+    if (activeEl) {
+      const tag = (activeEl.tagName || '').toUpperCase();
+      if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') return true;
+    }
+    return false;
+  }
+
+  _bindSelectSafety(selectEl, onChangeCallback) {
+    if (!selectEl) return;
+    ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(evt => {
+      selectEl.addEventListener(evt, (e) => e.stopPropagation());
+    });
+    selectEl.addEventListener('focus', () => {
+      this._selectActive = true;
+    });
+    selectEl.addEventListener('blur', () => {
+      if (this._selectBlurTimer) clearTimeout(this._selectBlurTimer);
+      this._selectBlurTimer = setTimeout(() => {
+        this._selectActive = false;
+        if (this._hass && !this._isUserInputActive()) {
+          const sig = this._computeMinerStateSignature(this._hass);
+          if (sig !== this._lastRenderSig) {
+            this._lastRenderSig = sig;
+            this.render();
+          }
+        }
+      }, 350);
+    });
+    if (onChangeCallback) {
+      selectEl.addEventListener('change', (e) => {
+        e.stopPropagation();
+        this._selectActive = false;
+        if (selectEl.blur) selectEl.blur();
+        onChangeCallback(e);
+      });
+    }
+  }
+
+  _bindModalBackdrop(modalEl) {
+    if (!modalEl) return;
+    let startedOnBackdrop = false;
+    modalEl.addEventListener('mousedown', (e) => {
+      startedOnBackdrop = (e.target === modalEl);
+    });
+    modalEl.addEventListener('touchstart', (e) => {
+      startedOnBackdrop = (e.target === modalEl);
+    }, { passive: true });
+    modalEl.addEventListener('click', (e) => {
+      if (startedOnBackdrop && e.target === modalEl) {
+        this._closeModals();
+      }
+      startedOnBackdrop = false;
+    });
+    modalEl.querySelectorAll('.modal-box').forEach(box => {
+      ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(evt => {
+        box.addEventListener(evt, (e) => e.stopPropagation());
+      });
+    });
+  }
+
   set hass(hass) {
     this._hass = hass;
-    if (this._modalOpen) {
-      return; // Freeze rendering so typing focus and open dialogs are NEVER disturbed
+    if (this._isUserInputActive()) {
+      return; // Freeze rendering so typing focus, open dropdowns, and dialogs are NEVER disturbed
     }
     const sig = this._computeMinerStateSignature(hass);
     if (this._lastRenderSig && sig === this._lastRenderSig) {
@@ -2756,34 +2819,13 @@ class HomeMinerFleetCard extends HTMLElement {
 
     const inputsAndSelects = modalRoot.querySelectorAll('input, select, button');
     inputsAndSelects.forEach(el => {
-      ['keydown', 'keyup', 'keypress'].forEach(evt => {
+      ['keydown', 'keyup', 'keypress', 'click', 'mousedown', 'pointerdown', 'touchstart'].forEach(evt => {
         el.addEventListener(evt, stopPropagation);
       });
     });
 
-    // Prevent clicks inside .modal-box from bubbling to backdrop
-    if (minerModal) {
-      minerModal.querySelectorAll('.modal-box').forEach(box => {
-        box.addEventListener('click', (e) => e.stopPropagation());
-      });
-      // Close on backdrop click
-      minerModal.addEventListener('click', (e) => {
-        if (e.target === minerModal) {
-          this._closeModals();
-        }
-      });
-    }
-
-    if (deleteModal) {
-      deleteModal.querySelectorAll('.modal-box').forEach(box => {
-        box.addEventListener('click', (e) => e.stopPropagation());
-      });
-      deleteModal.addEventListener('click', (e) => {
-        if (e.target === deleteModal) {
-          this._closeModals();
-        }
-      });
-    }
+    if (minerModal) this._bindModalBackdrop(minerModal);
+    if (deleteModal) this._bindModalBackdrop(deleteModal);
 
     // Close and cancel buttons
     const closeBtn = this.shadowRoot.querySelector('#modal-close-btn');
@@ -2803,16 +2845,7 @@ class HomeMinerFleetCard extends HTMLElement {
       ['keydown', 'keyup', 'keypress'].forEach(eventType => {
         discModal.addEventListener(eventType, stopPropagation);
       });
-
-      discModal.querySelectorAll('.modal-box').forEach(box => {
-        box.addEventListener('click', (e) => e.stopPropagation());
-      });
-
-      discModal.addEventListener('click', (e) => {
-        if (e.target === discModal) {
-          this._closeModals();
-        }
-      });
+      this._bindModalBackdrop(discModal);
 
       const discCloseBtn = this.shadowRoot.querySelector('#discovery-modal-close');
       const discCancelBtn = this.shadowRoot.querySelector('#discovery-cancel-btn');
@@ -2846,14 +2879,21 @@ class HomeMinerFleetCard extends HTMLElement {
     // Auto default port based on miner type
     const modalTypeSelect = this.shadowRoot.querySelector('#modal-type');
     const modalPortInput = this.shadowRoot.querySelector('#modal-port');
-    if (modalTypeSelect && modalPortInput) {
-      modalTypeSelect.addEventListener('change', () => {
-        if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
-          modalPortInput.value = 80;
-        } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
-          modalPortInput.value = 4028;
+    if (modalTypeSelect) {
+      this._bindSelectSafety(modalTypeSelect, () => {
+        if (modalPortInput) {
+          if (modalTypeSelect.value === 'bitaxe' || modalTypeSelect.value === 'nerdminer') {
+            modalPortInput.value = 80;
+          } else if (modalTypeSelect.value === 'cgminer_rpc' || modalTypeSelect.value === 'whatsminer' || modalTypeSelect.value === 'antminer') {
+            modalPortInput.value = 4028;
+          }
         }
       });
+    }
+
+    const modalPoolSelect = this.shadowRoot.querySelector('#modal-pool');
+    if (modalPoolSelect) {
+      this._bindSelectSafety(modalPoolSelect);
     }
 
     // Save Miner Button (Add or Edit)
@@ -2960,25 +3000,21 @@ class HomeMinerFleetCard extends HTMLElement {
       ['keydown', 'keyup', 'keypress'].forEach(eventType => {
         stratumModal.addEventListener(eventType, stopPropagation);
       });
-
-      stratumModal.querySelectorAll('.modal-box').forEach(box => {
-        box.addEventListener('click', (e) => e.stopPropagation());
-      });
-
-      stratumModal.addEventListener('click', (e) => {
-        if (e.target === stratumModal) {
-          this._closeModals();
-        }
-      });
+      this._bindModalBackdrop(stratumModal);
 
       const stratumCloseBtn = this.shadowRoot.querySelector('#stratum-modal-close');
       const stratumCancelBtn = this.shadowRoot.querySelector('#stratum-cancel-btn');
       if (stratumCloseBtn) stratumCloseBtn.addEventListener('click', () => this._closeModals());
       if (stratumCancelBtn) stratumCancelBtn.addEventListener('click', () => this._closeModals());
 
+      const stratumTargetSelect = this.shadowRoot.querySelector('#stratum-target-miner');
+      if (stratumTargetSelect) {
+        this._bindSelectSafety(stratumTargetSelect);
+      }
+
       const stratumCoinPreset = this.shadowRoot.querySelector('#stratum-coin-preset');
       if (stratumCoinPreset) {
-        stratumCoinPreset.addEventListener('change', () => {
+        this._bindSelectSafety(stratumCoinPreset, () => {
           const opt = stratumCoinPreset.selectedOptions[0];
           const hostInput = this.shadowRoot.querySelector('#stratum-input-host');
           const portInput = this.shadowRoot.querySelector('#stratum-input-port');
@@ -3050,10 +3086,16 @@ class HomeMinerFleetCard extends HTMLElement {
         });
       }
     }
+
+    const cModal = this.shadowRoot.querySelector('#chronicle-modal');
+    if (cModal) {
+      this._bindModalBackdrop(cModal);
+    }
   }
 
   _closeModals() {
     this._modalOpen = false;
+    this._selectActive = false;
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
     const deleteModal = this.shadowRoot.querySelector('#delete-modal');
     const discModal = this.shadowRoot.querySelector('#discovery-modal');
@@ -6149,7 +6191,7 @@ class HomeMinerFleetCard extends HTMLElement {
   render() {
     if (!this._hass || !this._hass.states) return;
     this._ensureDom();
-    if (this._modalOpen) return;
+    if (this._isUserInputActive()) return;
     this._lastRenderSig = this._computeMinerStateSignature(this._hass);
 
     try {
@@ -8471,13 +8513,21 @@ class HomeMinerFleetCard extends HTMLElement {
     }
 
     // Solo Block Radar Coin Selector
+    const lotteryWrap = this.shadowRoot.querySelector('.lottery-coin-wrap');
+    if (lotteryWrap) {
+      ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(evt => {
+        lotteryWrap.addEventListener(evt, (e) => e.stopPropagation());
+      });
+    }
+
     const lotteryCoinSelect = this.shadowRoot.querySelector('#lottery-coin-select');
     if (lotteryCoinSelect) {
-      lotteryCoinSelect.addEventListener('change', (e) => {
+      this._bindSelectSafety(lotteryCoinSelect, (e) => {
         const val = e.target.value;
         if (val) {
           this._selectedLotteryCoin = val;
           safeStorage.set('lottery_selected_coin', val);
+          this._lastRenderSig = null;
           this.render();
         }
       });
@@ -8834,21 +8884,26 @@ class HomeMinerFleetCard extends HTMLElement {
     // Mining History Modal Close Buttons
     const cModalCloseBtn = this.shadowRoot.querySelector('#cmodal-close-btn');
     const cModalDoneBtn = this.shadowRoot.querySelector('#cmodal-done-btn');
-    const cModalBackdrop = this.shadowRoot.querySelector('#chronicle-modal');
     if (cModalCloseBtn) cModalCloseBtn.addEventListener('click', () => this._closeModals());
     if (cModalDoneBtn) cModalDoneBtn.addEventListener('click', () => this._closeModals());
-    if (cModalBackdrop) {
-      cModalBackdrop.addEventListener('click', (e) => {
-        if (e.target === cModalBackdrop) this._closeModals();
-      });
-    }
 
     // Live Stratum Particle Pipeline Controls
     const pipelineCollapseBtn = this.shadowRoot.querySelector('#pipeline-collapse-toggle');
     const pipelineHeader = this.shadowRoot.querySelector('#pipeline-toggle');
+    const pipelineCoinWrap = this.shadowRoot.querySelector('.pipeline-coin-wrap');
     const pipelineCoinSelect = this.shadowRoot.querySelector('#pipeline-coin-select');
 
+    if (pipelineCoinWrap) {
+      ['click', 'mousedown', 'pointerdown', 'touchstart'].forEach(evt => {
+        pipelineCoinWrap.addEventListener(evt, (e) => e.stopPropagation());
+      });
+    }
+
     const handleCollapseToggle = (e) => {
+      const path = e.composedPath ? e.composedPath() : [];
+      if (path.some(el => el.id === 'pipeline-anim-toggle' || el.id === 'pipeline-coin-select' || el.classList?.contains('pipeline-coin-wrap'))) {
+        return;
+      }
       if (e.target && (e.target.closest('#pipeline-anim-toggle') || e.target.closest('#pipeline-coin-select') || e.target.closest('.pipeline-coin-wrap'))) return;
       this._pipelineCollapsed = !this._pipelineCollapsed;
       safeStorage.set('miner_pipeline_collapsed', this._pipelineCollapsed ? 'true' : 'false');
@@ -8867,10 +8922,7 @@ class HomeMinerFleetCard extends HTMLElement {
     }
 
     if (pipelineCoinSelect) {
-      pipelineCoinSelect.addEventListener('click', (e) => e.stopPropagation());
-      pipelineCoinSelect.addEventListener('mousedown', (e) => e.stopPropagation());
-      pipelineCoinSelect.addEventListener('change', (e) => {
-        e.stopPropagation();
+      this._bindSelectSafety(pipelineCoinSelect, (e) => {
         const newCoin = (e.target.value || 'BTC').toUpperCase();
         this._selectedPipelineCoin = newCoin;
         safeStorage.set('miner_pipeline_coin', newCoin);
