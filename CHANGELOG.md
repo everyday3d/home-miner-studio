@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added dynamic miner discovery in Lovelace cards to automatically detect and display any additional configured miners from Home Assistant sensor entities.
   - Added `#modal-type` dropdown selection and automated port 80 defaulting in the 1-click Add/Edit Miner modal.
   - Documented technical specifications and tuning profiles in the Supported Hardware Matrix and Spotlight Profiles in `README.md`.
+  - **Hardware Status**: Protocol integration implemented according to AxeOS specifications; flagged as community experimental / untested on physical hardware.
 
 ## [0.7.0] - 2026-10-15
 

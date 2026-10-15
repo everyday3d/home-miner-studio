@@ -59,7 +59,7 @@ Home Miner Studio is architected from the ground up to support the full spectrum
 | Hardware Architecture | Hardware Class | Hashrate Range | Power Draw | Efficiency | Noise Level | Protocol & Port | Native HA Preset |
 |:---|:---|:---|:---|:---|:---|:---|:---|
 | **Bitaxe Supra / Gamma** | Open-Hardware Desk Solo | 1.2 – 2.5 TH/s | 14 – 26 W | 18.5 J/TH | 🔇 22 dB (Whisper) | AxeOS HTTP (Port 80) | `type: bitaxe` |
-| **NerdQaxe (Quad-ASIC)** | Open-Hardware Quad Solo | 2.0 – 4.8 TH/s | 50 – 110 W | 20.0 J/TH | 🔇 28 dB (Quiet Desk) | AxeOS HTTP (Port 80) | `type: nerdqaxe` |
+| **NerdQaxe (Quad-ASIC)** *(Untested)* | Open-Hardware Quad Solo | 2.0 – 4.8 TH/s | 50 – 110 W | 20.0 J/TH | 🔇 28 dB (Quiet Desk) | AxeOS HTTP (Port 80) | `type: nerdqaxe` |
 | **Canaan Avalon Nano 3S** | Living Room Space Heater | 4.5 – 6.0 TH/s | 100 – 140 W | 24.0 J/TH | 🔇 34 dB (Quiet Room) | CGMiner RPC (Port 4028) | `type: cgminer_rpc` |
 | **NerdMiner v2 / NerdAxe** | Micro Desk Art Lottery Rig | 78 KH/s – 500 GH/s | 1.5 – 12 W | Passive Thermal | 🔇 0 dB (Silent) | NerdMiner HTTP (Port 80) | `type: nerdminer` |
 | **FutureBit Apollo II** | Full Bitcoin Node + ASIC | 6.0 – 10.0 TH/s | 125 – 220 W | 21.0 J/TH | 🔇 28 dB (Quiet Desk) | Apollo OS HTTP (Port 80) | `type: futurebit` |
@@ -73,10 +73,12 @@ Home Miner Studio is architected from the ground up to support the full spectrum
   * Open-source single-ASIC board designed by Skot9000 & the open hardware mining community.
   * Direct AxeOS REST integration over local WiFi.
   * Interactive target frequency (`MHz`) and core voltage (`mV`) tuning sliders with live power profiling (`Eco`, `Standard`, `Turbo`).
-* 🎛️ **NerdQaxe (Quad-ASIC BM1366 / BM1368 / BM1370)**:
+* 🎛️ **NerdQaxe (Quad-ASIC BM1366 / BM1368 / BM1370)** *(Community Experimental • Untested)*:
   * Open-hardware quad-ASIC desktop powerhouse combining 4 BM13xx chips on a single die cluster with an ESP32-S3.
   * Direct AxeOS REST HTTP integration over local WiFi with unified multi-chip telemetry.
   * Interactive frequency (`MHz`) and voltage (`mV`) overclocking console with instant power presets (`Eco`, `Standard`, `Turbo`).
+  * > [!NOTE]
+  * > **Hardware Status (Untested)**: This integration was implemented following official AxeOS REST specifications. Physical hardware validation is pending — feedback and telemetry reports from NerdQaxe owners are welcome!
 * 🛋️ **Canaan Avalon Nano 3S**:
   * Dual-purpose quiet room heating appliance with customizable RGB lighting halos.
   * Communicates via raw TCP socket CGMiner RPC protocol on port 4028.

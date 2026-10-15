@@ -2601,7 +2601,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 <label class="modal-label">Miner Hardware Type</label>
                 <select id="modal-type" class="modal-select">
                   <option value="bitaxe" style="background-color: #0f172a; color: #f8fafc;">Bitaxe / AxeOS</option>
-                  <option value="nerdqaxe" style="background-color: #0f172a; color: #f8fafc;">NerdQaxe (Quad-ASIC)</option>
+                  <option value="nerdqaxe" style="background-color: #0f172a; color: #f8fafc;">NerdQaxe (Quad-ASIC • Untested)</option>
                   <option value="cgminer_rpc" style="background-color: #0f172a; color: #f8fafc;">Canaan Avalon / CGMiner</option>
                   <option value="nerdminer" style="background-color: #0f172a; color: #f8fafc;">ESP32 NerdMiner / NerdAxe</option>
                   <option value="futurebit" style="background-color: #0f172a; color: #f8fafc;">FutureBit Apollo II</option>
@@ -8192,6 +8192,11 @@ class HomeMinerFleetCard extends HTMLElement {
                       <span class="badge-glass-pill" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; font-weight: 700; font-size: 10px;">
                         ${minerRank.badge} Lvl ${minerLvl} • ${minerRank.title}
                       </span>
+                      ${isNerdqaxe ? `
+                        <span class="badge-glass-pill" style="background: rgba(148, 163, 184, 0.15); border-color: rgba(148, 163, 184, 0.4); color: #94a3b8; font-weight: 600; font-size: 10px;" title="Hardware implementation follows AxeOS specification; physical hardware testing is pending.">
+                          🧪 Untested Hardware
+                        </span>
+                      ` : ''}
                       ${isMega ? `
                         <span class="mega-share-pill mono">
                           <span>🏆</span>
