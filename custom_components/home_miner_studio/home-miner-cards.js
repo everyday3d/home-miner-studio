@@ -1692,8 +1692,67 @@ class HomeMinerFleetCard extends HTMLElement {
     return parts.join('|');
   }
 
+  _markScrollActive(duration = 1500) {
+    this._scrollActive = true;
+    if (this._scrollActiveTimer) clearTimeout(this._scrollActiveTimer);
+    this._scrollActiveTimer = setTimeout(() => {
+      this._scrollActive = false;
+      if (this._hass) {
+        const sig = this._computeMinerStateSignature(this._hass);
+        if (sig !== this._lastRenderSig) {
+          this._lastRenderSig = sig;
+          this.render();
+        }
+      }
+    }, duration);
+  }
+
+  _saveScrollPositions(cardRoot) {
+    if (!cardRoot) return;
+    this._savedScrolls = this._savedScrolls || {};
+    const scrollContainers = cardRoot.querySelectorAll(
+      '.workspace-tab-bar, .yield-table-wrap, .trophy-filter-bar, .chronicle-filter-bar, .roadmap-strip, .timeframe-selector'
+    );
+    scrollContainers.forEach(el => {
+      const key = el.getAttribute('data-scroll-cache') || el.className.split(' ')[0];
+      if (key) {
+        this._savedScrolls[key] = {
+          left: el.scrollLeft,
+          top: el.scrollTop
+        };
+      }
+    });
+  }
+
+  _restoreScrollPositions(cardRoot) {
+    if (!cardRoot || !this._savedScrolls) return;
+    const scrollContainers = cardRoot.querySelectorAll(
+      '.workspace-tab-bar, .yield-table-wrap, .trophy-filter-bar, .chronicle-filter-bar, .roadmap-strip, .timeframe-selector'
+    );
+    scrollContainers.forEach(el => {
+      const key = el.getAttribute('data-scroll-cache') || el.className.split(' ')[0];
+      if (key && this._savedScrolls[key]) {
+        if (this._savedScrolls[key].left !== undefined) {
+          el.scrollLeft = this._savedScrolls[key].left;
+        }
+        if (this._savedScrolls[key].top !== undefined) {
+          el.scrollTop = this._savedScrolls[key].top;
+        }
+      }
+    });
+
+    if (!this._scrollActive) {
+      const activePill = cardRoot.querySelector('.workspace-tab-bar .tab-pill.active');
+      if (activePill) {
+        try {
+          activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        } catch (e) {}
+      }
+    }
+  }
+
   _isUserInputActive() {
-    if (this._modalOpen || this._selectActive) return true;
+    if (this._modalOpen || this._selectActive || this._scrollActive) return true;
     const activeEl = this.shadowRoot?.activeElement;
     if (activeEl) {
       const tag = (activeEl.tagName || '').toUpperCase();
@@ -4219,6 +4278,9 @@ class HomeMinerFleetCard extends HTMLElement {
           top: 10px;
           z-index: 50;
           overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          scroll-behavior: smooth;
           scrollbar-width: thin;
           scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
         }
@@ -7248,6 +7310,8 @@ class HomeMinerFleetCard extends HTMLElement {
     const noncesPerSecFormatted = (activeHashThs * 1e12).toExponential(2);
     const shareTargetStr = miners[0]?.bestDiff ? (miners[0].bestDiff > 1e6 ? (miners[0].bestDiff / 1e6).toFixed(1) + 'M' : (miners[0].bestDiff / 1e3).toFixed(1) + 'K') : '8.19K';
 
+    this._saveScrollPositions(cardRoot);
+
     cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
@@ -8451,6 +8515,7 @@ class HomeMinerFleetCard extends HTMLElement {
       ` : ''}
     `;
 
+    this._restoreScrollPositions(cardRoot);
     this._attachCardEventHandlers();
     } catch (err) {
       console.error('Error rendering HomeMinerFleetCard:', err);
@@ -8668,6 +8733,34 @@ class HomeMinerFleetCard extends HTMLElement {
       clearInterval(this._goldenNonceInterval);
       this._goldenNonceInterval = null;
     }
+
+    // Wire scroll position caching, touch tracking, and desktop wheel translation on all scrollable bars
+    const scrollables = this.shadowRoot.querySelectorAll(
+      '.workspace-tab-bar, .yield-table-wrap, .trophy-filter-bar, .chronicle-filter-bar, .roadmap-strip, .timeframe-selector'
+    );
+    scrollables.forEach(el => {
+      const key = el.getAttribute('data-scroll-cache') || el.className.split(' ')[0];
+
+      // Desktop mouse-wheel horizontal translation for scroll strips
+      el.addEventListener('wheel', (e) => {
+        if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+          this._markScrollActive(1200);
+          this._savedScrolls = this._savedScrolls || {};
+          this._savedScrolls[key] = { left: el.scrollLeft, top: el.scrollTop };
+        }
+      }, { passive: false });
+
+      // Track scroll, touch and pointer events to prevent re-render jumps
+      ['scroll', 'touchstart', 'touchmove', 'pointerdown'].forEach(evt => {
+        el.addEventListener(evt, () => {
+          this._markScrollActive(1500);
+          this._savedScrolls = this._savedScrolls || {};
+          this._savedScrolls[key] = { left: el.scrollLeft, top: el.scrollTop };
+        }, { passive: true });
+      });
+    });
 
     // Solo Block Radar Coin Selector
     const lotteryWrap = this.shadowRoot.querySelector('.lottery-coin-wrap');
@@ -8979,6 +9072,11 @@ class HomeMinerFleetCard extends HTMLElement {
           this._activeTab = tab;
           this._lastRenderSig = null;
           safeStorage.set('miner_active_tab', tab);
+          const tabBar = this.shadowRoot.querySelector('.workspace-tab-bar');
+          if (tabBar) {
+            this._savedScrolls = this._savedScrolls || {};
+            this._savedScrolls['workspace-tab-bar'] = { left: tabBar.scrollLeft, top: tabBar.scrollTop };
+          }
           this.render();
         }
       });
@@ -8993,6 +9091,11 @@ class HomeMinerFleetCard extends HTMLElement {
           this._trophyFilter = cat;
           this._lastRenderSig = null;
           safeStorage.set('miner_trophy_filter', cat);
+          const bar = this.shadowRoot.querySelector('.trophy-filter-bar');
+          if (bar) {
+            this._savedScrolls = this._savedScrolls || {};
+            this._savedScrolls['trophy-filter-bar'] = { left: bar.scrollLeft, top: bar.scrollTop };
+          }
           this.render();
         }
       });
@@ -9021,6 +9124,11 @@ class HomeMinerFleetCard extends HTMLElement {
           this._chronicleFilter = filterVal;
           this._lastRenderSig = null;
           safeStorage.set('miner_chronicle_filter', filterVal);
+          const bar = this.shadowRoot.querySelector('.chronicle-filter-bar');
+          if (bar) {
+            this._savedScrolls = this._savedScrolls || {};
+            this._savedScrolls['chronicle-filter-bar'] = { left: bar.scrollLeft, top: bar.scrollTop };
+          }
           this.render();
         }
       });
