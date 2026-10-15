@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-15
+
 ### Added
 - **Apple Watch Companion Wrist HUD & Complications Integration** ([#39](https://github.com/everyday3d/home-miner-studio/issues/39)):
   - Added dedicated ultra-compact, high-contrast, pure-black OLED (`#000000`) watchOS layout in `home-miner-cards.js` automatically triggered on viewport widths `<= 280px` or via card configuration (`view_mode: watch` or `display_mode: watch`).
