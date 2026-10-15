@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented automatic `scrollLeft` and `scrollTop` caching (`_saveScrollPositions` / `_restoreScrollPositions`) across all scrollable containers (`.workspace-tab-bar`, `.yield-table-wrap`, `.trophy-filter-bar`, `.chronicle-filter-bar`, `.roadmap-strip`, `.timeframe-selector`) to guarantee zero scroll position loss across background DOM re-renders.
   - Added an active scroll and touch interaction guard (`_markScrollActive` / `_scrollActive`) in `_isUserInputActive()` to freeze background Home Assistant state update re-renders while a user is actively scrolling, swiping, or touching.
   - Integrated desktop mouse-wheel horizontal translation, allowing desktop users to smoothly scroll horizontal tab bars with standard vertical mouse wheels.
-  - Added smooth active pill auto-centering (`scrollIntoView({ inline: 'nearest' })`) when tabs are switched without resetting origin scroll position.
+- **Mobile Page-Level Auto-Scroll Jump Resolution** ([#42](https://github.com/everyday3d/home-miner-studio/issues/42)):
+  - Fixed a regression where scrolling down the mobile dashboard on tall views (such as Solo Radar) caused the entire page to violently jump back up to the top.
+  - Eliminated ancestor-level `scrollIntoView()` calls on active tab elements, replacing them with strictly local horizontal container scroll calculations (`tabBar.scrollLeft`).
 
 ### Added
 - **Native Support for NerdQaxe (Quad-ASIC Desktop Miner)** ([#38](https://github.com/everyday3d/home-miner-studio/issues/38)):

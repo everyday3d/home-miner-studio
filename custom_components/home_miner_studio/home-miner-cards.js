@@ -1741,12 +1741,15 @@ class HomeMinerFleetCard extends HTMLElement {
       }
     });
 
-    if (!this._scrollActive) {
-      const activePill = cardRoot.querySelector('.workspace-tab-bar .tab-pill.active');
-      if (activePill) {
-        try {
-          activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-        } catch (e) {}
+    const tabBar = cardRoot.querySelector('.workspace-tab-bar');
+    const activePill = tabBar?.querySelector('.tab-pill.active');
+    if (tabBar && activePill && !this._scrollActive && (!this._savedScrolls || this._savedScrolls['workspace-tab-bar'] === undefined)) {
+      const pillLeft = activePill.offsetLeft;
+      const pillRight = pillLeft + activePill.offsetWidth;
+      if (pillLeft < tabBar.scrollLeft) {
+        tabBar.scrollLeft = pillLeft;
+      } else if (pillRight > tabBar.scrollLeft + tabBar.clientWidth) {
+        tabBar.scrollLeft = pillRight - tabBar.clientWidth;
       }
     }
   }
