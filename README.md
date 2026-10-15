@@ -1,6 +1,6 @@
 # ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard
 
-[![Release v0.5.2](https://img.shields.io/badge/Release-v0.5.2%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
+[![Release v0.6.1](https://img.shields.io/badge/Release-v0.6.1%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg?style=flat-square&logo=home-assistant)](https://www.home-assistant.io/)
 [![Discussions](https://img.shields.io/badge/Community-Discussions%20%26%20Roadmap-blueviolet?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/discussions/7)
@@ -10,36 +10,93 @@
 
 ---
 
+## 🌟 Supported Hardware Architecture Spotlight
+
+Home Miner Studio is architected from the ground up to support the full spectrum of modern cryptocurrency mining hardware — from ultra-quiet open-source desktop lottery gadgets to industrial megawatt hashboards.
+
+![Supported Hardware Architecture Spotlight](assets/hardware_spotlight_showcase.png)
+
+### 📊 Supported Hardware Matrix
+
+| Hardware Architecture | Hardware Class | Hashrate Range | Power Draw | Efficiency | Noise Level | Protocol & Port | Native HA Preset |
+|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Bitaxe Supra / Gamma** | Open-Hardware Desk Solo | 1.2 – 2.5 TH/s | 14 – 26 W | 18.5 J/TH | 🔇 22 dB (Whisper) | AxeOS HTTP (Port 80) | `type: bitaxe` |
+| **Canaan Avalon Nano 3S** | Living Room Space Heater | 4.5 – 6.0 TH/s | 100 – 140 W | 24.0 J/TH | 🔇 34 dB (Quiet Room) | CGMiner RPC (Port 4028) | `type: cgminer_rpc` |
+| **NerdMiner v2 / NerdAxe** | Micro Desk Art Lottery Rig | 78 KH/s – 500 GH/s | 1.5 – 12 W | Passive Thermal | 🔇 0 dB (Silent) | NerdMiner HTTP (Port 80) | `type: nerdminer` |
+| **FutureBit Apollo II** | Full Bitcoin Node + ASIC | 6.0 – 10.0 TH/s | 125 – 220 W | 21.0 J/TH | 🔇 28 dB (Quiet Desk) | Apollo OS HTTP (Port 80) | `type: futurebit` |
+| **Lucky Miner LV06 / LV08** | Compact Desk Solo ASIC | 500 GH/s – 1.2 TH/s | 13 – 28 W | 25.0 J/TH | 🔇 25 dB (Whisper) | LuckyOS HTTP (Port 80) | `type: luckyminer` |
+| **MicroBT Whatsminer (M30S/M50)** | Industrial High-Throughput Rig | 100 – 120 TH/s | 3100 – 3400 W | 31.0 J/TH | 🔊 75 dB (Server Room) | BT-Miner RPC (Port 4028) | `type: whatsminer` |
+| **Bitmain Antminer (S19/S21)** | Global Standard ASIC Rig | 110 – 200 TH/s | 3250 – 3500 W | 17.5 J/TH | 🔊 75 dB (Server Room) | Braiins / Stock RPC (Port 4028) | `type: antminer` |
+
+### 🛠️ Hardware Spotlight Profiles
+
+* ⚡ **Bitaxe Supra & Gamma (BM1366 / BM1370)**:
+  * Open-source single-ASIC board designed by Skot9000 & the open hardware mining community.
+  * Direct AxeOS REST integration over local WiFi.
+  * Interactive target frequency (`MHz`) and core voltage (`mV`) tuning sliders with live power profiling (`Eco`, `Standard`, `Turbo`).
+* 🛋️ **Canaan Avalon Nano 3S**:
+  * Dual-purpose quiet room heating appliance with customizable RGB lighting halos.
+  * Communicates via raw TCP socket CGMiner RPC protocol on port 4028.
+  * Real-time telemetry for intake/exhaust thermals, hashboard yields, and power consumption.
+* 👓 **LilyGO NerdMiner v2 & NerdAxe**:
+  * The viral ESP32-S3 open-source solo Bitcoin lottery miner.
+  * Pocket-sized cypherpunk desk art tracking network block height, difficulty, and accepted nonces.
+* 🚀 **FutureBit Apollo II**:
+  * High-efficiency desktop Bitcoin ASIC paired with an onboard ARM computer running a full Bitcoin Core node and local block explorer.
+  * Complete Apollo OS API integration tracking hash performance, system thermals, and node sync.
+* 🍀 **Lucky Miner LV06 & LV08**:
+  * Micro-ASIC appliances powered by BM1366 chips with built-in color displays and whisper-quiet cooling.
+* 🏭 **MicroBT Whatsminer & Bitmain Antminer**:
+  * Full industrial socket telemetry: multi-chain hashboard temperatures, twin 6,000 RPM fan tachometers, chip error counts, and automated pool failover states.
+  * Compatible with stock Bitmain firmware, Braiins OS, VNISH, and standard CGMiner RPC.
+
+---
+
 ## 🌟 Key Features
 
-* 🔍 **Zero-Config Auto-Import**:
-  * Automatically scans your existing Home Assistant integrations (`bitaxe`, `ha_bitaxe`, `axeos`, `antminer`, `whatsminer`, `braiins`, `hiveos`, `nicehash`, `nerdminer`).
-  * Inspects Device & Entity Registries to auto-extract miner host IPs and models.
-  * 1-click import directly from the Lovelace card or dropdown selection in the config flow.
-* ⛏️ **Multi-Hardware Support**:
-  * **Micro-miners & Open Hardware**: Bitaxe (Ultra, Supra, Gamma), NerdMiner, Avalon Nano via local HTTP/REST API.
-  * **Bitaxe / AxeOS Tuning**: Interactive sliders for Target Frequency (`MHz`) and Target Core Voltage (`mV`), plus 1-click Power Profiles (`Eco`, `Standard`, `Turbo`) to underclock/overclock on the fly.
-  * **ASIC Rigs**: Antminer, Whatsminer, Innosilicon, Braiins OS via standard CGMiner/BMM raw TCP socket API (`summary`, `stats`, `pools`) with multi-hashboard chain temperature, fan speed, and chip status parsing.
-  * **GPU / Rig OS**: HiveOS, NiceHash, and local rig endpoints (Rigel, GMiner, T-Rex, XMRig).
+* 🔍 **Zero-Config Auto-Import & Network Discovery**:
+  * Scans existing Home Assistant integrations (`bitaxe`, `ha_bitaxe`, `axeos`, `antminer`, `whatsminer`, `braiins`, `hiveos`, `nicehash`, `nerdminer`).
+  * Auto-discovers local network ASIC nodes and AxeOS blades with 1-click import into Home Assistant.
+* 🎮 **Fleet RPG Progression & Prestige Themes (Level 1 to 500)**:
+  * **XP Progression Engine**: Rebalanced rewards granting 1 XP per verified accepted share plus logarithmic difficulty milestone bonuses.
+  * **Unlockable Rank Titles**: 20 distinct prestige ranks with custom badges from *Silicon Initiate* to *Omniscient Genesis Node*.
+  * **Prestige Theme Engine**: 5 handcrafted aero-glass themes unlocked at level milestones (Cyberpunk Neon, Bitcoin Gold, Solar Pulse, Matrix Terminal, Obsidian Stealth).
+  * **Mining History & Decentralized Chronicles**: 50 unlockable educational chapters unlocked every 10 levels demystifying Bitcoin mining history, cypherpunk milestones, and blockchain mechanics.
+* 🔬 **Live Stratum Particle Pipeline (Visual Block Assembly)**:
+  * Compact, collapsible canvas visualizer animating live stratum hashing nonces.
+  * Real-time stratum telemetry: active pool host/port, block height, Merkle root hash, job seed ID, and golden nonce counter.
+* ⚡ **Multi-Coin Live Yield Matrix & 1-Click Stratum Switcher**:
+  * Real-time profitability leaderboard for SHA-256 coins (BTC, BCH, DGB, FB, WOJAK, BELLS, PEPE, KAS).
+  * Net USD/day and monthly profit calculations taking utility electricity tariffs into account.
+  * 1-Click Stratum Switcher modal pushing new pool endpoints directly to miners without manual web UI logins.
+* 🎯 **Solo Block Lottery Radar & Acoustic Telemetry**:
+  * Mathematical solo block bounty odds calculator based on fleet hashrate vs network difficulty.
+  * 360° sweeping radar stage with dynamic distance blips for best difficulty shares and target milestones.
+  * Interactive victory fanfare celebration with particle confetti.
+  * Synthesized acoustic feedback with selectable audio modes: Geiger counter clicks and victory milestone chimes.
+* 🎨 **Native Machine Art Custom Iconset**:
+  * Extended custom vector icons registered directly on `window.customIcons['miner']`:
+    * `miner:bitaxe` — Official Bitaxe dual-faceted pickaxe
+    * `miner:avalon` — Canaan Avalon stylized dual-wing emblem
+    * `miner:nerdminer` — LilyGO T-Display board with cypherpunk glasses
+    * `miner:futurebit` — Apollo multi-blade turbine intake
+    * `miner:luckyminer` — Lucky Miner four-leaf clover
+    * `miner:whatsminer` — MicroBT dual-barrel aerodynamic chassis
+    * `miner:antminer` — Bitmain APW12 server rack chassis
 * 🏊 **Mining Pool Telemetry (7 Integrated Providers)**:
-  * **Helios Pool (`helios`)**: Solo CKPool architecture tracking, 1m/5m live worker hashrates, session & lifetime difficulty best share (`pool_best_share`), and solo block lottery bounty tracking.
+  * **Helios Pool (`helios`)**: Solo CKPool architecture tracking, live worker hashrates, session & lifetime difficulty best share (`pool_best_share`), and solo block lottery bounty tracking.
   * **Mining-Dutch (`mining_dutch`)**: Multi-algo auto-exchange telemetry, confirmed & unconfirmed BTC wallet balances, 24-hour estimated revenues, and worker status.
   * **Public-Pool (`public_pool`)**: Open-source solo Bitcoin mining pool API, real-time worker count, individual rig hashrates, and best difficulty share.
   * **2Miners (`2miners`)**: PPLNS & SOLO multi-coin pool API, real-time unpaid balance, 24h reward estimates, active workers, and pool-side hashrate.
   * **Braiins Pool (`braiins`)**: SlushPool / Braiins scoring hash rate, unconfirmed rewards, 24h estimated revenue, and worker connectivity.
   * **ViaBTC (`viabtc`)**: PPS+ / PPLNS multi-coin pool API, observer token telemetry, active worker count, and unpaid profit tracking.
   * **F2Pool (`f2pool`)**: Global multi-coin pool API, real-time hashrate, 24h reward estimates (`value_today`), and worker counts.
-  * **Telemetry Sensors**: Automatically exposes `pool_unpaid_balance`, `pool_24h_revenue`, `pool_active_workers`, `pool_reported_hashrate`, `pool_best_share`, and `pool_status` entities for every configured miner.
 * ⚡ **Home Assistant Energy Dashboard Integration**:
   * Exposes native `device_class: power` (W) and `device_class: energy` (kWh) entities.
   * Directly links power draw to utility rates and solar production for dynamic cost calculations.
 * ☀️ **Solar Curtailment & Smart Automation**:
   * Automatically throttle or pause miners when solar battery state-of-charge (SoC) drops or grid tariffs spike.
   * Thermal watchdog automations for smart plug kill switches when ambient/chassis temperatures rise.
-* 📊 **Standalone Lovelace Card (`home-miner-fleet-card`)**:
-  * Fleet overview with aggregate hashrate, efficiency ($J/\text{TH}$), and net power cost per day.
-  * Per-miner telemetry tiles with chip temperature health thresholds (<65°C green, 65–75°C amber, >75°C red).
-  * 1-click power profile buttons, auto-import action, and quick reboot triggers.
 
 ---
 
@@ -47,6 +104,8 @@
 
 ```text
 home-miner-studio/
+├── assets/
+│   └── hardware_spotlight_showcase.png # Hardware architecture spotlight graphic
 ├── custom_components/
 │   └── home_miner_studio/
 │       ├── __init__.py          # Integration setup & frontend card registration
@@ -62,6 +121,7 @@ home-miner-studio/
 │       ├── number.py            # Frequency & voltage tuning sliders
 │       ├── select.py            # Power profile presets (Eco / Standard / Turbo)
 │       ├── home-miner-cards.js  # Custom Lovelace card frontend
+│       ├── home-miner-icons.js  # Custom vector iconset provider (miner:*)
 │       └── translations/
 │           └── en.json          # English translations
 ├── hacs.json                    # HACS repository configuration

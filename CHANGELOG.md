@@ -5,17 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-- **RPG Hero Banner Viewport Encapsulation & Layout Void Fix** ([#30](https://github.com/everyday3d/home-miner-studio/issues/30)):
-  - Added missing closing `</div>` tag for `.rpg-hero-banner`, resolving an issue where subsequent consoles (Prestige Theme Engine, Trophy Cabinet, Chronicles, and Roadmap) were erroneously captured inside the banner's 2-column alternating CSS grid (`auto 1fr`), forcing the Level Orb out to the center with a massive empty void on the left.
-- **Lovelace In-Memory Resource Cache Busting & Responsive 6-Tab Bar** ([#24](https://github.com/everyday3d/home-miner-studio/issues/24)):
-  - Resolved Home Assistant in-memory Lovelace resource caching where disk-level edits to `.storage/lovelace_resources` were ignored by the running HA Core daemon, forcing browsers to continually request stale pre-RPG JavaScript bundles (`?v=1792014129710`) with 31-day HTTP caching headers (`max-age=2678400`).
-  - Executed live `lovelace/resources/update` through Home Assistant's WebSocket API to ensure instant, forced cache busting across all browser sessions upon page reload or Ctrl+F5.
-  - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
+## [0.6.1] - 2026-10-14
 
 ### Added
+- **Hardware Architecture Spotlight Showcase & Documentation Matrix** ([#31](https://github.com/everyday3d/home-miner-studio/issues/31)):
+  - Built an extensive visual Hardware Architecture Spotlight showcase graphic (`assets/hardware_spotlight_showcase.png`) and comprehensive documentation matrix in `README.md` spotlighting 7 verified hardware architectures.
+  - Detailed hardware class ratings, hashrate capabilities, power envelopes, electrical efficiency ($J/\text{TH}$), acoustic noise ratings, firmware protocols, and Home Assistant 1-click preset configurations.
+- **Extended Machine Art Custom Vector Iconset & Model Support** ([#31](https://github.com/everyday3d/home-miner-studio/issues/31)):
+  - Extended custom vector icon library on `window.customIcons['miner']` with official machine artwork:
+    - `miner:nerdminer` / `miner:nerdaxe`: LilyGO T-Display S3 ESP32 board with cypherpunk glasses.
+    - `miner:futurebit` / `miner:apollo`: Apollo multi-blade turbine intake.
+    - `miner:luckyminer`: Lucky Miner four-leaf clover emblem.
+    - `miner:whatsminer`: MicroBT dual-barrel aerodynamic server chassis.
+    - `miner:antminer`: Bitmain APW12 server rack chassis.
+  - Added native constants `TYPE_FUTUREBIT` and `TYPE_LUCKYMINER` in `const.py` and updated config flow/card modals with 1-click dropdown options.
 - **Authentic Machine Art Vector Icons (`miner:` Custom Iconset)** ([#30](https://github.com/everyday3d/home-miner-studio/issues/30)):
   - Designed and registered a custom SVG iconset (`miner:`) on `window.customIcons` and `window.customIconsets` providing authentic hardware art:
     - `miner:bitaxe`: Official Skot9000 Bitaxe pixel battleaxe logo.

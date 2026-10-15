@@ -3,9 +3,12 @@
  * Authentic vector logos for supported cryptocurrency miners:
  * - miner:bitaxe: Official Skot9000 Bitaxe pixel battleaxe logo
  * - miner:avalon: Official Canaan Creative Avalon stylized 'A' dragon emblem
+ * - miner:nerdminer / miner:nerdaxe: Retro cypherpunk glasses with Bitcoin pickaxe core
+ * - miner:futurebit / miner:apollo: FutureBit Apollo turbine fan chassis
+ * - miner:luckyminer: Lucky Miner 4-leaf clover ASIC die emblem
+ * - miner:whatsminer: MicroBT Whatsminer dual-fan tunnel server chassis
+ * - miner:antminer: Bitmain Antminer dual-fan rack blade
  * - miner:fleet: Crossed mining pickaxes & ASIC fleet emblem
- * - miner:whatsminer: MicroBT Whatsminer dual-fan chassis icon
- * - miner:antminer: Bitmain Antminer hashblade icon
  */
 
 (function() {
@@ -22,12 +25,32 @@
       path: 'M12 1.5L1.5 22.5H7.2L12 10.8L16.8 22.5H22.5L12 1.5ZM10 13.2L15.8 17.5L20.2 18.5L13.8 20.4L11.2 18L10 13.2Z',
       keywords: ['avalon', 'canaan', 'nano', 'miner']
     },
+    nerdminer: {
+      path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
+      keywords: ['nerdminer', 'nerdaxe', 'esp32', 't-display', 'miner']
+    },
+    nerdaxe: {
+      path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
+      keywords: ['nerdaxe', 'nerdminer', 'miner']
+    },
+    futurebit: {
+      path: 'M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 5.9 3.2L14 10l-2-5zm-7 7a7 7 0 0 1 3.2-5.9L10 10l-5 2zm2 4.9A7 7 0 0 1 6 12l5 2l-4 3.9zm5 2.1a7 7 0 0 1-5.9-3.2L10 14l2 5zm7-7a7 7 0 0 1-3.2 5.9L14 14l5-2zm-2-4.9A7 7 0 0 1 18 12l-5-2l4-3.9zM12 10a2 2 0 1 1-2 2a2 2 0 0 1 2-2z',
+      keywords: ['futurebit', 'apollo', 'node', 'miner']
+    },
+    apollo: {
+      path: 'M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 5.9 3.2L14 10l-2-5zm-7 7a7 7 0 0 1 3.2-5.9L10 10l-5 2zm2 4.9A7 7 0 0 1 6 12l5 2l-4 3.9zm5 2.1a7 7 0 0 1-5.9-3.2L10 14l2 5zm7-7a7 7 0 0 1-3.2 5.9L14 14l5-2zm-2-4.9A7 7 0 0 1 18 12l-5-2l4-3.9zM12 10a2 2 0 1 1-2 2a2 2 0 0 1 2-2z',
+      keywords: ['apollo', 'futurebit', 'miner']
+    },
+    luckyminer: {
+      path: 'M12 2a3.5 3.5 0 0 0-3.5 3.5c0 1.5 1 2.8 2.3 3.3a4.8 4.8 0 0 0-3.3-2.3a3.5 3.5 0 1 0 0 5a4.8 4.8 0 0 0 3.3-2.3a4.8 4.8 0 0 0-2.3 3.3a3.5 3.5 0 1 0 5 0a4.8 4.8 0 0 0-2.3-3.3a4.8 4.8 0 0 0 3.3 2.3a3.5 3.5 0 1 0 0-5a4.8 4.8 0 0 0-3.3 2.3a4.8 4.8 0 0 0 2.3-3.3A3.5 3.5 0 0 0 12 2zm0 8.5a1.5 1.5 0 1 1-1.5 1.5a1.5 1.5 0 0 1 1.5-1.5zM11 15v7h2v-7h-2z',
+      keywords: ['luckyminer', 'lv06', 'lv07', 'lv08', 'clover', 'miner']
+    },
     whatsminer: {
-      path: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm4 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8 0c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z',
+      path: 'M2 5h20v14H2V5zm3 3a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm14 0a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm-14 2a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm14 0a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm-8-3h2v10h-2V7z',
       keywords: ['whatsminer', 'microbt', 'miner']
     },
     antminer: {
-      path: 'M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z',
+      path: 'M4 3h16v18H4V3zm2 2v14h12V5H6zm2 2h8v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2zM2 9h2v6H2V9zm18 0h2v6h-2V9z',
       keywords: ['antminer', 'bitmain', 'miner']
     }
   };
@@ -50,6 +73,9 @@
   window.customIcons['hms'] = minerIconProvider;
   window.customIcons['bitaxe'] = minerIconProvider;
   window.customIcons['avalon'] = minerIconProvider;
+  window.customIcons['nerdminer'] = minerIconProvider;
+  window.customIcons['futurebit'] = minerIconProvider;
+  window.customIcons['luckyminer'] = minerIconProvider;
   window.customIconsets['miner'] = minerIconProvider;
 
   try {

@@ -7,7 +7,7 @@
  */
 
 console.info(
-  '%c⛏️ HOME MINER STUDIO %c v0.5.3-rpg %c Build 2026.10.14 ',
+  '%c⛏️ HOME MINER STUDIO %c v0.6.1 %c Build 2026.10.14 ',
   'background: #0ea5e9; color: #fff; font-weight: bold; border-radius: 4px 0 0 4px; padding: 2px 6px;',
   'background: #0f172a; color: #38bdf8; font-weight: bold; padding: 2px 6px;',
   'background: #1e293b; color: #94a3b8; border-radius: 0 4px 4px 0; padding: 2px 6px;'
@@ -27,12 +27,32 @@ const MINER_CUSTOM_ICONS = {
     path: 'M12 1.5L1.5 22.5H7.2L12 10.8L16.8 22.5H22.5L12 1.5ZM10 13.2L15.8 17.5L20.2 18.5L13.8 20.4L11.2 18L10 13.2Z',
     keywords: ['avalon', 'canaan', 'nano', 'miner']
   },
+  nerdminer: {
+    path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
+    keywords: ['nerdminer', 'nerdaxe', 'esp32', 't-display', 'miner']
+  },
+  nerdaxe: {
+    path: 'M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z',
+    keywords: ['nerdaxe', 'nerdminer', 'miner']
+  },
+  futurebit: {
+    path: 'M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 5.9 3.2L14 10l-2-5zm-7 7a7 7 0 0 1 3.2-5.9L10 10l-5 2zm2 4.9A7 7 0 0 1 6 12l5 2l-4 3.9zm5 2.1a7 7 0 0 1-5.9-3.2L10 14l2 5zm7-7a7 7 0 0 1-3.2 5.9L14 14l5-2zm-2-4.9A7 7 0 0 1 18 12l-5-2l4-3.9zM12 10a2 2 0 1 1-2 2a2 2 0 0 1 2-2z',
+    keywords: ['futurebit', 'apollo', 'node', 'miner']
+  },
+  apollo: {
+    path: 'M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 5.9 3.2L14 10l-2-5zm-7 7a7 7 0 0 1 3.2-5.9L10 10l-5 2zm2 4.9A7 7 0 0 1 6 12l5 2l-4 3.9zm5 2.1a7 7 0 0 1-5.9-3.2L10 14l2 5zm7-7a7 7 0 0 1-3.2 5.9L14 14l5-2zm-2-4.9A7 7 0 0 1 18 12l-5-2l4-3.9zM12 10a2 2 0 1 1-2 2a2 2 0 0 1 2-2z',
+    keywords: ['apollo', 'futurebit', 'miner']
+  },
+  luckyminer: {
+    path: 'M12 2a3.5 3.5 0 0 0-3.5 3.5c0 1.5 1 2.8 2.3 3.3a4.8 4.8 0 0 0-3.3-2.3a3.5 3.5 0 1 0 0 5a4.8 4.8 0 0 0 3.3-2.3a4.8 4.8 0 0 0-2.3 3.3a3.5 3.5 0 1 0 5 0a4.8 4.8 0 0 0-2.3-3.3a4.8 4.8 0 0 0 3.3 2.3a3.5 3.5 0 1 0 0-5a4.8 4.8 0 0 0-3.3 2.3a4.8 4.8 0 0 0 2.3-3.3A3.5 3.5 0 0 0 12 2zm0 8.5a1.5 1.5 0 1 1-1.5 1.5a1.5 1.5 0 0 1 1.5-1.5zM11 15v7h2v-7h-2z',
+    keywords: ['luckyminer', 'lv06', 'lv07', 'lv08', 'clover', 'miner']
+  },
   whatsminer: {
-    path: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm4 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8 0c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z',
+    path: 'M2 5h20v14H2V5zm3 3a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm14 0a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm-14 2a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm14 0a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm-8-3h2v10h-2V7z',
     keywords: ['whatsminer', 'microbt', 'miner']
   },
   antminer: {
-    path: 'M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z',
+    path: 'M4 3h16v18H4V3zm2 2v14h12V5H6zm2 2h8v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2zM2 9h2v6H2V9zm18 0h2v6h-2V9z',
     keywords: ['antminer', 'bitmain', 'miner']
   }
 };
@@ -56,6 +76,9 @@ if (typeof window !== 'undefined') {
   window.customIcons['hms'] = minerIconProvider;
   window.customIcons['bitaxe'] = minerIconProvider;
   window.customIcons['avalon'] = minerIconProvider;
+  window.customIcons['nerdminer'] = minerIconProvider;
+  window.customIcons['futurebit'] = minerIconProvider;
+  window.customIcons['luckyminer'] = minerIconProvider;
   window.customIconsets['miner'] = minerIconProvider;
 
   try {
@@ -1298,24 +1321,38 @@ class HomeMinerFleetCard extends HTMLElement {
         </svg>
       `;
     }
-    if (type.includes('nerdminer')) {
+    if (type.includes('nerdminer') || type.includes('nerdaxe')) {
       return `
         <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon nerdminer-icon">
-          <path d="M4 3h16c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2zm2 3v12h12V6H6zm4 2h4c1.1 0 2 .9 2 2v1c0 .7-.4 1.4-1 1.7.6.3 1 1 1 1.7v1.6c0 1.1-.9 2-2 2h-4V8zm2 2v2h2v-2h-2zm0 4v2h2v-2h-2z"/>
+          <path d="M1 8h9v7H1V8zm13 0h9v7h-9V8zm-4 3h4v2h-4v-2zM3 10v3h5v-3H3zm13 0v3h5v-3h-5zM5 2h2v4H5V2zm12 0h2v4h-2V2zM7 3h10v2H7V3z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('futurebit') || type.includes('apollo')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon futurebit-icon">
+          <path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 5.9 3.2L14 10l-2-5zm-7 7a7 7 0 0 1 3.2-5.9L10 10l-5 2zm2 4.9A7 7 0 0 1 6 12l5 2l-4 3.9zm5 2.1a7 7 0 0 1-5.9-3.2L10 14l2 5zm7-7a7 7 0 0 1-3.2 5.9L14 14l5-2zm-2-4.9A7 7 0 0 1 18 12l-5-2l4-3.9zM12 10a2 2 0 1 1-2 2a2 2 0 0 1 2-2z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('luckyminer') || type.includes('lv06') || type.includes('lv07') || type.includes('lv08')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon luckyminer-icon">
+          <path d="M12 2a3.5 3.5 0 0 0-3.5 3.5c0 1.5 1 2.8 2.3 3.3a4.8 4.8 0 0 0-3.3-2.3a3.5 3.5 0 1 0 0 5a4.8 4.8 0 0 0 3.3-2.3a4.8 4.8 0 0 0-2.3 3.3a3.5 3.5 0 1 0 5 0a4.8 4.8 0 0 0-2.3-3.3a4.8 4.8 0 0 0 3.3 2.3a3.5 3.5 0 1 0 0-5a4.8 4.8 0 0 0-3.3 2.3a4.8 4.8 0 0 0 2.3-3.3A3.5 3.5 0 0 0 12 2zm0 8.5a1.5 1.5 0 1 1-1.5 1.5a1.5 1.5 0 0 1 1.5-1.5zM11 15v7h2v-7h-2z"/>
         </svg>
       `;
     }
     if (type.includes('whatsminer')) {
       return `
         <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon whatsminer-icon">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm4 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8 0c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/>
+          <path d="M2 5h20v14H2V5zm3 3a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm14 0a4 4 0 1 0 0 8a4 4 0 0 0 0-8zm-14 2a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm14 0a2 2 0 1 1 0 4a2 2 0 0 1 0-4zm-8-3h2v10h-2V7z"/>
         </svg>
       `;
     }
     if (type.includes('antminer')) {
       return `
         <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon antminer-icon">
-          <path d="M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z"/>
+          <path d="M4 3h16v18H4V3zm2 2v14h12V5H6zm2 2h8v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2zM2 9h2v6H2V9zm18 0h2v6h-2V9z"/>
         </svg>
       `;
     }
@@ -1998,9 +2035,11 @@ class HomeMinerFleetCard extends HTMLElement {
                 <select id="modal-type" class="modal-select">
                   <option value="bitaxe" style="background-color: #0f172a; color: #f8fafc;">Bitaxe / AxeOS</option>
                   <option value="cgminer_rpc" style="background-color: #0f172a; color: #f8fafc;">Canaan Avalon / CGMiner</option>
+                  <option value="nerdminer" style="background-color: #0f172a; color: #f8fafc;">ESP32 NerdMiner / NerdAxe</option>
+                  <option value="futurebit" style="background-color: #0f172a; color: #f8fafc;">FutureBit Apollo II</option>
+                  <option value="luckyminer" style="background-color: #0f172a; color: #f8fafc;">Lucky Miner (LV06/LV08)</option>
                   <option value="whatsminer" style="background-color: #0f172a; color: #f8fafc;">MicroBT Whatsminer</option>
                   <option value="antminer" style="background-color: #0f172a; color: #f8fafc;">Antminer / Braiins OS</option>
-                  <option value="nerdminer" style="background-color: #0f172a; color: #f8fafc;">ESP32 NerdMiner</option>
                   <option value="hiveos" style="background-color: #0f172a; color: #f8fafc;">HiveOS Rig Farm</option>
                   <option value="generic_rest" style="background-color: #0f172a; color: #f8fafc;">Generic REST API</option>
                 </select>
@@ -2814,19 +2853,19 @@ class HomeMinerFleetCard extends HTMLElement {
     alert(`✅ Successfully imported ${successCount} cryptocurrency mining rigs into Home Assistant!`);
   }
 
-  _openAddModal() {
+  _openAddModal(presetType, presetName, presetPort) {
     this._ensureDom();
     this._modalOpen = true;
     this._modalMode = 'add';
     this._activeHost = '';
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    this.shadowRoot.querySelector('#modal-title').textContent = '➕ Add Cryptocurrency Miner';
-    this.shadowRoot.querySelector('#modal-name').value = '';
+    this.shadowRoot.querySelector('#modal-title').textContent = presetName ? `➕ Add ${presetName}` : '➕ Add Cryptocurrency Miner';
+    this.shadowRoot.querySelector('#modal-name').value = presetName || '';
     this.shadowRoot.querySelector('#modal-host').value = '';
     this.shadowRoot.querySelector('#modal-host').disabled = false;
-    this.shadowRoot.querySelector('#modal-port').value = 80;
+    this.shadowRoot.querySelector('#modal-port').value = presetPort || (presetType === 'cgminer_rpc' ? 4028 : 80);
     this.shadowRoot.querySelector('#modal-coin').value = 'BTC';
-    this.shadowRoot.querySelector('#modal-type').value = 'bitaxe';
+    this.shadowRoot.querySelector('#modal-type').value = presetType || 'bitaxe';
     this.shadowRoot.querySelector('#modal-pool').value = 'helios';
     this.shadowRoot.querySelector('#modal-wallet').value = '';
     if (minerModal) minerModal.style.display = 'flex';
@@ -6436,7 +6475,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.5.3-rpg 🔄</span>
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.6.1 🔄</span>
             </div>
           </div>
         </div>

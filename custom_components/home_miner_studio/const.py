@@ -24,6 +24,8 @@ TYPE_WHATSMINER = "whatsminer"
 TYPE_ANTMINER = "antminer"
 TYPE_HIVEOS = "hiveos"
 TYPE_NERDMINER = "nerdminer"
+TYPE_FUTUREBIT = "futurebit"
+TYPE_LUCKYMINER = "luckyminer"
 TYPE_GENERIC_REST = "generic_rest"
 
 MINER_TYPES = [
@@ -33,6 +35,8 @@ MINER_TYPES = [
     TYPE_ANTMINER,
     TYPE_HIVEOS,
     TYPE_NERDMINER,
+    TYPE_FUTUREBIT,
+    TYPE_LUCKYMINER,
     TYPE_GENERIC_REST,
 ]
 
