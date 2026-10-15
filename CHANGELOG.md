@@ -16,6 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated collapsible header toggle handlers with `e.composedPath()` guards preventing accidental collapse when interacting with embedded coin selectors.
 
 ### Added
+- **Repository Feature Spotlight Showcase & Animated Stratum Visualizer** ([#35](https://github.com/everyday3d/home-miner-studio/issues/35)):
+  - Authored a comprehensive visual feature showcase (`## 🌟 Feature Spotlight & Visual Showcase`) in `README.md` highlighting all core platform capabilities with crisp, high-DPI screenshots and concise technical blurbs.
+  - Engineered an animated GIF demonstration (`assets/stratum_pipeline_animated.gif`) for the Stratum Visual Particle Pipeline showcasing live 4-stage block assembly, nonce particle conduits, golden nonce detection, and multi-coin switching across Mining-Dutch & HeliosPool SHA-256 ecosystems.
+  - Rendered dedicated high-resolution visual spotlight assets across all interactive modules:
+    - **Live Stratum Particle Pipeline**: `assets/stratum_pipeline_animated.gif`
+    - **Solo Block Lottery Radar & Acoustic Telemetry**: `assets/solo_lottery_radar.png`
+    - **Fleet Holographic Workstations & Machine Art**: `assets/fleet_workstations.png`
+    - **Multi-Coin Live Yield Matrix**: `assets/yield_market_matrix.png`
+    - **Decentralized Chronicles & Historical Trophy Room**: `assets/chronicles_trophy_room.png`
+    - **1-Click Stratum Pool Switcher Modal**: `assets/stratum_switcher_modal.png`
+    - **Automated Subnet Rig Discovery Console**: `assets/network_discovery_console.png`
+    - **Mobile Companion HUD & Responsive Glass Layout**: `assets/mobile_companion_hud.png`
 - **Mining-Dutch & HeliosPool SHA-256 Ecosystem Expansion** ([#33](https://github.com/everyday3d/home-miner-studio/issues/33)):
   - Expanded the Stratum Visual Pipeline Architecture with comprehensive SHA-256 coin profiles grouped into distinct pool categories (`Mining-Dutch`, `HeliosPool Solo`, and `Auxiliary & Community Networks`):
     - **Mining-Dutch Ecosystem**: Bitcoin (BTC), Wojakcoin (WOJAK), Bitcoin Cash (BCH), Bitcoin SV (BSV), Fractal Bitcoin (FB), DigiByte (DGB), Peercoin (PPC), eCash (XEC), Namecoin (NMC), Emercoin (EMC), Terracoin (TRC), Demcat/Chi (CHI), FixedTrade (FIX), Ring (XRG), SpaceCoin (SPACE), FreeCash (FCH), Bitcoin2 (BC2), and DeviantCoin (DVT) with corresponding stratum ports (e.g. 3465, 9995, 3703, 3433, 3335, 3471, 3408, 3445, 3407).

@@ -10,7 +10,45 @@
 
 ---
 
-## 🌟 Supported Hardware Architecture Spotlight
+## 🌟 Feature Spotlight & Visual Showcase
+
+Explore the flagship visual modules and interactive engineering built into Home Miner Studio:
+
+### 🔬 1. Live Stratum Particle Pipeline (Visual Block Assembly)
+![Live Stratum Particle Pipeline](assets/stratum_pipeline_animated.gif)
+> **Live Nonce Telemetry & Block Assembly**: High-framerate HTML5 canvas visualizer animating live stratum nonces streaming into candidate block headers, featuring golden nonce detection, Merkle root verification, and 1-click multi-coin switching across Mining-Dutch & HeliosPool SHA-256 ecosystems.
+
+### 🎯 2. Solo Block Lottery Radar & Acoustic Telemetry
+![Solo Block Lottery Radar](assets/solo_lottery_radar.png)
+> **Live Solo Odds & Milestone Radar**: Mathematical solo block jackpot odds calculator featuring an animated 360° sweeping radar, real-time target distance blips, victory particle fanfare, and synthesized Geiger-counter audio feedback.
+
+### 🖥️ 3. Fleet Holographic Workstations & Machine Art Iconset
+![Fleet Holographic Workstations](assets/fleet_workstations.png)
+> **Unified Hardware Command**: Real-time aero-glass workstation cards tracking individual ASIC hashrates, core thermals, fan tachometers, and frequency/voltage tuning with custom machine art vector iconography.
+
+### ⚡ 4. Multi-Coin Live Yield Matrix
+![Multi-Coin Live Yield Matrix](assets/yield_market_matrix.png)
+> **Real-Time Profitability Engine**: Dynamic SHA-256 coin profitability leaderboard ranking network difficulty, block subsidies, and net USD/day margins factoring in local electricity tariffs.
+
+### 🏆 5. Decentralized Chronicles & Historical Trophy Room
+![Decentralized Chronicles & Trophy Room](assets/chronicles_trophy_room.png)
+> **Fleet RPG Progression**: 50 unlockable Bitcoin history lore chapters, 20 prestige ranks, achievement trophies, and 5 dynamic glass themes celebrating cypherpunk milestones from Level 1 to 500.
+
+### 🔄 6. 1-Click Stratum Pool Switcher
+![1-Click Stratum Pool Switcher](assets/stratum_switcher_modal.png)
+> **Direct Hardware Remote Provisioning**: Instant modal dispatching new stratum URLs, ports, and worker credentials directly to AxeOS and CGMiner hardware without web UI logins.
+
+### 🔍 7. Automated Subnet Rig Discovery Console
+![Automated Subnet Rig Discovery](assets/network_discovery_console.png)
+> **Zero-Config Onboarding**: Network scanner detecting AxeOS nodes, CGMiner sockets, and existing Home Assistant integrations for 1-click fleet onboarding.
+
+### 📱 8. Mobile Companion HUD & Responsive Glass Layout
+![Mobile Companion HUD](assets/mobile_companion_hud.png)
+> **Pocket Mining Operations**: Touch-optimized responsive interface bringing live fleet hashrates, lottery sweeps, quick tuning controls, and yield metrics to smartphones and companion wall tablets.
+
+---
+
+## 🛠️ Supported Hardware Architecture Spotlight
 
 Home Miner Studio is architected from the ground up to support the full spectrum of modern cryptocurrency mining hardware — from ultra-quiet open-source desktop lottery gadgets to industrial megawatt hashboards.
 
@@ -105,6 +143,14 @@ Home Miner Studio is architected from the ground up to support the full spectrum
 ```text
 home-miner-studio/
 ├── assets/
+│   ├── stratum_pipeline_animated.gif   # Animated canvas particle pipeline visualizer
+│   ├── solo_lottery_radar.png          # Solo lottery 360° radar display
+│   ├── fleet_workstations.png          # Unified fleet workstation telemetry
+│   ├── yield_market_matrix.png         # Multi-coin SHA-256 yield matrix
+│   ├── chronicles_trophy_room.png      # 50-chapter lorebook & prestige trophies
+│   ├── stratum_switcher_modal.png      # 1-Click stratum switcher modal
+│   ├── network_discovery_console.png   # Subnet ASIC auto-discovery console
+│   ├── mobile_companion_hud.png        # Mobile responsive touch HUD
 │   └── hardware_spotlight_showcase.png # Hardware architecture spotlight graphic
 ├── custom_components/
 │   └── home_miner_studio/
