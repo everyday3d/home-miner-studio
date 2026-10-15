@@ -1082,14 +1082,35 @@ const PRESTIGE_THEMES = [
   }
 ];
 
+const PIPELINE_COIN_GROUPS = [
+  {
+    id: 'mining_dutch',
+    label: 'Mining-Dutch (SHA-256 & Merged)',
+    icon: '🇳🇱'
+  },
+  {
+    id: 'helios',
+    label: 'HeliosPool (Solo SHA-256)',
+    icon: '☀️'
+  },
+  {
+    id: 'aux',
+    label: 'Auxiliary Networks',
+    icon: '🌐'
+  }
+];
+
 const PIPELINE_COIN_PROFILES = {
+  // --- MINING-DUTCH (SHA-256 & MERGED) ---
   BTC: {
     name: 'Bitcoin',
     symbol: 'BTC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
     icon: '₿',
     algo: 'SHA-256',
-    defaultHost: 'public-pool.io',
-    defaultPort: 2142,
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3465,
     baseHeight: 892110,
     blockIntervalSec: 600,
     reward: '3.125 BTC',
@@ -1100,6 +1121,8 @@ const PIPELINE_COIN_PROFILES = {
   WOJAK: {
     name: 'WOJAK',
     symbol: 'WOJAK',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
     icon: '🎭',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
@@ -1114,10 +1137,12 @@ const PIPELINE_COIN_PROFILES = {
   BCH: {
     name: 'Bitcoin Cash',
     symbol: 'BCH',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
     icon: '₿',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
-    defaultPort: 3334,
+    defaultPort: 3703,
     baseHeight: 892400,
     blockIntervalSec: 600,
     reward: '3.125 BCH',
@@ -1125,9 +1150,27 @@ const PIPELINE_COIN_PROFILES = {
     diffStr: '500.0G',
     tagColor: '#34d399'
   },
+  BSV: {
+    name: 'Bitcoin SV',
+    symbol: 'BSV',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: 'Ɓ',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3433,
+    baseHeight: 890000,
+    blockIntervalSec: 600,
+    reward: '3.125 BSV',
+    targetZeros: 15,
+    diffStr: '72.0G',
+    tagColor: '#eab308'
+  },
   FB: {
     name: 'Fractal Bitcoin',
     symbol: 'FB',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
     icon: '🌀',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
@@ -1142,10 +1185,12 @@ const PIPELINE_COIN_PROFILES = {
   DGB: {
     name: 'DigiByte',
     symbol: 'DGB',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
     icon: 'Ɗ',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
-    defaultPort: 3338,
+    defaultPort: 3471,
     baseHeight: 20450000,
     blockIntervalSec: 15,
     reward: '420 DGB',
@@ -1153,9 +1198,319 @@ const PIPELINE_COIN_PROFILES = {
     diffStr: '45.0M',
     tagColor: '#0284c7'
   },
+  PPC: {
+    name: 'Peercoin',
+    symbol: 'PPC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🅿️',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3408,
+    baseHeight: 742000,
+    blockIntervalSec: 600,
+    reward: '35.0 PPC',
+    targetZeros: 11,
+    diffStr: '2.80G',
+    tagColor: '#38bdf8'
+  },
+  XEC: {
+    name: 'eCash',
+    symbol: 'XEC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🪙',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3703,
+    baseHeight: 892000,
+    blockIntervalSec: 600,
+    reward: '6,250,000 XEC',
+    targetZeros: 14,
+    diffStr: '220.0G',
+    tagColor: '#0074c2'
+  },
+  NMC: {
+    name: 'Namecoin',
+    symbol: 'NMC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch (Merged)',
+    icon: '🅽',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3465,
+    baseHeight: 745000,
+    blockIntervalSec: 600,
+    reward: '12.5 NMC',
+    targetZeros: 19,
+    diffStr: '85.0M',
+    tagColor: '#10b981'
+  },
+  EMC: {
+    name: 'Emercoin',
+    symbol: 'EMC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch (Merged)',
+    icon: '🅴',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3465,
+    baseHeight: 610000,
+    blockIntervalSec: 600,
+    reward: '5.0 EMC',
+    targetZeros: 12,
+    diffStr: '5.50G',
+    tagColor: '#a855f7'
+  },
+  TRC: {
+    name: 'Terracoin',
+    symbol: 'TRC',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch (Merged)',
+    icon: '🌍',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3465,
+    baseHeight: 4500000,
+    blockIntervalSec: 120,
+    reward: '10.5 TRC',
+    targetZeros: 11,
+    diffStr: '1.20G',
+    tagColor: '#059669'
+  },
+  CHI: {
+    name: 'Xaya',
+    symbol: 'CHI',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch (Merged)',
+    icon: '⚔️',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3465,
+    baseHeight: 4800000,
+    blockIntervalSec: 30,
+    reward: '21.25 CHI',
+    targetZeros: 18,
+    diffStr: '80.0M',
+    tagColor: '#e11d48'
+  },
+  FIX: {
+    name: 'FixedCoin',
+    symbol: 'FIX',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🔧',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3407,
+    baseHeight: 520000,
+    blockIntervalSec: 120,
+    reward: '50.0 FIX',
+    targetZeros: 7,
+    diffStr: '320.0M',
+    tagColor: '#64748b'
+  },
+  XRG: {
+    name: 'Ergon',
+    symbol: 'XRG',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '⚡',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3407,
+    baseHeight: 280000,
+    blockIntervalSec: 600,
+    reward: '0.85 XRG',
+    targetZeros: 10,
+    diffStr: '850.0M',
+    tagColor: '#06b6d4'
+  },
+  SPACE: {
+    name: 'MVC (Metaverse)',
+    symbol: 'SPACE',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🌌',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3445,
+    baseHeight: 110000,
+    blockIntervalSec: 600,
+    reward: '12.5 SPACE',
+    targetZeros: 12,
+    diffStr: '4.20G',
+    tagColor: '#6366f1'
+  },
+  FCH: {
+    name: 'FreeCash',
+    symbol: 'FCH',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '💸',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3407,
+    baseHeight: 1850000,
+    blockIntervalSec: 600,
+    reward: '50.0 FCH',
+    targetZeros: 8,
+    diffStr: '180.0M',
+    tagColor: '#10b981'
+  },
+  BC2: {
+    name: 'Bitcoin II',
+    symbol: 'BC2',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🥈',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3407,
+    baseHeight: 650000,
+    blockIntervalSec: 600,
+    reward: '5.0 BC2',
+    targetZeros: 9,
+    diffStr: '95.0M',
+    tagColor: '#94a3b8'
+  },
+  DVT: {
+    name: 'DeVault',
+    symbol: 'DVT',
+    pool: 'mining_dutch',
+    poolName: 'Mining-Dutch',
+    icon: '🗝️',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3407,
+    baseHeight: 890000,
+    blockIntervalSec: 120,
+    reward: '250 DVT',
+    targetZeros: 8,
+    diffStr: '45.0M',
+    tagColor: '#d97706'
+  },
+
+  // --- HELIOSPOOL (SOLO SHA-256) ---
+  BTC_HELIOS: {
+    name: 'Bitcoin (Helios Solo)',
+    symbol: 'BTC',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '☀️',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 892110,
+    blockIntervalSec: 600,
+    reward: '3.125 BTC',
+    targetZeros: 19,
+    diffStr: '85.0M',
+    tagColor: '#f59e0b'
+  },
+  BCH_HELIOS: {
+    name: 'Bitcoin Cash (Helios Solo)',
+    symbol: 'BCH',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '₿',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 892400,
+    blockIntervalSec: 600,
+    reward: '3.125 BCH',
+    targetZeros: 14,
+    diffStr: '500.0G',
+    tagColor: '#34d399'
+  },
+  DGB_HELIOS: {
+    name: 'DigiByte (Helios Solo)',
+    symbol: 'DGB',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: 'Ɗ',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 20450000,
+    blockIntervalSec: 15,
+    reward: '420 DGB',
+    targetZeros: 7,
+    diffStr: '45.0M',
+    tagColor: '#0284c7'
+  },
+  CHTA_HELIOS: {
+    name: 'Cheetahcoin (Helios Solo)',
+    symbol: 'CHTA',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '🐆',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 1250000,
+    blockIntervalSec: 60,
+    reward: '10,000 CHTA',
+    targetZeros: 6,
+    diffStr: '150.0M',
+    tagColor: '#f59e0b'
+  },
+  WJK_HELIOS: {
+    name: 'WOJAK (Helios Solo)',
+    symbol: 'WOJAK',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '🎭',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 1420500,
+    blockIntervalSec: 120,
+    reward: '10,000 WJK',
+    targetZeros: 9,
+    diffStr: '14.1G',
+    tagColor: '#38bdf8'
+  },
+  FIX_HELIOS: {
+    name: 'FixedCoin (Helios Solo)',
+    symbol: 'FIX',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '🔧',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 520000,
+    blockIntervalSec: 120,
+    reward: '50.0 FIX',
+    targetZeros: 7,
+    diffStr: '320.0M',
+    tagColor: '#64748b'
+  },
+  XEC_HELIOS: {
+    name: 'eCash (Helios Solo)',
+    symbol: 'XEC',
+    pool: 'helios',
+    poolName: 'HeliosPool',
+    icon: '🪙',
+    algo: 'SHA-256',
+    defaultHost: 'pool.heliosmining.io',
+    defaultPort: 3333,
+    baseHeight: 892000,
+    blockIntervalSec: 600,
+    reward: '6,250,000 XEC',
+    targetZeros: 14,
+    diffStr: '220.0G',
+    tagColor: '#0074c2'
+  },
+
+  // --- AUXILIARY NETWORKS ---
   BELLS: {
     name: 'Bellscoin',
     symbol: 'BELLS',
+    pool: 'aux',
+    poolName: 'Mining-Dutch',
     icon: '🔔',
     algo: 'Scrypt',
     defaultHost: 'americas.mining-dutch.nl',
@@ -1170,6 +1525,8 @@ const PIPELINE_COIN_PROFILES = {
   PEPE: {
     name: 'Pepecoin',
     symbol: 'PEPE',
+    pool: 'aux',
+    poolName: 'Mining-Dutch',
     icon: '🐸',
     algo: 'Scrypt',
     defaultHost: 'americas.mining-dutch.nl',
@@ -1184,6 +1541,8 @@ const PIPELINE_COIN_PROFILES = {
   KAS: {
     name: 'Kaspa',
     symbol: 'KAS',
+    pool: 'aux',
+    poolName: 'WoolyPooly',
     icon: '⚡',
     algo: 'kHeavyHash',
     defaultHost: 'pool.woolypooly.com',
@@ -2276,15 +2635,41 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="modal-field full">
                 <label class="modal-label">Coin & Algo Preset</label>
                 <select id="stratum-coin-preset" class="modal-select">
-                  <option value="WOJAK" data-port="9995" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🎭 WOJAK (WJK) • Mining-Dutch (Port 9995)</option>
-                  <option value="BTC" data-port="3333" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin (BTC) • Mining-Dutch (Port 3333)</option>
-                  <option value="BTC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">☀️ Bitcoin (BTC) • Helios Pool Solo (Port 3333)</option>
-                  <option value="BTC_PUBLIC" data-port="2142" data-host="public-pool.io" style="background-color: #0f172a; color: #f8fafc;">🎯 Bitcoin (BTC) • Public-Pool.io (Port 2142)</option>
-                  <option value="BCH" data-port="3334" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Mining-Dutch (Port 3334)</option>
-                  <option value="DGB" data-port="3338" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte SHA256 (DGB) • Mining-Dutch (Port 3338)</option>
-                  <option value="BELLS" data-port="9997" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔔 Bellcoin (BELLS) • Mining-Dutch (Port 9997)</option>
-                  <option value="PEPE" data-port="9998" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🐸 Pepecoin (PEPE) • Mining-Dutch (Port 9998)</option>
-                  <option value="CUSTOM" data-port="" data-host="" style="background-color: #0f172a; color: #f8fafc;">⚙️ Custom Stratum Endpoint...</option>
+                  <optgroup label="🇳🇱 Mining-Dutch (SHA-256 & Merged)">
+                    <option value="WOJAK" data-port="9995" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🎭 WOJAK (WJK) • Mining-Dutch (Port 9995)</option>
+                    <option value="BTC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin (BTC) • Mining-Dutch (Port 3465)</option>
+                    <option value="BCH" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Mining-Dutch (Port 3703)</option>
+                    <option value="BSV" data-port="3433" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɓ Bitcoin SV (BSV) • Mining-Dutch (Port 3433)</option>
+                    <option value="FB" data-port="3335" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌀 Fractal Bitcoin (FB) • Mining-Dutch (Port 3335)</option>
+                    <option value="DGB" data-port="3471" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte SHA256 (DGB) • Mining-Dutch (Port 3471)</option>
+                    <option value="PPC" data-port="3408" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅿️ Peercoin (PPC) • Mining-Dutch (Port 3408)</option>
+                    <option value="XEC" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🪙 eCash (XEC) • Mining-Dutch (Port 3703)</option>
+                    <option value="NMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅽 Namecoin (NMC) • Mining-Dutch (Port 3465)</option>
+                    <option value="EMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅴 Emercoin (EMC) • Mining-Dutch (Port 3465)</option>
+                    <option value="TRC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌍 Terracoin (TRC) • Mining-Dutch (Port 3465)</option>
+                    <option value="CHI" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">⚔️ Xaya (CHI) • Mining-Dutch (Port 3465)</option>
+                    <option value="FIX" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔧 FixedCoin (FIX) • Mining-Dutch (Port 3407)</option>
+                    <option value="XRG" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">⚡ Ergon (XRG) • Mining-Dutch (Port 3407)</option>
+                    <option value="SPACE" data-port="3445" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌌 MVC (SPACE) • Mining-Dutch (Port 3445)</option>
+                    <option value="FCH" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">💸 FreeCash (FCH) • Mining-Dutch (Port 3407)</option>
+                    <option value="BC2" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🥈 Bitcoin II (BC2) • Mining-Dutch (Port 3407)</option>
+                    <option value="DVT" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🗝️ DeVault (DVT) • Mining-Dutch (Port 3407)</option>
+                  </optgroup>
+                  <optgroup label="☀️ HeliosPool (Solo SHA-256)">
+                    <option value="BTC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">☀️ Bitcoin (BTC) • Helios Solo (Port 3333)</option>
+                    <option value="BCH_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Helios Solo (Port 3333)</option>
+                    <option value="DGB_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte (DGB) • Helios Solo (Port 3333)</option>
+                    <option value="CHTA_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🐆 Cheetahcoin (CHTA) • Helios Solo (Port 3333)</option>
+                    <option value="WJK_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🎭 Wojakcoin (WJK) • Helios Solo (Port 3333)</option>
+                    <option value="FIX_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🔧 FixedCoin (FIX) • Helios Solo (Port 3333)</option>
+                    <option value="XEC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🪙 eCash (XEC) • Helios Solo (Port 3333)</option>
+                  </optgroup>
+                  <optgroup label="🌐 Auxiliary & Community Networks">
+                    <option value="BELLS" data-port="9997" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔔 Bellcoin (BELLS) • Mining-Dutch (Port 9997)</option>
+                    <option value="PEPE" data-port="9998" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🐸 Pepecoin (PEPE) • Mining-Dutch (Port 9998)</option>
+                    <option value="BTC_PUBLIC" data-port="2142" data-host="public-pool.io" style="background-color: #0f172a; color: #f8fafc;">🎯 Bitcoin (BTC) • Public-Pool.io (Port 2142)</option>
+                    <option value="CUSTOM" data-port="" data-host="" style="background-color: #0f172a; color: #f8fafc;">⚙️ Custom Stratum Endpoint...</option>
+                  </optgroup>
                 </select>
               </div>
               <div class="modal-field">
@@ -3567,12 +3952,20 @@ class HomeMinerFleetCard extends HTMLElement {
           padding: 0 2px;
           appearance: auto;
           -webkit-appearance: auto;
+          max-width: 210px;
+        }
+        .pipeline-coin-select optgroup {
+          background: #0f172a;
+          color: #38bdf8;
+          font-family: 'JetBrains Mono', monospace;
+          font-weight: 700;
+          font-size: 11px;
         }
         .pipeline-coin-select option {
-          background: #0f172a;
+          background: #0b1120;
           color: #f8fafc;
           font-family: 'JetBrains Mono', monospace;
-          font-size: 11.5px;
+          font-size: 11px;
           padding: 4px;
         }
 
@@ -6625,10 +7018,18 @@ class HomeMinerFleetCard extends HTMLElement {
     const configuredCoin = (this._config?.pipeline_coin || '').toUpperCase();
     const storedCoin = (safeStorage.get('miner_pipeline_coin') || '').toUpperCase();
     const selectedCoinKey = (this._selectedPipelineCoin || storedCoin || configuredCoin || activeFleetCoin || 'BTC').toUpperCase();
-    const profile = PIPELINE_COIN_PROFILES[selectedCoinKey] || PIPELINE_COIN_PROFILES.BTC;
+    
+    // Resolve profile by exact key or symbol fallback
+    const profile = PIPELINE_COIN_PROFILES[selectedCoinKey] 
+      || Object.values(PIPELINE_COIN_PROFILES).find(p => p.symbol === selectedCoinKey) 
+      || PIPELINE_COIN_PROFILES.BTC;
 
     // Check if any miner in the fleet is mining this selected coin
-    const matchingMiner = miners.find(m => (m.coin && m.coin.toUpperCase() === selectedCoinKey) && m.poolUrl && m.poolUrl !== '--');
+    const matchingMiner = miners.find(m => {
+      if (!m.coin) return false;
+      const mc = m.coin.toUpperCase();
+      return (mc === profile.symbol || mc === selectedCoinKey || (mc === 'WJK' && profile.symbol === 'WOJAK') || (mc === 'WOJAK' && profile.symbol === 'WJK')) && m.poolUrl && m.poolUrl !== '--';
+    });
     const firstMinerWithPool = matchingMiner || miners.find(m => m.poolUrl && m.poolUrl !== '--') || miners[0];
 
     let activeStratumHost = profile.defaultHost;
@@ -6636,16 +7037,18 @@ class HomeMinerFleetCard extends HTMLElement {
     if (matchingMiner?.poolUrl) {
       activeStratumHost = matchingMiner.poolUrl.replace(/^stratum\+tcp:\/\//, '');
       activeStratumPort = matchingMiner.poolPort || profile.defaultPort;
-    } else if (selectedCoinKey === activeFleetCoin && firstMinerWithPool?.poolUrl) {
+    } else if ((selectedCoinKey === activeFleetCoin || profile.symbol === activeFleetCoin) && firstMinerWithPool?.poolUrl) {
       activeStratumHost = firstMinerWithPool.poolUrl.replace(/^stratum\+tcp:\/\//, '');
       activeStratumPort = firstMinerWithPool.poolPort || profile.defaultPort;
     }
 
-    const activePoolProviderName = (matchingMiner?.poolProvider && matchingMiner.poolProvider !== 'none')
-      ? (matchingMiner.poolProvider.charAt(0).toUpperCase() + matchingMiner.poolProvider.slice(1))
-      : (firstMinerWithPool?.poolProvider && firstMinerWithPool.poolProvider !== 'none'
-        ? (firstMinerWithPool.poolProvider.charAt(0).toUpperCase() + firstMinerWithPool.poolProvider.slice(1))
-        : (activeStratumHost.includes('mining-dutch') ? 'Mining-Dutch' : (activeStratumHost.includes('public-pool') ? 'Public-Pool' : 'Stratum Pool')));
+    const activePoolProviderName = profile.poolName || (
+      matchingMiner?.poolProvider && matchingMiner.poolProvider !== 'none'
+        ? (matchingMiner.poolProvider.charAt(0).toUpperCase() + matchingMiner.poolProvider.slice(1))
+        : (firstMinerWithPool?.poolProvider && firstMinerWithPool.poolProvider !== 'none'
+          ? (firstMinerWithPool.poolProvider.charAt(0).toUpperCase() + firstMinerWithPool.poolProvider.slice(1))
+          : (activeStratumHost.includes('mining-dutch') ? 'Mining-Dutch' : (activeStratumHost.includes('helios') ? 'HeliosPool' : 'Stratum Pool')))
+    );
 
     const currentBlockHeight = Math.floor(profile.baseHeight + (Math.floor(Date.now() / (profile.blockIntervalSec * 1000)) % 1000));
     const pseudoJobSeed = Math.floor(Date.now() / 45000);
@@ -6757,10 +7160,18 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="pipeline-coin-wrap" title="Configure target coin and stratum telemetry architecture">
               <span class="pipeline-coin-icon">${profile.icon}</span>
               <select id="pipeline-coin-select" class="pipeline-coin-select">
-                ${Object.entries(PIPELINE_COIN_PROFILES).map(([k, p]) => {
-                  const isMining = k === activeFleetCoin;
-                  const isSel = k === selectedCoinKey;
-                  return `<option value="${k}" ${isSel ? 'selected' : ''}>${p.icon} ${k}${isMining ? ' (Mining ⛏️)' : ''}</option>`;
+                ${PIPELINE_COIN_GROUPS.map(group => {
+                  const groupCoins = Object.entries(PIPELINE_COIN_PROFILES).filter(([_, p]) => p.pool === group.id);
+                  if (!groupCoins.length) return '';
+                  return `
+                    <optgroup label="${group.icon} ${group.label}">
+                      ${groupCoins.map(([k, p]) => {
+                        const isMining = (p.symbol === activeFleetCoin || k === activeFleetCoin || (activeFleetCoin === 'WJK' && p.symbol === 'WOJAK'));
+                        const isSel = k === selectedCoinKey || (selectedCoinKey === p.symbol && p.pool === 'mining_dutch');
+                        return `<option value="${k}" ${isSel ? 'selected' : ''}>${p.icon} ${p.name || k} (${p.symbol})${isMining ? ' (Mining ⛏️)' : ''}</option>`;
+                      }).join('')}
+                    </optgroup>
+                  `;
                 }).join('')}
               </select>
             </div>

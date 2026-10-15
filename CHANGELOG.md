@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Mining-Dutch & HeliosPool SHA-256 Ecosystem Expansion** ([#33](https://github.com/everyday3d/home-miner-studio/issues/33)):
+  - Expanded the Stratum Visual Pipeline Architecture with comprehensive SHA-256 coin profiles grouped into distinct pool categories (`Mining-Dutch`, `HeliosPool Solo`, and `Auxiliary & Community Networks`):
+    - **Mining-Dutch Ecosystem**: Bitcoin (BTC), Wojakcoin (WOJAK), Bitcoin Cash (BCH), Bitcoin SV (BSV), Fractal Bitcoin (FB), DigiByte (DGB), Peercoin (PPC), eCash (XEC), Namecoin (NMC), Emercoin (EMC), Terracoin (TRC), Demcat/Chi (CHI), FixedTrade (FIX), Ring (XRG), SpaceCoin (SPACE), FreeCash (FCH), Bitcoin2 (BC2), and DeviantCoin (DVT) with corresponding stratum ports (e.g. 3465, 9995, 3703, 3433, 3335, 3471, 3408, 3445, 3407).
+    - **HeliosPool Solo SHA-256 Ecosystem**: Bitcoin (BTC), Bitcoin Cash (BCH), DigiByte (DGB), Cheetahcoin (CHTA), Wojakcoin (WJK), FixedCoin (FIX), and eCash (XEC) configured for `pool.heliosmining.io:3333`.
+    - **Auxiliary Networks**: Bellscoin (BELLS), Pepecoin (PEPE), Public-Pool.io (BTC), and Kaspa (KAS).
+  - Categorized coin selectors (`#pipeline-coin-select` and `#stratum-coin-preset`) with stylized `<optgroup>` headers for clear visual navigation.
+  - Enhanced miner detection and profile resolution supporting symbol and alias mappings (`WJK` <-> `WOJAK`, pool-specific keys like `BTC_HELIOS`).
 - **Configurable Multi-Coin Stratum Visual Pipeline Architecture** ([#32](https://github.com/everyday3d/home-miner-studio/issues/32)):
   - Added an interactive Coin Selector dropdown (`#pipeline-coin-select`) in the Stratum Particle Pipeline header to dynamically toggle visual telemetry and block assembly across major mineable networks: Bitcoin (BTC), WOJAK (WJK), Bitcoin Cash (BCH), Fractal Bitcoin (FB), DigiByte (DGB), Bellscoin (BELLS), Pepecoin (PEPE), and Kaspa (KAS).
   - Integrated dynamic telemetry adaptation across all 4 pipeline stages:
