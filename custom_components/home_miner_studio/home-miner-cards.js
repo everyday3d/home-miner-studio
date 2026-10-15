@@ -1082,6 +1082,121 @@ const PRESTIGE_THEMES = [
   }
 ];
 
+const PIPELINE_COIN_PROFILES = {
+  BTC: {
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    icon: '₿',
+    algo: 'SHA-256',
+    defaultHost: 'public-pool.io',
+    defaultPort: 2142,
+    baseHeight: 892110,
+    blockIntervalSec: 600,
+    reward: '3.125 BTC',
+    targetZeros: 19,
+    diffStr: '85.0M',
+    tagColor: '#fbbf24'
+  },
+  WOJAK: {
+    name: 'WOJAK',
+    symbol: 'WOJAK',
+    icon: '🎭',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 9995,
+    baseHeight: 1420500,
+    blockIntervalSec: 120,
+    reward: '10,000 WJK',
+    targetZeros: 9,
+    diffStr: '14.1G',
+    tagColor: '#38bdf8'
+  },
+  BCH: {
+    name: 'Bitcoin Cash',
+    symbol: 'BCH',
+    icon: '₿',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3334,
+    baseHeight: 892400,
+    blockIntervalSec: 600,
+    reward: '3.125 BCH',
+    targetZeros: 14,
+    diffStr: '500.0G',
+    tagColor: '#34d399'
+  },
+  FB: {
+    name: 'Fractal Bitcoin',
+    symbol: 'FB',
+    icon: '🌀',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3335,
+    baseHeight: 385200,
+    blockIntervalSec: 30,
+    reward: '25 FB',
+    targetZeros: 16,
+    diffStr: '12.5T',
+    tagColor: '#818cf8'
+  },
+  DGB: {
+    name: 'DigiByte',
+    symbol: 'DGB',
+    icon: 'Ɗ',
+    algo: 'SHA-256',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 3338,
+    baseHeight: 20450000,
+    blockIntervalSec: 15,
+    reward: '420 DGB',
+    targetZeros: 7,
+    diffStr: '45.0M',
+    tagColor: '#0284c7'
+  },
+  BELLS: {
+    name: 'Bellscoin',
+    symbol: 'BELLS',
+    icon: '🔔',
+    algo: 'Scrypt',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 9997,
+    baseHeight: 482100,
+    blockIntervalSec: 60,
+    reward: '500 BELLS',
+    targetZeros: 6,
+    diffStr: '250.0M',
+    tagColor: '#f59e0b'
+  },
+  PEPE: {
+    name: 'Pepecoin',
+    symbol: 'PEPE',
+    icon: '🐸',
+    algo: 'Scrypt',
+    defaultHost: 'americas.mining-dutch.nl',
+    defaultPort: 9998,
+    baseHeight: 540200,
+    blockIntervalSec: 60,
+    reward: '10,000 PEPE',
+    targetZeros: 8,
+    diffStr: '85.0M',
+    tagColor: '#10b981'
+  },
+  KAS: {
+    name: 'Kaspa',
+    symbol: 'KAS',
+    icon: '⚡',
+    algo: 'kHeavyHash',
+    defaultHost: 'pool.woolypooly.com',
+    defaultPort: 16110,
+    baseHeight: 89200000,
+    blockIntervalSec: 1,
+    reward: '22.5 KAS',
+    targetZeros: 18,
+    diffStr: '1.20P',
+    tagColor: '#2dd4bf'
+  }
+};
+
 class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
@@ -1115,6 +1230,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._audioCtx = null;
     this._pipelineCollapsed = safeStorage.get('miner_pipeline_collapsed') === 'true';
     this._pipelineAnimPaused = safeStorage.get('miner_pipeline_anim_paused') === 'true';
+    this._selectedPipelineCoin = safeStorage.get('miner_pipeline_coin') || null;
     this._particleAnimId = null;
     this._goldenNonceInterval = null;
   }
@@ -1167,7 +1283,10 @@ class HomeMinerFleetCard extends HTMLElement {
       this._soundMode || 'off',
       this._selectedCoin || '',
       this._selectedLotteryCoin || '',
-      this._selectedTimeframe || '24h'
+      this._selectedTimeframe || '24h',
+      this._selectedPipelineCoin || '',
+      this._pipelineCollapsed ? '1' : '0',
+      this._pipelineAnimPaused ? '1' : '0'
     ];
 
     for (const eid in states) {
@@ -3416,6 +3535,47 @@ class HomeMinerFleetCard extends HTMLElement {
           text-overflow: ellipsis;
         }
 
+        .pipeline-coin-wrap {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          background: rgba(15, 23, 42, 0.7);
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          border-radius: 7px;
+          padding: 2px 7px;
+          position: relative;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+        }
+        .pipeline-coin-wrap:hover {
+          border-color: rgba(56, 189, 248, 0.6);
+          box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+        .pipeline-coin-icon {
+          font-size: 11.5px;
+          line-height: 1;
+        }
+        .pipeline-coin-select {
+          background: transparent;
+          border: none;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          outline: none;
+          padding: 0 2px;
+          appearance: auto;
+          -webkit-appearance: auto;
+        }
+        .pipeline-coin-select option {
+          background: #0f172a;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11.5px;
+          padding: 4px;
+        }
+
         .pipeline-header-actions {
           display: flex;
           align-items: center;
@@ -5273,6 +5433,14 @@ class HomeMinerFleetCard extends HTMLElement {
             display: none !important;
           }
 
+          .pipeline-coin-wrap {
+            padding: 1px 5px !important;
+          }
+
+          .pipeline-coin-select {
+            font-size: 10px !important;
+          }
+
           .pipeline-header-actions {
             gap: 4px !important;
           }
@@ -6452,14 +6620,34 @@ class HomeMinerFleetCard extends HTMLElement {
     cardRoot.style.setProperty('--theme-card-border', activeTheme.cardBorder);
     cardRoot.style.setProperty('--theme-hero-bg', activeTheme.heroBg);
 
-    // Stratum Pipeline Telemetry
-    const firstMinerWithPool = miners.find(m => m.poolUrl && m.poolUrl !== '--') || miners[0];
-    const activeStratumHost = firstMinerWithPool?.poolUrl ? firstMinerWithPool.poolUrl.replace(/^stratum\+tcp:\/\//, '') : 'public-pool.io';
-    const activeStratumPort = firstMinerWithPool?.poolPort || 3333;
-    const activePoolProviderName = firstMinerWithPool?.poolProvider && firstMinerWithPool.poolProvider !== 'none'
-      ? (firstMinerWithPool.poolProvider.charAt(0).toUpperCase() + firstMinerWithPool.poolProvider.slice(1))
-      : 'Stratum Pool';
-    const currentBlockHeight = Math.floor(892110 + (Math.floor(Date.now() / 600000) % 50));
+    // Stratum Pipeline Telemetry & Dynamic Coin Profile Resolution
+    const activeFleetCoin = (activeCoinMined || 'BTC').toUpperCase();
+    const configuredCoin = (this._config?.pipeline_coin || '').toUpperCase();
+    const storedCoin = (safeStorage.get('miner_pipeline_coin') || '').toUpperCase();
+    const selectedCoinKey = (this._selectedPipelineCoin || storedCoin || configuredCoin || activeFleetCoin || 'BTC').toUpperCase();
+    const profile = PIPELINE_COIN_PROFILES[selectedCoinKey] || PIPELINE_COIN_PROFILES.BTC;
+
+    // Check if any miner in the fleet is mining this selected coin
+    const matchingMiner = miners.find(m => (m.coin && m.coin.toUpperCase() === selectedCoinKey) && m.poolUrl && m.poolUrl !== '--');
+    const firstMinerWithPool = matchingMiner || miners.find(m => m.poolUrl && m.poolUrl !== '--') || miners[0];
+
+    let activeStratumHost = profile.defaultHost;
+    let activeStratumPort = profile.defaultPort;
+    if (matchingMiner?.poolUrl) {
+      activeStratumHost = matchingMiner.poolUrl.replace(/^stratum\+tcp:\/\//, '');
+      activeStratumPort = matchingMiner.poolPort || profile.defaultPort;
+    } else if (selectedCoinKey === activeFleetCoin && firstMinerWithPool?.poolUrl) {
+      activeStratumHost = firstMinerWithPool.poolUrl.replace(/^stratum\+tcp:\/\//, '');
+      activeStratumPort = firstMinerWithPool.poolPort || profile.defaultPort;
+    }
+
+    const activePoolProviderName = (matchingMiner?.poolProvider && matchingMiner.poolProvider !== 'none')
+      ? (matchingMiner.poolProvider.charAt(0).toUpperCase() + matchingMiner.poolProvider.slice(1))
+      : (firstMinerWithPool?.poolProvider && firstMinerWithPool.poolProvider !== 'none'
+        ? (firstMinerWithPool.poolProvider.charAt(0).toUpperCase() + firstMinerWithPool.poolProvider.slice(1))
+        : (activeStratumHost.includes('mining-dutch') ? 'Mining-Dutch' : (activeStratumHost.includes('public-pool') ? 'Public-Pool' : 'Stratum Pool')));
+
+    const currentBlockHeight = Math.floor(profile.baseHeight + (Math.floor(Date.now() / (profile.blockIntervalSec * 1000)) % 1000));
     const pseudoJobSeed = Math.floor(Date.now() / 45000);
     const jobIdHex = ((pseudoJobSeed * 2654435761) >>> 0).toString(16).padStart(8, '0');
     const merkleRootHex = ((pseudoJobSeed * 1103515245 + 12345) >>> 0).toString(16).slice(0, 4) + '...' + (((pseudoJobSeed * 214013 + 2531011) >>> 0).toString(16).slice(0, 4));
@@ -6557,14 +6745,24 @@ class HomeMinerFleetCard extends HTMLElement {
 
       </div>
 
-      <!-- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY - COLLAPSIBLE) -->
+      <!-- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY - COLLAPSIBLE & CONFIGURABLE) -->
       <div class="pipeline-card ${this._pipelineCollapsed ? 'collapsed' : ''}" id="pipeline-card">
         <div class="pipeline-header" id="pipeline-toggle">
           <div class="pipeline-header-left">
             <div class="pipeline-icon-badge">🔬</div>
             <div class="pipeline-title">
-              <span>Stratum Particle Pipeline</span>
+              <span>Stratum Pipeline</span>
               <span class="live-dot" title="Active Stratum session"></span>
+            </div>
+            <div class="pipeline-coin-wrap" title="Configure target coin and stratum telemetry architecture">
+              <span class="pipeline-coin-icon">${profile.icon}</span>
+              <select id="pipeline-coin-select" class="pipeline-coin-select">
+                ${Object.entries(PIPELINE_COIN_PROFILES).map(([k, p]) => {
+                  const isMining = k === activeFleetCoin;
+                  const isSel = k === selectedCoinKey;
+                  return `<option value="${k}" ${isSel ? 'selected' : ''}>${p.icon} ${k}${isMining ? ' (Mining ⛏️)' : ''}</option>`;
+                }).join('')}
+              </select>
             </div>
             <div class="pipeline-summary-pill">
               ${activePoolProviderName} • Job #${jobIdHex.slice(0, 6)} • ${activeHashThs.toFixed(2)} TH/s • Block #${currentBlockHeight.toLocaleString()}
@@ -6587,13 +6785,13 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="pipeline-stage">
             <div class="stage-header">
               <span>🌐 1. Stratum Ingress</span>
-              <span class="stage-tag">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
+              <span class="stage-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
             </div>
             <div>
               <div class="stage-mono" style="color: #38bdf8;" title="${activeStratumHost}:${activeStratumPort}">${activeStratumHost}:${activeStratumPort}</div>
               <div class="stage-sub-meta" style="margin-top: 2px;">
                 <span>Job: <strong style="color: #cbd5e1;">#${jobIdHex}</strong></span>
-                <span style="color: #34d399;">Active V1</span>
+                <span style="color: ${profile.tagColor || '#34d399'};">${profile.algo}</span>
               </div>
             </div>
             <div class="pulse-bar">
@@ -6624,7 +6822,7 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="stage-mono" style="color: #cbd5e1; font-size: 10.5px;">Merkle: ${merkleRootHex}</div>
               <div class="stage-sub-meta" style="margin-top: 3px;">
                 <span>Share Target: <strong style="color: #38bdf8;">${shareTargetStr}</strong></span>
-                <span>Block: <strong style="color: #fbbf24;">85.0M</strong></span>
+                <span>Block: <strong style="color: #fbbf24;">${profile.diffStr}</strong></span>
               </div>
             </div>
             <div class="stage-sub-meta" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 3px;">
@@ -6640,11 +6838,11 @@ class HomeMinerFleetCard extends HTMLElement {
               <span class="stage-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">#${currentBlockHeight.toLocaleString()}</span>
             </div>
             <div class="golden-scanner">
-              <span class="scanner-text" id="golden-nonce-ticker">0x7F2A48D1</span>
+              <span class="scanner-text" id="golden-nonce-ticker" data-zeros="${profile.targetZeros}">0x${'0'.repeat(Math.min(16, profile.targetZeros))}7F2A...</span>
             </div>
             <div class="stage-sub-meta">
-              <span>Reward: <strong style="color: #fbbf24;">3.125 BTC</strong></span>
-              <span style="color: #f43f5e;">19 Zeros Target</span>
+              <span>Reward: <strong style="color: #fbbf24;">${profile.reward}</strong></span>
+              <span style="color: #f43f5e;">${profile.targetZeros} Zeros Target</span>
             </div>
           </div>
         </div>
@@ -8237,8 +8435,10 @@ class HomeMinerFleetCard extends HTMLElement {
     // Live Stratum Particle Pipeline Controls
     const pipelineCollapseBtn = this.shadowRoot.querySelector('#pipeline-collapse-toggle');
     const pipelineHeader = this.shadowRoot.querySelector('#pipeline-toggle');
+    const pipelineCoinSelect = this.shadowRoot.querySelector('#pipeline-coin-select');
+
     const handleCollapseToggle = (e) => {
-      if (e.target && e.target.closest('#pipeline-anim-toggle')) return;
+      if (e.target && (e.target.closest('#pipeline-anim-toggle') || e.target.closest('#pipeline-coin-select') || e.target.closest('.pipeline-coin-wrap'))) return;
       this._pipelineCollapsed = !this._pipelineCollapsed;
       safeStorage.set('miner_pipeline_collapsed', this._pipelineCollapsed ? 'true' : 'false');
       this._lastRenderSig = null;
@@ -8253,6 +8453,19 @@ class HomeMinerFleetCard extends HTMLElement {
     }
     if (pipelineHeader) {
       pipelineHeader.addEventListener('click', handleCollapseToggle);
+    }
+
+    if (pipelineCoinSelect) {
+      pipelineCoinSelect.addEventListener('click', (e) => e.stopPropagation());
+      pipelineCoinSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+      pipelineCoinSelect.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const newCoin = (e.target.value || 'BTC').toUpperCase();
+        this._selectedPipelineCoin = newCoin;
+        safeStorage.set('miner_pipeline_coin', newCoin);
+        this._lastRenderSig = null;
+        this.render();
+      });
     }
 
     const pipelineAnimBtn = this.shadowRoot.querySelector('#pipeline-anim-toggle');
@@ -8322,13 +8535,15 @@ class HomeMinerFleetCard extends HTMLElement {
 
       const goldenTicker = this.shadowRoot.querySelector('#golden-nonce-ticker');
       if (goldenTicker) {
+        const targetZeros = parseInt(goldenTicker.getAttribute('data-zeros') || '19', 10);
+        const zeroPrefix = '0'.repeat(Math.min(16, targetZeros));
         this._goldenNonceInterval = setInterval(() => {
           if (!this.shadowRoot || !this.shadowRoot.contains(goldenTicker)) {
             clearInterval(this._goldenNonceInterval);
             return;
           }
           const rnd = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
-          goldenTicker.textContent = `0x0000000000000000${rnd}...`;
+          goldenTicker.textContent = `0x${zeroPrefix}${rnd}...`;
         }, 125);
       }
     }

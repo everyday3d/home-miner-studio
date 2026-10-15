@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Configurable Multi-Coin Stratum Visual Pipeline Architecture** ([#32](https://github.com/everyday3d/home-miner-studio/issues/32)):
+  - Added an interactive Coin Selector dropdown (`#pipeline-coin-select`) in the Stratum Particle Pipeline header to dynamically toggle visual telemetry and block assembly across major mineable networks: Bitcoin (BTC), WOJAK (WJK), Bitcoin Cash (BCH), Fractal Bitcoin (FB), DigiByte (DGB), Bellscoin (BELLS), Pepecoin (PEPE), and Kaspa (KAS).
+  - Integrated dynamic telemetry adaptation across all 4 pipeline stages:
+    - Stage 1 (Stratum Ingress): Displays network algorithm (`SHA-256`, `Scrypt`, `kHeavyHash`), ingress stratum port, and active pool host (resolving active miner pool endpoints or preset defaults).
+    - Stage 2 (Nonce Stream): Maintains live particle conduit animation with hashrate and ASIC blade counters.
+    - Stage 3 (Diff Filter): Dynamically formats difficulty gate target thresholds (e.g., `85.0M`, `14.1G`, `500.0G`, `12.5T`, `250.0M`, `1.20P`).
+    - Stage 4 (Block Assembly): Displays coin-specific block subsidy reward (`3.125 BTC`, `10,000 WJK`, `3.125 BCH`, `25 FB`, `420 DGB`, `500 BELLS`, `10,000 PEPE`, `22.5 KAS`), target zero requirements (`data-zeros`), dynamic block height, and adaptive golden nonce ticker zero-prefix matching the network target difficulty.
+  - Added persistent storage in `safeStorage` (`miner_pipeline_coin`) and support for card YAML configuration (`pipeline_coin`) with automatic fallback to active fleet mining coin.
+  - Hardened header interaction preventing accidental collapse or expansion when selecting coins from the dropdown.
+
 ## [0.6.1] - 2026-10-14
 
 ### Added
