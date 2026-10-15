@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added full pointer/mouse event suppression (`click`, `mousedown`, `pointerdown`, `touchstart`) on `.pipeline-coin-wrap`, `.lottery-coin-wrap`, and all modal selects (`_bindSelectSafety`).
   - Updated collapsible header toggle handlers with `e.composedPath()` guards preventing accidental collapse when interacting with embedded coin selectors.
 
+### Security
+- **Worker Name & Device Identifier Redaction Across Spotlight Assets** ([#37](https://github.com/everyday3d/home-miner-studio/issues/37)):
+  - Enforced zero worker name and sensitive hardware identifier exposure across all repository spotlight graphics and animations.
+  - Applied frosted-glass Gaussian blur filters (`.blur-redact`) and privacy badges over worker names, miner hostnames, and IP addresses in `assets/fleet_workstations.png`, `assets/stratum_switcher_modal.png`, `assets/network_discovery_console.png`, `assets/mobile_companion_hud.png`, and `assets/solo_lottery_radar_animated.gif`.
+
 ### Added
 - **Animated Solo Block Lottery Radar Visualizer** ([#36](https://github.com/everyday3d/home-miner-studio/issues/36)):
   - Built an animated GIF demonstration (`assets/solo_lottery_radar_animated.gif`) for the Solo Block Lottery Radar & Acoustic Telemetry showcase in `README.md`.
