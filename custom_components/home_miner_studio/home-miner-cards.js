@@ -13,6 +13,56 @@ console.info(
   'background: #1e293b; color: #94a3b8; border-radius: 0 4px 4px 0; padding: 2px 6px;'
 );
 
+// --- AUTHENTIC MACHINE ART CUSTOM ICONSET (`miner:`) ---
+const MINER_CUSTOM_ICONS = {
+  fleet: {
+    path: 'M14.8 2.7L12 5.5L13.5 7L16.3 4.2C18.5 5.5 20.3 7.3 21.3 9.7L22.8 8.8C21.6 5.9 19.3 3.6 16.5 2.2L14.8 2.7ZM9.2 2.7L7.5 2.2C4.7 3.6 2.4 5.9 1.2 8.8L2.7 9.7C3.7 7.3 5.5 5.5 7.7 4.2L10.5 7L12 5.5L9.2 2.7ZM10.9 8.1L2.2 16.8L3.6 18.2L12.3 9.5L10.9 8.1ZM13.1 8.1L11.7 9.5L20.4 18.2L21.8 16.8L13.1 8.1ZM1.5 20L4 22.5L7 19.5L4.5 17L1.5 20ZM22.5 20L19.5 17L17 19.5L20 22.5L22.5 20Z',
+    keywords: ['miner', 'fleet', 'crypto', 'pickaxe']
+  },
+  bitaxe: {
+    path: 'M1 23H5V19H1V23ZM5 19H9V15H5V19ZM9 15H13V11H9V15ZM10 11H14V3H10V11ZM14 3H22V7H14V3ZM22 7H24V14H22V7ZM22 14H18V18H22V14ZM18 18H14V14H18V18ZM10 15H14V19H10V15Z',
+    keywords: ['bitaxe', 'axeos', 'bm1366', 'bm1370', 'miner']
+  },
+  avalon: {
+    path: 'M12 1.5L1.5 22.5H7.2L12 10.8L16.8 22.5H22.5L12 1.5ZM10 13.2L15.8 17.5L20.2 18.5L13.8 20.4L11.2 18L10 13.2Z',
+    keywords: ['avalon', 'canaan', 'nano', 'miner']
+  },
+  whatsminer: {
+    path: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm4 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8 0c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z',
+    keywords: ['whatsminer', 'microbt', 'miner']
+  },
+  antminer: {
+    path: 'M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z',
+    keywords: ['antminer', 'bitmain', 'miner']
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.customIcons = window.customIcons || {};
+  window.customIconsets = window.customIconsets || {};
+
+  const minerIconProvider = {
+    getIcon: async (iconName) => ({
+      path: MINER_CUSTOM_ICONS[iconName]?.path || MINER_CUSTOM_ICONS['fleet'].path
+    }),
+    getIconList: async () =>
+      Object.entries(MINER_CUSTOM_ICONS).map(([name, icon]) => ({
+        name,
+        keywords: icon.keywords
+      }))
+  };
+
+  window.customIcons['miner'] = minerIconProvider;
+  window.customIcons['hms'] = minerIconProvider;
+  window.customIcons['bitaxe'] = minerIconProvider;
+  window.customIcons['avalon'] = minerIconProvider;
+  window.customIconsets['miner'] = minerIconProvider;
+
+  try {
+    window.dispatchEvent(new CustomEvent('custom-icons-added'));
+  } catch (e) {}
+}
+
 const safeStorage = {
   get(key) {
     try {
@@ -1226,6 +1276,53 @@ class HomeMinerFleetCard extends HTMLElement {
         <circle cx="42" cy="35" r="6" fill="#38bdf8" />
         <circle cx="78" cy="35" r="6" fill="#38bdf8" />
         <rect x="28" y="4" width="64" height="6" rx="2" fill="#334155" stroke="#64748b" stroke-width="1" />
+      </svg>
+    `;
+  }
+
+  _getMinerTypeIconSvg(minerType, size = 24) {
+    const type = (minerType || '').toLowerCase();
+    if (type.includes('bitaxe') || type.includes('axeos')) {
+      // Official Skot9000 Bitaxe Pixel Axe Logo
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon bitaxe-icon">
+          <path d="M1 23H5V19H1V23ZM5 19H9V15H5V19ZM9 15H13V11H9V15ZM10 11H14V3H10V11ZM14 3H22V7H14V3ZM22 7H24V14H22V7ZM22 14H18V18H22V14ZM18 18H14V14H18V18ZM10 15H14V19H10V15Z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('avalon') || type.includes('canaan')) {
+      // Official Canaan Creative Avalon 'A' Dragon Logo
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon avalon-icon">
+          <path d="M12 1.5L1.5 22.5H7.2L12 10.8L16.8 22.5H22.5L12 1.5ZM10 13.2L15.8 17.5L20.2 18.5L13.8 20.4L11.2 18L10 13.2Z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('nerdminer')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon nerdminer-icon">
+          <path d="M4 3h16c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2zm2 3v12h12V6H6zm4 2h4c1.1 0 2 .9 2 2v1c0 .7-.4 1.4-1 1.7.6.3 1 1 1 1.7v1.6c0 1.1-.9 2-2 2h-4V8zm2 2v2h2v-2h-2zm0 4v2h2v-2h-2z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('whatsminer')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon whatsminer-icon">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm4 4c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8 0c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/>
+        </svg>
+      `;
+    }
+    if (type.includes('antminer')) {
+      return `
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon antminer-icon">
+          <path d="M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z"/>
+        </svg>
+      `;
+    }
+    // Generic Fleet / Crossed Pickaxes
+    return `
+      <svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="miner-type-icon fleet-icon">
+        <path d="M14.8 2.7L12 5.5L13.5 7L16.3 4.2C18.5 5.5 20.3 7.3 21.3 9.7L22.8 8.8C21.6 5.9 19.3 3.6 16.5 2.2L14.8 2.7ZM9.2 2.7L7.5 2.2C4.7 3.6 2.4 5.9 1.2 8.8L2.7 9.7C3.7 7.3 5.5 5.5 7.7 4.2L10.5 7L12 5.5L9.2 2.7ZM10.9 8.1L2.2 16.8L3.6 18.2L12.3 9.5L10.9 8.1ZM13.1 8.1L11.7 9.5L20.4 18.2L21.8 16.8L13.1 8.1ZM1.5 20L4 22.5L7 19.5L4.5 17L1.5 20ZM22.5 20L19.5 17L17 19.5L20 22.5L22.5 20Z"/>
       </svg>
     `;
   }
@@ -3581,6 +3678,12 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           justify-content: center;
           font-size: 20px;
+          flex-shrink: 0;
+        }
+
+        .pod-icon svg {
+          display: block;
+          filter: drop-shadow(0 0 6px currentColor);
         }
 
         .pod-name {
@@ -6601,6 +6704,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 <span>Trophy Cabinet: <b style="color: #34d399;">${unlockedBadgesCount} / ${rpgBadges.length} Badges Unlocked (${Math.round((unlockedBadgesCount / rpgBadges.length) * 100)}%)</b></span>
               </div>
             </div>
+          </div>
         </div>
 
         <!-- PRESTIGE THEME ENGINE CONSOLE -->
@@ -7238,7 +7342,7 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="pod-header-row">
                 <div class="pod-identity">
                   <div class="pod-icon" style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'}; border-color: ${isBitaxe ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}; background: ${isBitaxe ? 'rgba(245, 158, 11, 0.1)' : 'rgba(56, 189, 248, 0.1)'};">
-                    ${isBitaxe ? '⚡' : '🖥️'}
+                    ${this._getMinerTypeIconSvg(miner.type || (isBitaxe ? 'bitaxe' : 'avalon'), 24)}
                   </div>
                   <div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">

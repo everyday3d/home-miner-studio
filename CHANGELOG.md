@@ -8,12 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **RPG Hero Banner Viewport Encapsulation & Layout Void Fix** ([#30](https://github.com/everyday3d/home-miner-studio/issues/30)):
+  - Added missing closing `</div>` tag for `.rpg-hero-banner`, resolving an issue where subsequent consoles (Prestige Theme Engine, Trophy Cabinet, Chronicles, and Roadmap) were erroneously captured inside the banner's 2-column alternating CSS grid (`auto 1fr`), forcing the Level Orb out to the center with a massive empty void on the left.
 - **Lovelace In-Memory Resource Cache Busting & Responsive 6-Tab Bar** ([#24](https://github.com/everyday3d/home-miner-studio/issues/24)):
   - Resolved Home Assistant in-memory Lovelace resource caching where disk-level edits to `.storage/lovelace_resources` were ignored by the running HA Core daemon, forcing browsers to continually request stale pre-RPG JavaScript bundles (`?v=1792014129710`) with 31-day HTTP caching headers (`max-age=2678400`).
   - Executed live `lovelace/resources/update` through Home Assistant's WebSocket API to ensure instant, forced cache busting across all browser sessions upon page reload or Ctrl+F5.
   - Refined `.workspace-tab-bar` styling with compact padding, slim scrollbars, and an adaptive `@media (max-width: 950px)` breakpoint so all 6 tabs (`Fleet`, `Yield Matrix`, `Solo Radar`, `Market`, `Trophies`, `Overview`) remain fully visible, proportionate, and easily clickable across varying screen sizes.
 
 ### Added
+- **Authentic Machine Art Vector Icons (`miner:` Custom Iconset)** ([#30](https://github.com/everyday3d/home-miner-studio/issues/30)):
+  - Designed and registered a custom SVG iconset (`miner:`) on `window.customIcons` and `window.customIconsets` providing authentic hardware art:
+    - `miner:bitaxe`: Official Skot9000 Bitaxe pixel battleaxe logo.
+    - `miner:avalon`: Official Canaan Creative Avalon stylized 'A' dragon emblem.
+    - `miner:fleet`: Crossed mining pickaxes & ASIC fleet emblem.
+    - `miner:whatsminer`: MicroBT Whatsminer dual-fan server chassis icon.
+    - `miner:antminer`: Bitmain Antminer hashblade icon.
+  - Updated Home Assistant Lovelace dashboard configuration for `crypto-miners` to use `miner:fleet`, `miner:bitaxe`, and `miner:avalon` in place of generic MDI icons (`mdi:pickaxe`, `mdi:chip`, `mdi:server`).
+  - Updated hardware workstation pod headers to display luminous machine vector SVG logos with neon drop-shadow glow instead of emojis (`⚡`, `🖥️`).
 - **Comprehensive Mobile UX & Small-Screen Responsiveness Optimization Pass** ([#29](https://github.com/everyday3d/home-miner-studio/issues/29)):
   - Optimized dashboard layout across narrow viewports (360px – 640px) ensuring fluid responsive collapse, touch-friendly UI, and zero horizontal page scrolling on smartphones and mobile companion apps.
   - Implemented `@media (max-width: 640px)` stylesheet adaptations in `home-miner-cards.js`:
