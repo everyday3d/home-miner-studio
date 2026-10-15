@@ -7,7 +7,7 @@
  */
 
 console.info(
-  '%c⛏️ HOME MINER STUDIO %c v0.6.1 %c Build 2026.10.14 ',
+  '%c⛏️ HOME MINER STUDIO %c v0.7.2 %c Build 2026.10.15 ',
   'background: #0ea5e9; color: #fff; font-weight: bold; border-radius: 4px 0 0 4px; padding: 2px 6px;',
   'background: #0f172a; color: #38bdf8; font-weight: bold; padding: 2px 6px;',
   'background: #1e293b; color: #94a3b8; border-radius: 0 4px 4px 0; padding: 2px 6px;'
@@ -7324,7 +7324,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.7.1 🔄</span>
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.7.2 🔄</span>
             </div>
           </div>
         </div>

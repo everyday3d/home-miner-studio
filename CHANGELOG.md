@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.1] - 2026-10-15
+## [0.7.2] - 2026-10-15
 
 ### Fixed
 - **Scroll Position Preservation & Interaction Freeze on Scrollable Containers** ([#41](https://github.com/everyday3d/home-miner-studio/issues/41)):
@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mobile Page-Level Auto-Scroll Jump Resolution** ([#42](https://github.com/everyday3d/home-miner-studio/issues/42)):
   - Fixed a regression where scrolling down the mobile dashboard on tall views (such as Solo Radar) caused the entire page to violently jump back up to the top.
   - Eliminated ancestor-level `scrollIntoView()` calls on active tab elements, replacing them with strictly local horizontal container scroll calculations (`tabBar.scrollLeft`).
+
+## [0.7.1] - 2026-10-15
 
 ### Added
 - **Native Support for NerdQaxe (Quad-ASIC Desktop Miner)** ([#38](https://github.com/everyday3d/home-miner-studio/issues/38)):
