@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated collapsible header toggle handlers with `e.composedPath()` guards preventing accidental collapse when interacting with embedded coin selectors.
 
 ### Added
+- **Animated Solo Block Lottery Radar Visualizer** ([#36](https://github.com/everyday3d/home-miner-studio/issues/36)):
+  - Built an animated GIF demonstration (`assets/solo_lottery_radar_animated.gif`) for the Solo Block Lottery Radar & Acoustic Telemetry showcase in `README.md`.
+  - Visualizes real-time 360° sweeping radar beam rotation with phosphor persistence trails, target difficulty blips (85M network target, 14.8M personal best share, 3.4M recent share), expanding contact ripples, milestone progression ladder pulses, active audio wave bars, and live share ticker updates.
 - **Repository Feature Spotlight Showcase & Animated Stratum Visualizer** ([#35](https://github.com/everyday3d/home-miner-studio/issues/35)):
   - Authored a comprehensive visual feature showcase (`## 🌟 Feature Spotlight & Visual Showcase`) in `README.md` highlighting all core platform capabilities with crisp, high-DPI screenshots and concise technical blurbs.
   - Engineered an animated GIF demonstration (`assets/stratum_pipeline_animated.gif`) for the Stratum Visual Particle Pipeline showcasing live 4-stage block assembly, nonce particle conduits, golden nonce detection, and multi-coin switching across Mining-Dutch & HeliosPool SHA-256 ecosystems.

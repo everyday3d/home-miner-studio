@@ -19,7 +19,7 @@ Explore the flagship visual modules and interactive engineering built into Home 
 > **Live Nonce Telemetry & Block Assembly**: High-framerate HTML5 canvas visualizer animating live stratum nonces streaming into candidate block headers, featuring golden nonce detection, Merkle root verification, and 1-click multi-coin switching across Mining-Dutch & HeliosPool SHA-256 ecosystems.
 
 ### 🎯 2. Solo Block Lottery Radar & Acoustic Telemetry
-![Solo Block Lottery Radar](assets/solo_lottery_radar.png)
+![Solo Block Lottery Radar](assets/solo_lottery_radar_animated.gif)
 > **Live Solo Odds & Milestone Radar**: Mathematical solo block jackpot odds calculator featuring an animated 360° sweeping radar, real-time target distance blips, victory particle fanfare, and synthesized Geiger-counter audio feedback.
 
 ### 🖥️ 3. Fleet Holographic Workstations & Machine Art Iconset
@@ -144,6 +144,7 @@ Home Miner Studio is architected from the ground up to support the full spectrum
 home-miner-studio/
 ├── assets/
 │   ├── stratum_pipeline_animated.gif   # Animated canvas particle pipeline visualizer
+│   ├── solo_lottery_radar_animated.gif # Animated 360° sweeping lottery radar display
 │   ├── solo_lottery_radar.png          # Solo lottery 360° radar display
 │   ├── fleet_workstations.png          # Unified fleet workstation telemetry
 │   ├── yield_market_matrix.png         # Multi-coin SHA-256 yield matrix
