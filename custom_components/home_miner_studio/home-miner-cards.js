@@ -111,29 +111,72 @@ const safeStorage = {
   }
 };
 
-// --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap, 21 Rank Milestones) ---
+// --- MONOCHROME INLINE SVG ICON SYSTEM (Precision Hardware Workstation) ---
+function svgIcon(name, size = 14) {
+  const s = size;
+  const base = `width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"`;
+  const icons = {
+    'cpu': `<svg ${base}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>`,
+    'server': `<svg ${base}><rect x="2" y="3" width="20" height="7" rx="1.5"/><rect x="2" y="14" width="20" height="7" rx="1.5"/><circle cx="6" cy="6.5" r="1" fill="currentColor"/><circle cx="6" cy="17.5" r="1" fill="currentColor"/><path d="M11 6.5h7M11 17.5h7"/></svg>`,
+    'zap': `<svg ${base}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    'activity': `<svg ${base}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    'thermometer': `<svg ${base}><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>`,
+    'fan': `<svg ${base}><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><circle cx="12" cy="12" r="2"/></svg>`,
+    'target': `<svg ${base}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+    'chart': `<svg ${base}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+    'award': `<svg ${base}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>`,
+    'layers': `<svg ${base}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+    'grid': `<svg ${base}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>`,
+    'volume-off': `<svg ${base}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+    'volume-on': `<svg ${base}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
+    'bell': `<svg ${base}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+    'plus': `<svg ${base}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    'search': `<svg ${base}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    'refresh': `<svg ${base}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+    'sliders': `<svg ${base}><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>`,
+    'settings': `<svg ${base}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    'trash': `<svg ${base}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+    'external-link': `<svg ${base}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+    'lock': `<svg ${base}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    'unlock': `<svg ${base}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`,
+    'check': `<svg ${base}><polyline points="20 6 9 17 4 12"/></svg>`,
+    'book': `<svg ${base}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+    'flame': `<svg ${base}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+    'leaf': `<svg ${base}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`,
+    'shield': `<svg ${base}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    'crown': `<svg ${base}><polygon points="2 4 5 16 19 16 22 4 17 9 12 4 7 9 2 4"/><line x1="5" y1="20" x2="19" y2="20"/></svg>`,
+    'globe': `<svg ${base}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+    'link': `<svg ${base}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+    'terminal': `<svg ${base}><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>`,
+    'box': `<svg ${base}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+    'hash': `<svg ${base}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`
+  };
+  return icons[name] || icons['cpu'];
+}
+
+// --- MINING ENGINEERING MILESTONES & TELEMETRY RANKS (Lvl 500 Cap, 21 Tiers) ---
 const RPG_TITLES = [
-  { level: 500, title: 'Satoshi Slayer (MAX)', badge: '👑' },
-  { level: 475, title: 'Blockchain Demiurge', badge: '🪐' },
-  { level: 450, title: 'Celestial Hasher', badge: '🌌' },
-  { level: 425, title: 'Genesis Archon', badge: '🗝️' },
-  { level: 400, title: 'Consensus Sovereign', badge: '🏛️' },
-  { level: 375, title: 'Sub-Zero Cryomancer', badge: '❄️' },
-  { level: 350, title: 'Quantum Proofmaster', badge: '⚛️' },
-  { level: 325, title: 'Zero-Latency Phantom', badge: '⚡' },
-  { level: 300, title: 'Crypto Colossus', badge: '🗿' },
-  { level: 275, title: 'ASIC Architect', badge: '📐' },
-  { level: 250, title: 'Megahash Overlord', badge: '🔱' },
-  { level: 225, title: 'Silicon Alchemist', badge: '🧪' },
-  { level: 200, title: 'Thermal Dominator', badge: '🔥' },
-  { level: 175, title: 'Difficulty Crusher', badge: '🔨' },
-  { level: 150, title: 'Hashrate Vanguard', badge: '🛡️' },
-  { level: 125, title: 'Heatsink Warden', badge: '🌪️' },
-  { level: 100, title: 'Volt Tamer', badge: '⚡' },
-  { level: 75,  title: 'Frequency Enthusiast', badge: '📈' },
-  { level: 50,  title: 'Stratum Journeyman', badge: '🌐' },
-  { level: 25,  title: 'Silicon Apprentice', badge: '🔌' },
-  { level: 1,   title: 'Novice Breadboarder', badge: '🌱' }
+  { level: 500, title: 'Principal Protocol Architect (MAX)', badge: svgIcon('crown', 13) },
+  { level: 475, title: 'Exahash Infrastructure Director', badge: svgIcon('globe', 13) },
+  { level: 450, title: 'Sovereign Block Producer', badge: svgIcon('shield', 13) },
+  { level: 425, title: 'Stratum V2 Systems Fellow', badge: svgIcon('link', 13) },
+  { level: 400, title: 'Consensus Operations Lead', badge: svgIcon('layers', 13) },
+  { level: 375, title: 'Immersion Cooling Specialist', badge: svgIcon('thermometer', 13) },
+  { level: 350, title: 'Zero-Latency Stratum Engineer', badge: svgIcon('zap', 13) },
+  { level: 325, title: 'High-Density Fleet Commander', badge: svgIcon('server', 13) },
+  { level: 300, title: 'Industrial Datacenter Operator', badge: svgIcon('cpu', 13) },
+  { level: 275, title: 'Custom Silicon Systems Engineer', badge: svgIcon('sliders', 13) },
+  { level: 250, title: 'Terahash Fleet Lead', badge: svgIcon('activity', 13) },
+  { level: 225, title: 'ASIC Voltage & Binning Specialist', badge: svgIcon('zap', 13) },
+  { level: 200, title: 'Thermal Dynamics Engineer', badge: svgIcon('thermometer', 13) },
+  { level: 175, title: 'High-Difficulty Share Specialist', badge: svgIcon('target', 13) },
+  { level: 150, title: 'Multi-Blade Operations Engineer', badge: svgIcon('server', 13) },
+  { level: 125, title: 'Airflow & Acoustics Technician', badge: svgIcon('fan', 13) },
+  { level: 100, title: 'Undervolt Efficiency Tuner', badge: svgIcon('sliders', 13) },
+  { level: 75,  title: 'Clock Frequency Tuner', badge: svgIcon('activity', 13) },
+  { level: 50,  title: 'Stratum Pool Operator', badge: svgIcon('globe', 13) },
+  { level: 25,  title: 'ASIC Bench Technician', badge: svgIcon('cpu', 13) },
+  { level: 1,   title: 'Home Lab Operator', badge: svgIcon('terminal', 13) }
 ];
 
 const CHRONICLE_CHAPTERS = [
@@ -700,115 +743,115 @@ function getRpgBadges(stats) {
       id: 'first_nonce',
       cat: 'shares',
       catLabel: 'Nonces & Shares',
-      name: 'First Nonce',
-      icon: '🥉',
+      name: 'Initial Share Verification',
+      icon: svgIcon('hash', 18),
       desc: 'Submit your first verified accepted share to the network pool.',
       unlocked: totalShares >= 1,
       currVal: totalShares,
       targetVal: 1,
       progressPct: Math.min(100, Math.round((totalShares / 1) * 100)),
       statStr: `${totalShares.toLocaleString()} / 1`,
-      remStr: 'Completed'
+      remStr: 'Verified'
     },
     {
       id: 'shares_10k',
       cat: 'shares',
       catLabel: 'Nonces & Shares',
-      name: 'Ten K Club',
-      icon: '🥈',
+      name: '10K Share Volume',
+      icon: svgIcon('layers', 18),
       desc: 'Reach 10,000 accepted shares across your mining fleet.',
       unlocked: totalShares >= 10000,
       currVal: totalShares,
       targetVal: 10000,
       progressPct: Math.min(100, Math.round((totalShares / 10000) * 100)),
       statStr: `${totalShares.toLocaleString()} / 10,000`,
-      remStr: totalShares >= 10000 ? 'Completed' : `${(10000 - totalShares).toLocaleString()} left`
+      remStr: totalShares >= 10000 ? 'Verified' : `${(10000 - totalShares).toLocaleString()} left`
     },
     {
       id: 'shares_100k',
       cat: 'shares',
       catLabel: 'Nonces & Shares',
-      name: 'Century Miner',
-      icon: '🥇',
+      name: '100K Share Throughput',
+      icon: svgIcon('activity', 18),
       desc: 'Reach 100,000 accepted shares across your mining fleet.',
       unlocked: totalShares >= 100000,
       currVal: totalShares,
       targetVal: 100000,
       progressPct: Math.min(100, Math.round((totalShares / 100000) * 100)),
       statStr: `${totalShares.toLocaleString()} / 100,000`,
-      remStr: totalShares >= 100000 ? 'Completed' : `${(100000 - totalShares).toLocaleString()} left`
+      remStr: totalShares >= 100000 ? 'Verified' : `${(100000 - totalShares).toLocaleString()} left`
     },
     {
       id: 'shares_1m',
       cat: 'shares',
       catLabel: 'Nonces & Shares',
-      name: 'Mega Miner',
-      icon: '💎',
-      desc: 'Submit 1,000,000 lifetime shares to the blockchain.',
+      name: '1M Share Benchmark',
+      icon: svgIcon('award', 18),
+      desc: 'Submit 1,000,000 lifetime verified shares to the pool.',
       unlocked: totalShares >= 1000000,
       currVal: totalShares,
       targetVal: 1000000,
       progressPct: Math.min(100, Math.round((totalShares / 1000000) * 100)),
       statStr: `${totalShares.toLocaleString()} / 1,000,000`,
-      remStr: totalShares >= 1000000 ? 'Completed' : `${(1000000 - totalShares).toLocaleString()} left`
+      remStr: totalShares >= 1000000 ? 'Verified' : `${(1000000 - totalShares).toLocaleString()} left`
     },
 
     // 2. Difficulty & Luck
     {
       id: 'diff_1m',
       cat: 'difficulty',
-      catLabel: 'Difficulty & Luck',
-      name: 'Millionaire Hit',
-      icon: '🎯',
+      catLabel: 'Difficulty & Target',
+      name: '1M Difficulty Threshold',
+      icon: svgIcon('target', 18),
       desc: 'Submit a share with difficulty greater than 1,000,000 (1M).',
       unlocked: bestDiff >= 1e6,
       currVal: bestDiff,
       targetVal: 1e6,
       progressPct: Math.min(100, Math.round((bestDiff / 1e6) * 100)),
       statStr: `${diffStr(bestDiff)} / 1.00 M`,
-      remStr: bestDiff >= 1e6 ? 'Completed' : `${diffStr(1e6 - bestDiff)} left`
+      remStr: bestDiff >= 1e6 ? 'Verified' : `${diffStr(1e6 - bestDiff)} left`
     },
     {
       id: 'diff_100m',
       cat: 'difficulty',
-      catLabel: 'Difficulty & Luck',
-      name: 'High Roller',
-      icon: '⚡',
+      catLabel: 'Difficulty & Target',
+      name: '100M High-Diff Share',
+      icon: svgIcon('zap', 18),
       desc: 'Submit a share with difficulty exceeding 100,000,000 (100M).',
       unlocked: bestDiff >= 1e8,
       currVal: bestDiff,
       targetVal: 1e8,
       progressPct: Math.min(100, Math.round((bestDiff / 1e8) * 100)),
       statStr: `${diffStr(bestDiff)} / 100.00 M`,
-      remStr: bestDiff >= 1e8 ? 'Completed' : `${diffStr(1e8 - bestDiff)} left`
+      remStr: bestDiff >= 1e8 ? 'Verified' : `${diffStr(1e8 - bestDiff)} left`
     },
     {
       id: 'diff_1g',
       cat: 'difficulty',
-      catLabel: 'Difficulty & Luck',
-      name: 'Gigahash Titan',
-      icon: '🏆',
-      desc: 'Hit a legendary Mega-Share with difficulty exceeding 1,000,000,000 (1G).',
+      catLabel: 'Difficulty & Target',
+      name: '1G G-Share Milestone',
+      icon: svgIcon('award', 18),
+      desc: 'Hit a 1G+ share with difficulty exceeding 1,000,000,000.',
       unlocked: bestDiff >= 1e9,
       currVal: bestDiff,
       targetVal: 1e9,
       progressPct: Math.min(100, Math.round((bestDiff / 1e9) * 100)),
       statStr: `${diffStr(bestDiff)} / 1.00 G`,
-      remStr: bestDiff >= 1e9 ? 'Completed' : `${diffStr(1e9 - bestDiff)} left`
+      remStr: bestDiff >= 1e9 ? 'Verified' : `${diffStr(1e9 - bestDiff)} left`
     },
     {
       id: 'block_bounty',
       cat: 'difficulty',
-      catLabel: 'Difficulty & Luck',
-      name: 'Solo Block Bounty',
-      icon: '👑',
-      desc: 'Solve a valid Bitcoin or Alt-Coin block on solo stratum.',
+      catLabel: 'Difficulty & Target',
+      name: 'Full Block Producer',
+      icon: svgIcon('box', 18),
+      desc: 'Solve a valid network block on solo or pooled stratum.',
       unlocked: !!blocksSolved,
       currVal: blocksSolved ? 1 : 0,
       targetVal: 1,
       progressPct: blocksSolved ? 100 : 0,
       statStr: blocksSolved ? '1 / 1 Block' : '0 / 1 Block',
-      remStr: blocksSolved ? 'SOLVED!' : 'Awaiting Solved Block'
+      remStr: blocksSolved ? 'SOLVED' : 'Awaiting Block'
     },
 
     // 3. Tuning & Hardware
@@ -816,71 +859,71 @@ function getRpgBadges(stats) {
       id: 'oc_speed',
       cat: 'hardware',
       catLabel: 'Tuning & Hardware',
-      name: 'Speed Demon',
-      icon: '🏎️',
-      desc: 'Overclock ASIC core frequency to 600 MHz or higher.',
+      name: '600 MHz Core Clock',
+      icon: svgIcon('sliders', 18),
+      desc: 'Tune ASIC core clock frequency to 600 MHz or higher.',
       unlocked: maxFreq >= 600,
       currVal: maxFreq,
       targetVal: 600,
       progressPct: Math.min(100, Math.round((maxFreq / 600) * 100)),
       statStr: `${maxFreq.toFixed(0)} MHz / 600 MHz`,
-      remStr: maxFreq >= 600 ? 'Completed' : `${(600 - maxFreq).toFixed(0)} MHz to go`
+      remStr: maxFreq >= 600 ? 'Verified' : `${(600 - maxFreq).toFixed(0)} MHz to go`
     },
     {
       id: 'oc_redline',
       cat: 'hardware',
       catLabel: 'Tuning & Hardware',
-      name: 'Redline Turbo',
-      icon: '🚀',
-      desc: 'Overclock ASIC core frequency to 700 MHz extreme tier.',
+      name: '700 MHz High-Frequency Spec',
+      icon: svgIcon('flame', 18),
+      desc: 'Drive ASIC core clock frequency to 700 MHz high-output tier.',
       unlocked: maxFreq >= 700,
       currVal: maxFreq,
       targetVal: 700,
       progressPct: Math.min(100, Math.round((maxFreq / 700) * 100)),
       statStr: `${maxFreq.toFixed(0)} MHz / 700 MHz`,
-      remStr: maxFreq >= 700 ? 'Completed' : `${(700 - maxFreq).toFixed(0)} MHz to go`
+      remStr: maxFreq >= 700 ? 'Verified' : `${(700 - maxFreq).toFixed(0)} MHz to go`
     },
     {
       id: 'temp_cryo',
       cat: 'hardware',
       catLabel: 'Tuning & Hardware',
-      name: 'Cryo Core',
-      icon: '❄️',
-      desc: 'Maintain core operating temperature under 56°C under active load.',
+      name: 'Sub-56°C Thermal Envelope',
+      icon: svgIcon('thermometer', 18),
+      desc: 'Maintain core junction temperature ≤ 56°C under active load.',
       unlocked: minTemp > 0 && minTemp <= 56,
       currVal: minTemp,
       targetVal: 56,
       progressPct: (minTemp > 0 && minTemp <= 56) ? 100 : Math.max(0, Math.round((1 - (minTemp - 56) / 20) * 100)),
       statStr: minTemp > 0 ? `${minTemp.toFixed(1)}°C ≤ 56°C` : '--',
-      remStr: (minTemp > 0 && minTemp <= 56) ? 'Completed' : 'Cooling needed'
+      remStr: (minTemp > 0 && minTemp <= 56) ? 'Verified' : 'Above 56°C'
     },
     {
       id: 'eff_green',
       cat: 'hardware',
       catLabel: 'Tuning & Hardware',
-      name: 'Green Hash',
-      icon: '🔋',
-      desc: 'Tune fleet to achieve electrical efficiency ≤ 25.0 J/TH.',
+      name: 'Sub-25 J/TH Fleet Efficiency',
+      icon: svgIcon('leaf', 18),
+      desc: 'Tune fleet voltage/clock curve to ≤ 25.0 J/TH efficiency.',
       unlocked: efficiency > 0 && efficiency <= 25,
       currVal: efficiency,
       targetVal: 25,
       progressPct: (efficiency > 0 && efficiency <= 25) ? 100 : 60,
       statStr: efficiency > 0 ? `${efficiency.toFixed(1)} J/TH ≤ 25 J/TH` : '--',
-      remStr: (efficiency > 0 && efficiency <= 25) ? 'Completed' : 'Tune efficiency'
+      remStr: (efficiency > 0 && efficiency <= 25) ? 'Verified' : 'Tune J/TH'
     },
     {
       id: 'fan_tornado',
       cat: 'hardware',
       catLabel: 'Tuning & Hardware',
-      name: 'Tornado Turbine',
-      icon: '🌪️',
-      desc: 'Drive cooling fan at 5,000+ RPM high-velocity cooling.',
+      name: '5,000 RPM High-Static Airflow',
+      icon: svgIcon('fan', 18),
+      desc: 'Operate cooling fan at 5,000+ RPM static pressure.',
       unlocked: maxFan >= 5000,
       currVal: maxFan,
       targetVal: 5000,
       progressPct: Math.min(100, Math.round((maxFan / 5000) * 100)),
       statStr: `${maxFan.toLocaleString()} RPM / 5,000`,
-      remStr: maxFan >= 5000 ? 'Completed' : `${(5000 - maxFan).toLocaleString()} RPM to go`
+      remStr: maxFan >= 5000 ? 'Verified' : `${(5000 - maxFan).toLocaleString()} RPM to go`
     },
 
     // 4. Stratum & Operations
@@ -888,23 +931,23 @@ function getRpgBadges(stats) {
       id: 'rigs_dual',
       cat: 'operations',
       catLabel: 'Stratum & Ops',
-      name: 'Dual Rig Dynasty',
-      icon: '🖥️',
+      name: 'Multi-Blade Cluster',
+      icon: svgIcon('server', 18),
       desc: 'Operate 2 or more active ASIC blades simultaneously.',
       unlocked: rigCount >= 2,
       currVal: rigCount,
       targetVal: 2,
       progressPct: Math.min(100, Math.round((rigCount / 2) * 100)),
-      statStr: `${rigCount} / 2 Rigs`,
-      remStr: rigCount >= 2 ? 'Completed' : '1 more rig needed'
+      statStr: `${rigCount} / 2 Blades`,
+      remStr: rigCount >= 2 ? 'Verified' : '1 more blade needed'
     },
     {
       id: 'pool_stratum',
       cat: 'operations',
       catLabel: 'Stratum & Ops',
-      name: 'Stratum Navigator',
-      icon: '🌐',
-      desc: 'Connect to an active Stratum mining pool provider.',
+      name: 'Stratum Telemetry Uplink',
+      icon: svgIcon('globe', 18),
+      desc: 'Maintain an active TCP Stratum session with a mining pool.',
       unlocked: hasStratum,
       currVal: hasStratum ? 1 : 0,
       targetVal: 1,
@@ -916,174 +959,174 @@ function getRpgBadges(stats) {
       id: 'coin_alt',
       cat: 'operations',
       catLabel: 'Stratum & Ops',
-      name: 'Alt-Coin Alchemist',
-      icon: '🎭',
-      desc: 'Mine or track an alternative SHA-256 coin like WOJAK.',
+      name: 'Multi-Chain SHA-256 Routing',
+      icon: svgIcon('link', 18),
+      desc: 'Route hashrate to an alternative SHA-256 chain (e.g. WOJAK, BCH, DGB).',
       unlocked: coin && coin !== 'BTC',
       currVal: coin && coin !== 'BTC' ? 1 : 0,
       targetVal: 1,
       progressPct: coin && coin !== 'BTC' ? 100 : 0,
       statStr: `${coin || 'BTC'} Active`,
-      remStr: coin && coin !== 'BTC' ? 'Completed' : 'Mine an alt-coin'
+      remStr: coin && coin !== 'BTC' ? 'Verified' : 'Route alt-chain'
     },
     {
       id: 'audio_on',
       cat: 'operations',
       catLabel: 'Stratum & Ops',
-      name: 'Sonic Rig',
-      icon: '🔊',
-      desc: 'Enable synthesized acoustic Geiger clicks or crystal chimes.',
+      name: 'Acoustic Share Telemetry',
+      icon: svgIcon('volume-on', 18),
+      desc: 'Enable synthesized Geiger clicks or harmonic share audio.',
       unlocked: soundMode !== 'off',
       currVal: soundMode !== 'off' ? 1 : 0,
       targetVal: 1,
       progressPct: soundMode !== 'off' ? 100 : 0,
       statStr: soundMode !== 'off' ? `${soundMode.toUpperCase()} Active` : 'Muted',
-      remStr: soundMode !== 'off' ? 'Enabled' : 'Audio muted'
+      remStr: soundMode !== 'off' ? 'Enabled' : 'Muted'
     },
 
-    // 5. Prestige Tiers
+    // 5. Engineering Tiers
     {
       id: 'lvl_100',
       cat: 'prestige',
-      catLabel: 'Prestige Tiers',
-      name: 'Centurion',
-      icon: '🌟',
-      desc: 'Ascend to Fleet Level 100 (Volt Tamer).',
+      catLabel: 'Engineering Tiers',
+      name: 'Tier 100 · Undervolt Efficiency Tuner',
+      icon: svgIcon('sliders', 18),
+      desc: 'Reach Fleet Milestone Level 100 and unlock Workstation Surface Themes.',
       unlocked: level >= 100,
       currVal: level,
       targetVal: 100,
       progressPct: Math.min(100, Math.round((level / 100) * 100)),
       statStr: `Lvl ${level} / Lvl 100`,
-      remStr: level >= 100 ? 'Completed' : `${100 - level} levels left`
+      remStr: level >= 100 ? 'Verified' : `${100 - level} levels left`
     },
     {
       id: 'lvl_250',
       cat: 'prestige',
-      catLabel: 'Prestige Tiers',
-      name: 'Master of Silicon',
-      icon: '🔱',
-      desc: 'Ascend to Fleet Level 250 (Megahash Overlord).',
+      catLabel: 'Engineering Tiers',
+      name: 'Tier 250 · Terahash Fleet Lead',
+      icon: svgIcon('cpu', 18),
+      desc: 'Reach Fleet Milestone Level 250 through sustained share volume.',
       unlocked: level >= 250,
       currVal: level,
       targetVal: 250,
       progressPct: Math.min(100, Math.round((level / 250) * 100)),
       statStr: `Lvl ${level} / Lvl 250`,
-      remStr: level >= 250 ? 'Completed' : `${250 - level} levels left`
+      remStr: level >= 250 ? 'Verified' : `${250 - level} levels left`
     },
     {
       id: 'lvl_400',
       cat: 'prestige',
-      catLabel: 'Prestige Tiers',
-      name: 'Celestial Sovereign',
-      icon: '🌌',
-      desc: 'Ascend to Fleet Level 400 (Consensus Sovereign).',
+      catLabel: 'Engineering Tiers',
+      name: 'Tier 400 · Consensus Operations Lead',
+      icon: svgIcon('shield', 18),
+      desc: 'Reach Fleet Milestone Level 400 industrial endurance benchmark.',
       unlocked: level >= 400,
       currVal: level,
       targetVal: 400,
       progressPct: Math.min(100, Math.round((level / 400) * 100)),
       statStr: `Lvl ${level} / Lvl 400`,
-      remStr: level >= 400 ? 'Completed' : `${400 - level} levels left`
+      remStr: level >= 400 ? 'Verified' : `${400 - level} levels left`
     }
   ];
 }
 
-// --- PRESTIGE THEME ENGINE (Unlocked at Lvl 100 • 5 Milestone Aesthetic Themes) ---
+// --- WORKSTATION SURFACE THEMES (Unlocked at Lvl 100 • 6 Industrial Palettes) ---
 const PRESTIGE_THEMES = [
   {
     id: 'default',
-    name: 'Cyber Obsidian',
+    name: 'Precision Slate',
     reqLevel: 0,
-    subtitle: 'Default • Classic Aero-Glass',
-    icon: '💎',
-    previewGradient: 'linear-gradient(135deg, #090d16 0%, #0f172a 50%, #0284c7 100%)',
+    subtitle: 'Default • Matte Carbon & Cyan Telemetry',
+    icon: svgIcon('terminal', 15),
+    previewGradient: 'linear-gradient(90deg, #0b0e14 0%, #161f30 60%, #38bdf8 100%)',
     accent: '#38bdf8',
-    accentSecondary: '#fbbf24',
-    accentGlow: 'rgba(56, 189, 248, 0.4)',
-    cardBg: 'rgba(15, 23, 42, 0.72)',
-    cardBorder: 'rgba(255, 255, 255, 0.12)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.10) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5))',
-    goldGlow: '0 0 35px -8px rgba(245, 158, 11, 0.22)'
+    accentSecondary: '#f59e0b',
+    accentGlow: 'rgba(56, 189, 248, 0.15)',
+    cardBg: '#111620',
+    cardBorder: '#1f2737',
+    heroBg: '#0b0e14',
+    pillGradient: '#1a2232',
+    goldGlow: 'none'
   },
   {
     id: 'solar_flare',
-    name: 'Solar Flare Gold',
+    name: 'Industrial Amber',
     reqLevel: 100,
-    subtitle: 'Level 100 • Volt Tamer Tier',
-    icon: '☀️',
-    previewGradient: 'linear-gradient(135deg, #451a03 0%, #b45309 40%, #fbbf24 100%)',
-    accent: '#fbbf24',
-    accentSecondary: '#f59e0b',
-    accentGlow: 'rgba(245, 158, 11, 0.5)',
-    cardBg: 'rgba(28, 20, 10, 0.75)',
-    cardBorder: 'rgba(245, 158, 11, 0.3)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(217, 119, 6, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(24, 17, 8, 0.85) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(120, 53, 15, 0.6))',
-    goldGlow: '0 0 40px -6px rgba(245, 158, 11, 0.45)'
+    subtitle: 'Level 100 • Undervolt Efficiency Tier',
+    icon: svgIcon('zap', 15),
+    previewGradient: 'linear-gradient(90deg, #0f0d0a 0%, #271e10 60%, #f59e0b 100%)',
+    accent: '#f59e0b',
+    accentSecondary: '#fbbf24',
+    accentGlow: 'rgba(245, 158, 11, 0.15)',
+    cardBg: '#14120e',
+    cardBorder: '#2e2618',
+    heroBg: '#0c0b08',
+    pillGradient: '#261f12',
+    goldGlow: 'none'
   },
   {
     id: 'thermal_magma',
-    name: 'Thermal Magma',
+    name: 'Crimson Telemetry',
     reqLevel: 200,
-    subtitle: 'Level 200 • Thermal Dominator Tier',
-    icon: '🔥',
-    previewGradient: 'linear-gradient(135deg, #4c0519 0%, #be123c 45%, #fb7185 100%)',
+    subtitle: 'Level 200 • Thermal Dynamics Tier',
+    icon: svgIcon('thermometer', 15),
+    previewGradient: 'linear-gradient(90deg, #110a0d 0%, #2a1219 60%, #f43f5e 100%)',
     accent: '#f43f5e',
     accentSecondary: '#fb7185',
-    accentGlow: 'rgba(244, 63, 94, 0.5)',
-    cardBg: 'rgba(30, 10, 18, 0.78)',
-    cardBorder: 'rgba(244, 63, 94, 0.32)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(225, 29, 72, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(26, 8, 16, 0.85) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(136, 19, 55, 0.6))',
-    goldGlow: '0 0 40px -6px rgba(244, 63, 94, 0.45)'
+    accentGlow: 'rgba(244, 63, 94, 0.15)',
+    cardBg: '#160f13',
+    cardBorder: '#331b23',
+    heroBg: '#0d090b',
+    pillGradient: '#2a151d',
+    goldGlow: 'none'
   },
   {
     id: 'emerald_matrix',
-    name: 'Emerald Matrix',
+    name: 'Phosphor Terminal',
     reqLevel: 300,
-    subtitle: 'Level 300 • Crypto Colossus Tier',
-    icon: '❇️',
-    previewGradient: 'linear-gradient(135deg, #022c22 0%, #047857 45%, #34d399 100%)',
+    subtitle: 'Level 300 • Datacenter Operator Tier',
+    icon: svgIcon('activity', 15),
+    previewGradient: 'linear-gradient(90deg, #08100d 0%, #0f291e 60%, #10b981 100%)',
     accent: '#10b981',
     accentSecondary: '#34d399',
-    accentGlow: 'rgba(16, 185, 129, 0.5)',
-    cardBg: 'rgba(6, 28, 20, 0.78)',
-    cardBorder: 'rgba(16, 185, 129, 0.3)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(5, 150, 105, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(5, 24, 17, 0.85) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 78, 59, 0.6))',
-    goldGlow: '0 0 40px -6px rgba(16, 185, 129, 0.45)'
+    accentGlow: 'rgba(16, 185, 129, 0.15)',
+    cardBg: '#0d1713',
+    cardBorder: '#1a3329',
+    heroBg: '#080e0b',
+    pillGradient: '#132820',
+    goldGlow: 'none'
   },
   {
     id: 'amethyst_nebula',
-    name: 'Amethyst Nebula',
+    name: 'Ultraviolet Wafer',
     reqLevel: 400,
-    subtitle: 'Level 400 • Consensus Sovereign Tier',
-    icon: '🔮',
-    previewGradient: 'linear-gradient(135deg, #2e1065 0%, #6d28d9 45%, #c084fc 100%)',
+    subtitle: 'Level 400 • Consensus Operations Tier',
+    icon: svgIcon('cpu', 15),
+    previewGradient: 'linear-gradient(90deg, #0d0a14 0%, #221638 60%, #a855f7 100%)',
     accent: '#a855f7',
     accentSecondary: '#c084fc',
-    accentGlow: 'rgba(168, 85, 247, 0.5)',
-    cardBg: 'rgba(24, 10, 42, 0.78)',
-    cardBorder: 'rgba(168, 85, 247, 0.32)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.22) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.18) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(20, 8, 36, 0.85) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 7, 100, 0.6))',
-    goldGlow: '0 0 40px -6px rgba(168, 85, 247, 0.45)'
+    accentGlow: 'rgba(168, 85, 247, 0.15)',
+    cardBg: '#13101c',
+    cardBorder: '#2a203d',
+    heroBg: '#0b0910',
+    pillGradient: '#211832',
+    goldGlow: 'none'
   },
   {
     id: 'celestial_diamond',
-    name: 'Celestial Diamond',
+    name: 'Titanium Monochrome',
     reqLevel: 500,
-    subtitle: 'Level 500 • Satoshi Slayer (Apex Tier)',
-    icon: '👑',
-    previewGradient: 'linear-gradient(135deg, #38bdf8 0%, #ec4899 50%, #fbbf24 100%)',
+    subtitle: 'Level 500 • Principal Architect (Apex)',
+    icon: svgIcon('crown', 15),
+    previewGradient: 'linear-gradient(90deg, #0a0c10 0%, #1e2530 60%, #f8fafc 100%)',
     accent: '#f8fafc',
     accentSecondary: '#38bdf8',
-    accentGlow: 'rgba(255, 255, 255, 0.65)',
-    cardBg: 'rgba(18, 24, 38, 0.82)',
-    cardBorder: 'rgba(255, 255, 255, 0.4)',
-    heroBg: 'radial-gradient(at 0% 0%, rgba(236, 72, 153, 0.18) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.22) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.88) 0px, transparent 100%)',
-    pillGradient: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(56, 189, 248, 0.4))',
-    goldGlow: '0 0 50px -4px rgba(255, 255, 255, 0.5), 0 0 30px rgba(56, 189, 248, 0.4)'
+    accentGlow: 'rgba(248, 250, 252, 0.15)',
+    cardBg: '#12161f',
+    cardBorder: '#2e3748',
+    heroBg: '#090b0f',
+    pillGradient: '#1e2533',
+    goldGlow: 'none'
   }
 ];
 
@@ -1091,17 +1134,17 @@ const PIPELINE_COIN_GROUPS = [
   {
     id: 'mining_dutch',
     label: 'Mining-Dutch (SHA-256 & Merged)',
-    icon: '🇳🇱'
+    icon: ''
   },
   {
     id: 'helios',
     label: 'HeliosPool (Solo SHA-256)',
-    icon: '☀️'
+    icon: ''
   },
   {
     id: 'aux',
     label: 'Auxiliary Networks',
-    icon: '🌐'
+    icon: ''
   }
 ];
 
@@ -1128,7 +1171,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'WOJAK',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🎭',
+    icon: 'W',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 9995,
@@ -1176,7 +1219,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'FB',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🌀',
+    icon: 'F',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3335,
@@ -1208,7 +1251,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'PPC',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🅿️',
+    icon: 'P',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3408,
@@ -1224,7 +1267,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'XEC',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🪙',
+    icon: 'X',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3703,
@@ -1240,7 +1283,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'NMC',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch (Merged)',
-    icon: '🅽',
+    icon: 'N',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3465,
@@ -1256,7 +1299,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'EMC',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch (Merged)',
-    icon: '🅴',
+    icon: 'E',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3465,
@@ -1272,7 +1315,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'TRC',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch (Merged)',
-    icon: '🌍',
+    icon: 'T',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3465,
@@ -1288,7 +1331,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'CHI',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch (Merged)',
-    icon: '⚔️',
+    icon: 'C',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3465,
@@ -1304,7 +1347,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'FIX',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🔧',
+    icon: 'F',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3407,
@@ -1320,7 +1363,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'XRG',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '⚡',
+    icon: 'X',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3407,
@@ -1336,7 +1379,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'SPACE',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🌌',
+    icon: 'S',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3445,
@@ -1352,7 +1395,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'FCH',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '💸',
+    icon: 'F',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3407,
@@ -1368,7 +1411,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'BC2',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🥈',
+    icon: 'B',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3407,
@@ -1384,7 +1427,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'DVT',
     pool: 'mining_dutch',
     poolName: 'Mining-Dutch',
-    icon: '🗝️',
+    icon: 'D',
     algo: 'SHA-256',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 3407,
@@ -1402,7 +1445,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'BTC',
     pool: 'helios',
     poolName: 'HeliosPool',
-    icon: '☀️',
+    icon: '₿',
     algo: 'SHA-256',
     defaultHost: 'pool.heliosmining.io',
     defaultPort: 3333,
@@ -1450,7 +1493,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'CHTA',
     pool: 'helios',
     poolName: 'HeliosPool',
-    icon: '🐆',
+    icon: 'C',
     algo: 'SHA-256',
     defaultHost: 'pool.heliosmining.io',
     defaultPort: 3333,
@@ -1466,7 +1509,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'WOJAK',
     pool: 'helios',
     poolName: 'HeliosPool',
-    icon: '🎭',
+    icon: 'W',
     algo: 'SHA-256',
     defaultHost: 'pool.heliosmining.io',
     defaultPort: 3333,
@@ -1482,7 +1525,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'FIX',
     pool: 'helios',
     poolName: 'HeliosPool',
-    icon: '🔧',
+    icon: 'F',
     algo: 'SHA-256',
     defaultHost: 'pool.heliosmining.io',
     defaultPort: 3333,
@@ -1498,7 +1541,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'XEC',
     pool: 'helios',
     poolName: 'HeliosPool',
-    icon: '🪙',
+    icon: 'X',
     algo: 'SHA-256',
     defaultHost: 'pool.heliosmining.io',
     defaultPort: 3333,
@@ -1516,7 +1559,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'BELLS',
     pool: 'aux',
     poolName: 'Mining-Dutch',
-    icon: '🔔',
+    icon: 'B',
     algo: 'Scrypt',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 9997,
@@ -1532,7 +1575,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'PEPE',
     pool: 'aux',
     poolName: 'Mining-Dutch',
-    icon: '🐸',
+    icon: 'P',
     algo: 'Scrypt',
     defaultHost: 'americas.mining-dutch.nl',
     defaultPort: 9998,
@@ -1548,7 +1591,7 @@ const PIPELINE_COIN_PROFILES = {
     symbol: 'KAS',
     pool: 'aux',
     poolName: 'WoolyPooly',
-    icon: '⚡',
+    icon: 'K',
     algo: 'kHeavyHash',
     defaultHost: 'pool.woolypooly.com',
     defaultPort: 16110,
@@ -1592,7 +1635,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._lastTotalShares = null;
     this._lastBestDiff = null;
     this._audioCtx = null;
-    this._pipelineCollapsed = safeStorage.get('miner_pipeline_collapsed') === 'true';
+    this._pipelineCollapsed = safeStorage.get('miner_pipeline_collapsed') !== 'false';
     this._pipelineAnimPaused = safeStorage.get('miner_pipeline_anim_paused') === 'true';
     this._selectedPipelineCoin = safeStorage.get('miner_pipeline_coin') || null;
     this._particleAnimId = null;
@@ -2647,11 +2690,11 @@ class HomeMinerFleetCard extends HTMLElement {
       <canvas id="celebration-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
       <div id="card-root"></div>
       <div id="modal-root">
-        <!-- ADD / EDIT MINER GLASS MODAL -->
+        <!-- ADD / EDIT MINER MODAL -->
         <div id="miner-modal" class="modal-backdrop" style="display: none;">
           <div class="modal-box">
             <div class="modal-header">
-              <span class="modal-title" id="modal-title">➕ Add Cryptocurrency Miner</span>
+              <span class="modal-title" id="modal-title">${svgIcon('plus', 16)} Add Cryptocurrency Miner</span>
               <button class="glass-btn" id="modal-close-btn" style="padding: 4px 8px;">✕</button>
             </div>
             <div class="modal-grid">
@@ -2717,9 +2760,9 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="modal-box" style="max-width: 680px; width: 95%;">
             <div class="modal-header">
               <div class="discovery-header-cluster">
-                <span style="font-size: 22px;">🔍</span>
+                <span style="color: #38bdf8; display: flex;">${svgIcon('search', 20)}</span>
                 <div>
-                  <span class="modal-title" style="font-size: 17px;" id="discovery-modal-title">Hardware Discovery Console</span>
+                  <span class="modal-title" style="font-size: 16px;" id="discovery-modal-title">Hardware Discovery Console</span>
                   <div class="mono" style="font-size: 11px; color: #94a3b8;" id="discovery-subtitle">
                     Discovered ASIC rigs and AxeOS nodes on your local network
                   </div>
@@ -2739,17 +2782,17 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
               <div style="display: flex; gap: 10px;">
                 <button class="glass-btn" id="discovery-cancel-btn">Close</button>
-                <button class="glass-btn primary" id="discovery-import-btn">⚡ Import Selected (0)</button>
+                <button class="glass-btn primary" id="discovery-import-btn">Import Selected (0)</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- DELETE CONFIRMATION GLASS MODAL -->
+        <!-- DELETE CONFIRMATION MODAL -->
         <div id="delete-modal" class="modal-backdrop" style="display: none;">
           <div class="modal-box" style="max-width: 420px;">
             <div class="modal-header">
-              <span class="modal-title" style="color: #fb7185;">🗑️ Remove Miner</span>
+              <span class="modal-title" style="color: #fb7185; display: flex; align-items: center; gap: 8px;">${svgIcon('trash', 16)} Remove Miner</span>
               <button class="glass-btn" id="delete-modal-close" style="padding: 4px 8px;">✕</button>
             </div>
             <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5;" id="delete-modal-text">
@@ -2762,14 +2805,14 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
 
-        <!-- 1-CLICK STRATUM SWITCHER GLASS MODAL -->
+        <!-- 1-CLICK STRATUM SWITCHER MODAL -->
         <div id="stratum-modal" class="modal-backdrop" style="display: none;">
           <div class="modal-box" style="max-width: 520px; width: 95%;">
             <div class="modal-header">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 22px;">⚡</span>
+                <span style="color: #38bdf8; display: flex;">${svgIcon('zap', 20)}</span>
                 <div>
-                  <span class="modal-title" id="stratum-modal-title" style="color: #38bdf8;">1-Click Stratum Pool Switcher</span>
+                  <span class="modal-title" id="stratum-modal-title" style="color: #f8fafc;">1-Click Stratum Pool Switcher</span>
                   <div class="mono" style="font-size: 11px; color: #94a3b8;" id="stratum-modal-sub">
                     Direct hardware pool & coin switching
                   </div>
@@ -2781,46 +2824,46 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="modal-field full">
                 <label class="modal-label">Target Miner</label>
                 <select id="stratum-target-miner" class="modal-select">
-                  <option value="" style="background-color: #0f172a; color: #f8fafc;">🌐 Entire Fleet (All Compatible Miners)</option>
+                  <option value="" style="background-color: #0f172a; color: #f8fafc;">Entire Fleet (All Compatible Miners)</option>
                 </select>
               </div>
               <div class="modal-field full">
                 <label class="modal-label">Coin & Algo Preset</label>
                 <select id="stratum-coin-preset" class="modal-select">
-                  <optgroup label="🇳🇱 Mining-Dutch (SHA-256 & Merged)">
-                    <option value="WOJAK" data-port="9995" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🎭 WOJAK (WJK) • Mining-Dutch (Port 9995)</option>
-                    <option value="BTC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin (BTC) • Mining-Dutch (Port 3465)</option>
-                    <option value="BCH" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Mining-Dutch (Port 3703)</option>
-                    <option value="BSV" data-port="3433" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɓ Bitcoin SV (BSV) • Mining-Dutch (Port 3433)</option>
-                    <option value="FB" data-port="3335" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌀 Fractal Bitcoin (FB) • Mining-Dutch (Port 3335)</option>
-                    <option value="DGB" data-port="3471" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte SHA256 (DGB) • Mining-Dutch (Port 3471)</option>
-                    <option value="PPC" data-port="3408" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅿️ Peercoin (PPC) • Mining-Dutch (Port 3408)</option>
-                    <option value="XEC" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🪙 eCash (XEC) • Mining-Dutch (Port 3703)</option>
-                    <option value="NMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅽 Namecoin (NMC) • Mining-Dutch (Port 3465)</option>
-                    <option value="EMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🅴 Emercoin (EMC) • Mining-Dutch (Port 3465)</option>
-                    <option value="TRC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌍 Terracoin (TRC) • Mining-Dutch (Port 3465)</option>
-                    <option value="CHI" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">⚔️ Xaya (CHI) • Mining-Dutch (Port 3465)</option>
-                    <option value="FIX" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔧 FixedCoin (FIX) • Mining-Dutch (Port 3407)</option>
-                    <option value="XRG" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">⚡ Ergon (XRG) • Mining-Dutch (Port 3407)</option>
-                    <option value="SPACE" data-port="3445" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🌌 MVC (SPACE) • Mining-Dutch (Port 3445)</option>
-                    <option value="FCH" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">💸 FreeCash (FCH) • Mining-Dutch (Port 3407)</option>
-                    <option value="BC2" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🥈 Bitcoin II (BC2) • Mining-Dutch (Port 3407)</option>
-                    <option value="DVT" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🗝️ DeVault (DVT) • Mining-Dutch (Port 3407)</option>
+                  <optgroup label="Mining-Dutch (SHA-256 & Merged)">
+                    <option value="WOJAK" data-port="9995" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">W • WOJAK (WJK) • Mining-Dutch (Port 9995)</option>
+                    <option value="BTC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ • Bitcoin (BTC) • Mining-Dutch (Port 3465)</option>
+                    <option value="BCH" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">₿ • Bitcoin Cash (BCH) • Mining-Dutch (Port 3703)</option>
+                    <option value="BSV" data-port="3433" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɓ • Bitcoin SV (BSV) • Mining-Dutch (Port 3433)</option>
+                    <option value="FB" data-port="3335" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">F • Fractal Bitcoin (FB) • Mining-Dutch (Port 3335)</option>
+                    <option value="DGB" data-port="3471" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">Ɗ • DigiByte SHA256 (DGB) • Mining-Dutch (Port 3471)</option>
+                    <option value="PPC" data-port="3408" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">P • Peercoin (PPC) • Mining-Dutch (Port 3408)</option>
+                    <option value="XEC" data-port="3703" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">X • eCash (XEC) • Mining-Dutch (Port 3703)</option>
+                    <option value="NMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">N • Namecoin (NMC) • Mining-Dutch (Port 3465)</option>
+                    <option value="EMC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">E • Emercoin (EMC) • Mining-Dutch (Port 3465)</option>
+                    <option value="TRC" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">T • Terracoin (TRC) • Mining-Dutch (Port 3465)</option>
+                    <option value="CHI" data-port="3465" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">C • Xaya (CHI) • Mining-Dutch (Port 3465)</option>
+                    <option value="FIX" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">F • FixedCoin (FIX) • Mining-Dutch (Port 3407)</option>
+                    <option value="XRG" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">X • Ergon (XRG) • Mining-Dutch (Port 3407)</option>
+                    <option value="SPACE" data-port="3445" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">S • MVC (SPACE) • Mining-Dutch (Port 3445)</option>
+                    <option value="FCH" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">F • FreeCash (FCH) • Mining-Dutch (Port 3407)</option>
+                    <option value="BC2" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">B • Bitcoin II (BC2) • Mining-Dutch (Port 3407)</option>
+                    <option value="DVT" data-port="3407" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">D • DeVault (DVT) • Mining-Dutch (Port 3407)</option>
                   </optgroup>
-                  <optgroup label="☀️ HeliosPool (Solo SHA-256)">
-                    <option value="BTC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">☀️ Bitcoin (BTC) • Helios Solo (Port 3333)</option>
-                    <option value="BCH_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">₿ Bitcoin Cash (BCH) • Helios Solo (Port 3333)</option>
-                    <option value="DGB_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">Ɗ DigiByte (DGB) • Helios Solo (Port 3333)</option>
-                    <option value="CHTA_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🐆 Cheetahcoin (CHTA) • Helios Solo (Port 3333)</option>
-                    <option value="WJK_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🎭 Wojakcoin (WJK) • Helios Solo (Port 3333)</option>
-                    <option value="FIX_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🔧 FixedCoin (FIX) • Helios Solo (Port 3333)</option>
-                    <option value="XEC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">🪙 eCash (XEC) • Helios Solo (Port 3333)</option>
+                  <optgroup label="HeliosPool (Solo SHA-256)">
+                    <option value="BTC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">₿ • Bitcoin (BTC) • Helios Solo (Port 3333)</option>
+                    <option value="BCH_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">₿ • Bitcoin Cash (BCH) • Helios Solo (Port 3333)</option>
+                    <option value="DGB_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">Ɗ • DigiByte (DGB) • Helios Solo (Port 3333)</option>
+                    <option value="CHTA_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">C • Cheetahcoin (CHTA) • Helios Solo (Port 3333)</option>
+                    <option value="WJK_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">W • Wojakcoin (WJK) • Helios Solo (Port 3333)</option>
+                    <option value="FIX_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">F • FixedCoin (FIX) • Helios Solo (Port 3333)</option>
+                    <option value="XEC_HELIOS" data-port="3333" data-host="pool.heliosmining.io" style="background-color: #0f172a; color: #f8fafc;">X • eCash (XEC) • Helios Solo (Port 3333)</option>
                   </optgroup>
-                  <optgroup label="🌐 Auxiliary & Community Networks">
-                    <option value="BELLS" data-port="9997" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🔔 Bellcoin (BELLS) • Mining-Dutch (Port 9997)</option>
-                    <option value="PEPE" data-port="9998" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">🐸 Pepecoin (PEPE) • Mining-Dutch (Port 9998)</option>
-                    <option value="BTC_PUBLIC" data-port="2142" data-host="public-pool.io" style="background-color: #0f172a; color: #f8fafc;">🎯 Bitcoin (BTC) • Public-Pool.io (Port 2142)</option>
-                    <option value="CUSTOM" data-port="" data-host="" style="background-color: #0f172a; color: #f8fafc;">⚙️ Custom Stratum Endpoint...</option>
+                  <optgroup label="Auxiliary & Community Networks">
+                    <option value="BELLS" data-port="9997" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">B • Bellcoin (BELLS) • Mining-Dutch (Port 9997)</option>
+                    <option value="PEPE" data-port="9998" data-host="americas.mining-dutch.nl" style="background-color: #0f172a; color: #f8fafc;">P • Pepecoin (PEPE) • Mining-Dutch (Port 9998)</option>
+                    <option value="BTC_PUBLIC" data-port="2142" data-host="public-pool.io" style="background-color: #0f172a; color: #f8fafc;">₿ • Bitcoin (BTC) • Public-Pool.io (Port 2142)</option>
+                    <option value="CUSTOM" data-port="" data-host="" style="background-color: #0f172a; color: #f8fafc;">Custom Stratum Endpoint...</option>
                   </optgroup>
                 </select>
               </div>
@@ -2841,22 +2884,22 @@ class HomeMinerFleetCard extends HTMLElement {
                 <input type="text" id="stratum-input-pass" class="modal-input" value="x" placeholder="x" autocomplete="off" />
               </div>
             </div>
-            <div id="stratum-status-banner" style="display: none; margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace;"></div>
+            <div id="stratum-status-banner" style="display: none; margin-top: 14px; padding: 10px 14px; border-radius: 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace;"></div>
             <div class="modal-footer" style="margin-top: 16px;">
               <button class="glass-btn" id="stratum-cancel-btn">Cancel</button>
-              <button class="glass-btn primary" id="stratum-submit-btn" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8; color: #fff;">⚡ Switch Stratum Now</button>
+              <button class="glass-btn primary" id="stratum-submit-btn">Switch Stratum Now</button>
             </div>
           </div>
         </div>
 
         <!-- CHRONICLE READING MODAL -->
         <div id="chronicle-modal" class="modal-backdrop" style="display: none;">
-          <div class="modal-box" style="max-width: 640px; width: 95%; border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 158, 11, 0.2);">
-            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
+          <div class="modal-box" style="max-width: 640px; width: 95%; border-color: #26334d;">
+            <div class="modal-header" style="border-bottom: 1px solid #1f2737; padding-bottom: 14px;">
               <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 26px;">📜</span>
+                <span style="color: #38bdf8; display: flex;">${svgIcon('book', 20)}</span>
                 <div>
-                  <span class="modal-title" id="cmodal-title" style="color: #fbbf24; font-size: 17px;">Mining Chronicle</span>
+                  <span class="modal-title" id="cmodal-title" style="color: #f8fafc; font-size: 16px;">Mining Chronicle</span>
                   <div class="mono" style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="cmodal-subtitle">Level 10 Unlock • Era: 1993</div>
                 </div>
               </div>
@@ -2868,14 +2911,14 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
               <div class="chronicle-takeaway-box" id="cmodal-takeaway-box">
                 <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                  <span>💡</span>
-                  <span>Key Demystification for Home Miners</span>
+                  <span>${svgIcon('terminal', 13)}</span>
+                  <span>Engineering Takeaway for Home Miners</span>
                 </div>
                 <div id="cmodal-takeaway" style="font-size: 12.5px; color: #f1f5f9; font-weight: 500; line-height: 1.55;"></div>
               </div>
             </div>
-            <div class="modal-footer" style="padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-              <button class="glass-btn" id="cmodal-done-btn" style="margin-left: auto; padding: 6px 18px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">Done Reading</button>
+            <div class="modal-footer" style="padding-top: 14px; border-top: 1px solid #1f2737;">
+              <button class="glass-btn" id="cmodal-done-btn" style="margin-left: auto; padding: 6px 18px; color: #38bdf8; border-color: #26334d;">Done Reading</button>
             </div>
           </div>
         </div>
@@ -3129,11 +3172,11 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           stratumSubmitBtn.disabled = true;
-          stratumSubmitBtn.textContent = '⚡ Switching Stratum...';
+          stratumSubmitBtn.textContent = 'Switching Stratum...';
           if (statusBanner) {
             statusBanner.style.display = 'block';
-            statusBanner.style.background = 'rgba(56, 189, 248, 0.15)';
-            statusBanner.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+            statusBanner.style.background = 'rgba(56, 189, 248, 0.12)';
+            statusBanner.style.border = '1px solid rgba(56, 189, 248, 0.35)';
             statusBanner.style.color = '#38bdf8';
             statusBanner.textContent = 'Transmitting stratum switch payload to hardware...';
           }
@@ -3152,10 +3195,10 @@ class HomeMinerFleetCard extends HTMLElement {
             });
 
             if (statusBanner) {
-              statusBanner.style.background = 'rgba(16, 185, 129, 0.2)';
+              statusBanner.style.background = 'rgba(16, 185, 129, 0.15)';
               statusBanner.style.border = '1px solid #10b981';
               statusBanner.style.color = '#34d399';
-              statusBanner.textContent = `✓ Stratum switched to ${stratumHost}:${stratumPort}! Miner reconnecting...`;
+              statusBanner.textContent = `Stratum switched to ${stratumHost}:${stratumPort}. Miner reconnecting...`;
             }
 
             setTimeout(() => {
@@ -3164,12 +3207,12 @@ class HomeMinerFleetCard extends HTMLElement {
             }, 1200);
           } catch (err) {
             stratumSubmitBtn.disabled = false;
-            stratumSubmitBtn.textContent = '⚡ Switch Stratum Now';
+            stratumSubmitBtn.textContent = 'Switch Stratum Now';
             if (statusBanner) {
-              statusBanner.style.background = 'rgba(244, 63, 94, 0.2)';
+              statusBanner.style.background = 'rgba(244, 63, 94, 0.15)';
               statusBanner.style.border = '1px solid #f43f5e';
               statusBanner.style.color = '#fb7185';
-              statusBanner.textContent = '❌ Stratum switch error: ' + err.message;
+              statusBanner.textContent = 'Stratum switch error: ' + err.message;
             }
           }
         });
@@ -3232,13 +3275,13 @@ class HomeMinerFleetCard extends HTMLElement {
     if (statusBanner) statusBanner.style.display = 'none';
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = '⚡ Switch Stratum Now';
+      submitBtn.textContent = 'Switch Stratum Now';
     }
 
     // Populate miner target select
     if (targetSelect) {
       const miners = this._currentMiners || [];
-      targetSelect.innerHTML = `<option value="" style="background-color: #0f172a; color: #f8fafc;">🌐 Entire Fleet (All Compatible Miners)</option>` +
+      targetSelect.innerHTML = `<option value="" style="background-color: #0f172a; color: #f8fafc;">Entire Fleet (All Compatible Miners)</option>` +
         miners.map(m => {
           const isSel = m.host === targetHost;
           return `<option value="${m.host}" ${isSel ? 'selected' : ''} style="background-color: #0f172a; color: #f8fafc;">${m.name} (${m.host}) - ${(m.type || 'miner').toUpperCase()}</option>`;
@@ -3309,13 +3352,13 @@ class HomeMinerFleetCard extends HTMLElement {
     if (discModal) discModal.style.display = 'flex';
     if (importBtn) {
       importBtn.disabled = true;
-      importBtn.textContent = '⚡ Import Selected (0)';
+      importBtn.textContent = 'Import Selected (0)';
     }
 
     if (discBody) {
       discBody.innerHTML = `
         <div class="radar-scan-box">
-          <div class="radar-pulse-ring">⛏</div>
+          <div class="radar-pulse-ring">${svgIcon('search', 20)}</div>
           <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">Scanning Local Network for Mining Hardware...</div>
           <p style="font-size: 12px; color: #94a3b8; max-width: 400px; line-height: 1.5;">
             Detecting active AxeOS nodes, CGMiner RPC endpoints, Avalon Nano chassis, and Home Assistant miner entities.
@@ -3352,7 +3395,7 @@ class HomeMinerFleetCard extends HTMLElement {
       if (discBody) {
         discBody.innerHTML = `
           <div style="text-align: center; padding: 30px; color: #fb7185;">
-            ⚠️ Network discovery error: ${err.message}
+            Network discovery error: ${err.message}
           </div>
         `;
       }
@@ -3366,10 +3409,10 @@ class HomeMinerFleetCard extends HTMLElement {
     if (!this._discoveredMiners || this._discoveredMiners.length === 0) {
       discBody.innerHTML = `
         <div class="radar-scan-box">
-          <span style="font-size: 32px;">🌐</span>
+          <span style="color: #64748b; display: flex;">${svgIcon('globe', 28)}</span>
           <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">No Hardware Found to Import</div>
           <p style="font-size: 12px; color: #94a3b8; max-width: 420px; line-height: 1.5;">
-            All miners detected on your LAN are either already active in Home Miner Studio, or no AxeOS/CGMiner devices responded. You can add one manually anytime using <b>+ Add Miner</b>.
+            All miners detected on your LAN are either already active in Home Miner Studio, or no AxeOS/CGMiner devices responded. You can add one manually anytime using <b>Add Miner</b>.
           </p>
         </div>
       `;
@@ -3401,14 +3444,14 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
 
               <div class="discovery-meta-row">
-                <span>🌐 ${m.host}:${m.port || 80}</span>
+                <span>${m.host}:${m.port || 80}</span>
                 <span>•</span>
-                <span style="color: #fbbf24; font-weight: 700;">🪙 ${m.coin || 'BTC'}</span>
+                <span style="color: #fbbf24; font-weight: 700;">${m.coin || 'BTC'}</span>
               </div>
 
               <div style="font-size: 10px; color: #64748b; display: flex; justify-content: space-between;">
                 <span>Source: ${m.source_integration}</span>
-                ${isConfigured ? '<span style="color: #38bdf8;">● Already Managed</span>' : '<span style="color: #34d399;">★ Ready to Import</span>'}
+                ${isConfigured ? '<span style="color: #38bdf8;">● Already Managed</span>' : '<span style="color: #34d399;">● Ready to Import</span>'}
               </div>
             </div>
           `;
@@ -3450,7 +3493,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
     const count = this._selectedDiscoveredHosts.size;
     if (importBtn) {
-      importBtn.textContent = `⚡ Import Selected (${count})`;
+      importBtn.textContent = `Import Selected (${count})`;
       importBtn.disabled = count === 0;
     }
   }
@@ -3461,7 +3504,7 @@ class HomeMinerFleetCard extends HTMLElement {
     if (selectedHosts.length === 0) return;
 
     if (importBtn) {
-      importBtn.textContent = '⏳ Importing Rigs...';
+      importBtn.textContent = 'Importing Rigs...';
       importBtn.disabled = true;
     }
 
@@ -3485,7 +3528,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
     this._closeModals();
     this.render();
-    alert(`✅ Successfully imported ${successCount} cryptocurrency mining rigs into Home Assistant!`);
+    alert(`Successfully imported ${successCount} cryptocurrency mining rigs into Home Assistant.`);
   }
 
   _openAddModal(presetType, presetName, presetPort) {
@@ -3494,7 +3537,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._modalMode = 'add';
     this._activeHost = '';
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    this.shadowRoot.querySelector('#modal-title').textContent = presetName ? `➕ Add ${presetName}` : '➕ Add Cryptocurrency Miner';
+    this.shadowRoot.querySelector('#modal-title').innerHTML = presetName ? `${svgIcon('plus', 16)} Add ${presetName}` : `${svgIcon('plus', 16)} Add Cryptocurrency Miner`;
     this.shadowRoot.querySelector('#modal-name').value = presetName || '';
     this.shadowRoot.querySelector('#modal-host').value = '';
     this.shadowRoot.querySelector('#modal-host').disabled = false;
@@ -3512,7 +3555,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._modalMode = 'edit';
     this._activeHost = host;
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    this.shadowRoot.querySelector('#modal-title').textContent = `⚙️ Edit Miner (${host})`;
+    this.shadowRoot.querySelector('#modal-title').innerHTML = `${svgIcon('settings', 16)} Edit Miner (${host})`;
     this.shadowRoot.querySelector('#modal-name').value = name || '';
     this.shadowRoot.querySelector('#modal-host').value = host;
     this.shadowRoot.querySelector('#modal-host').disabled = true;
@@ -3544,18 +3587,13 @@ class HomeMinerFleetCard extends HTMLElement {
         :host {
           display: block;
           font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-          color: #f1f5f9;
-          background: #090d16;
-          background-image: 
-            radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.12) 0px, transparent 50%),
-            radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.08) 0px, transparent 60%),
-            radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.14) 0px, transparent 50%);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 24px;
+          color: #e2e8f0;
+          background: #0b0e14;
+          border-radius: 12px;
+          border: 1px solid #1e2636;
+          padding: 18px 20px;
           box-sizing: border-box;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
           position: relative;
           overflow: hidden;
         }
@@ -3568,53 +3606,42 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .mono {
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
         }
 
-        /* Glass Surfaces */
+        /* Precision Matte Hardware Surfaces */
         .glass-base {
-          background: rgba(255, 255, 255, 0.04);
-          backdrop-filter: blur(28px) saturate(160%);
-          -webkit-backdrop-filter: blur(28px) saturate(160%);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 16px;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+          background: #111620;
+          border: 1px solid #1f2737;
+          border-radius: 10px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
 
         .glass-card {
-          background: rgba(18, 26, 43, 0.55);
-          backdrop-filter: blur(24px) saturate(150%);
-          -webkit-backdrop-filter: blur(24px) saturate(150%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 18px;
-          padding: 22px;
-          box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+          background: #111620;
+          border: 1px solid #1f2737;
+          border-radius: 10px;
+          padding: 18px 20px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
           position: relative;
           overflow: hidden;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .glass-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+          display: none;
         }
 
         .glass-card.amber-glow {
-          border-color: rgba(245, 158, 11, 0.28);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 
-                      0 0 30px -8px rgba(245, 158, 11, 0.12),
-                      inset 0 1px 0 rgba(245, 158, 11, 0.3);
+          border-color: #2a2419;
+          border-top: 2px solid #f59e0b;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
         }
 
         .glass-card.cyan-glow {
-          border-color: rgba(56, 189, 248, 0.28);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 
-                      0 0 30px -8px rgba(56, 189, 248, 0.12),
-                      inset 0 1px 0 rgba(56, 189, 248, 0.3);
+          border-color: #1c2b3d;
+          border-top: 2px solid #38bdf8;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
         }
 
         /* Top Command Bar */
@@ -3622,74 +3649,77 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 14px 20px;
-          margin-bottom: 22px;
+          padding: 10px 14px;
+          margin-bottom: 12px;
           flex-wrap: wrap;
-          gap: 12px;
+          gap: 10px;
+          background: #0e131c;
+          border: 1px solid #1f2737;
+          border-radius: 10px;
         }
 
         .brand-cluster {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
         }
 
         .brand-icon-box {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(56, 189, 248, 0.2));
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
+          background: #161d2b;
+          border: 1px solid #283347;
+          color: #38bdf8;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
-          box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+          font-size: 16px;
         }
 
         .brand-title {
-          font-size: 19px;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          background: linear-gradient(90deg, #ffffff, #cbd5e1);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-size: 16px;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+          color: #f8fafc;
         }
 
         .badge-glass-pill {
-          font-size: 11px;
+          font-size: 10.5px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           font-weight: 600;
-          padding: 3px 9px;
-          border-radius: 999px;
-          background: rgba(56, 189, 248, 0.12);
-          border: 1px solid rgba(56, 189, 248, 0.35);
-          color: #38bdf8;
+          padding: 2px 8px;
+          border-radius: 5px;
+          background: #161e2e;
+          border: 1px solid #26334a;
+          color: #94a3b8;
           display: inline-flex;
           align-items: center;
           gap: 6px;
         }
 
         .status-orb {
-          width: 7px;
-          height: 7px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           background: #10b981;
-          box-shadow: 0 0 8px #10b981;
           display: inline-block;
+          flex-shrink: 0;
         }
 
         .top-actions {
           display: flex;
-          gap: 8px;
+          gap: 6px;
+          flex-wrap: wrap;
         }
 
         .glass-btn {
-          padding: 7px 15px;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          color: #f1f5f9;
+          padding: 6px 12px;
+          border-radius: 6px;
+          background: #161d2b;
+          border: 1px solid #283347;
+          color: #cbd5e1;
           font-size: 11px;
           font-weight: 600;
           font-family: 'JetBrains Mono', monospace;
@@ -3698,49 +3728,47 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           gap: 6px;
           text-decoration: none;
-          transition: all 0.2s ease;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
 
         .glass-btn:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.25);
-          transform: translateY(-1px);
+          background: #1e2738;
+          border-color: #3b4b66;
+          color: #f8fafc;
         }
 
         .glass-btn.primary {
-          background: rgba(56, 189, 248, 0.15);
+          background: rgba(56, 189, 248, 0.12);
           border-color: rgba(56, 189, 248, 0.4);
           color: #38bdf8;
         }
 
         .glass-btn.primary:hover {
-          background: rgba(56, 189, 248, 0.25);
-          box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+          background: rgba(56, 189, 248, 0.2);
+          border-color: #38bdf8;
+          color: #7dd3fc;
         }
 
         .sound-toggle-btn {
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .sound-toggle-btn.active-audio {
           color: #38bdf8;
           border-color: rgba(56, 189, 248, 0.45);
-          background: rgba(56, 189, 248, 0.16);
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+          background: rgba(56, 189, 248, 0.12);
         }
 
         .glass-btn.danger {
-          background: rgba(251, 113, 133, 0.12);
-          border-color: rgba(251, 113, 133, 0.35);
+          background: rgba(244, 63, 94, 0.1);
+          border-color: rgba(244, 63, 94, 0.3);
           color: #fb7185;
         }
 
         .glass-btn.danger:hover {
-          background: rgba(251, 113, 133, 0.25);
-          border-color: #fb7185;
-          box-shadow: 0 0 14px rgba(251, 113, 133, 0.35);
+          background: rgba(244, 63, 94, 0.18);
+          border-color: #f43f5e;
         }
 
         /* Modal Styles */
@@ -3750,9 +3778,9 @@ class HomeMinerFleetCard extends HTMLElement {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: rgba(5, 7, 11, 0.82);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -3761,16 +3789,16 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .modal-box {
-          background: rgba(18, 26, 43, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          border-radius: 18px;
+          background: #111620;
+          border: 1px solid #283347;
+          border-radius: 12px;
           width: 100%;
           max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
-          padding: 24px;
-          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.15);
+          padding: 20px 22px;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -3782,14 +3810,17 @@ class HomeMinerFleetCard extends HTMLElement {
           justify-content: space-between;
           align-items: center;
           padding-bottom: 12px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid #1f2737;
         }
 
         .modal-title {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
-          color: #38bdf8;
+          color: #f8fafc;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .modal-grid {
@@ -3813,14 +3844,15 @@ class HomeMinerFleetCard extends HTMLElement {
           font-family: 'JetBrains Mono', monospace;
           color: #94a3b8;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .modal-input {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
-          padding: 8px 12px;
-          color: #ffffff;
+          background: #0b0e14;
+          border: 1px solid #283347;
+          border-radius: 6px;
+          padding: 8px 11px;
+          color: #f8fafc;
           font-size: 12px;
           font-family: 'JetBrains Mono', monospace;
           outline: none;
@@ -3828,17 +3860,16 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .modal-input:focus {
           border-color: #38bdf8;
-          box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
         }
 
-        /* High-Contrast Modal Dropdown Select & Option Styling (Anti White-on-White) */
+        /* High-Contrast Modal Dropdown Select & Option Styling */
         select.modal-input, select.modal-select, .modal-select {
-          background-color: #0f172a !important;
+          background-color: #0b0e14 !important;
           color: #f8fafc !important;
-          border: 1px solid rgba(56, 189, 248, 0.4) !important;
-          border-radius: 8px !important;
-          padding: 8px 12px !important;
-          font-size: 13px !important;
+          border: 1px solid #283347 !important;
+          border-radius: 6px !important;
+          padding: 8px 11px !important;
+          font-size: 12px !important;
           font-family: 'JetBrains Mono', monospace !important;
           outline: none !important;
           cursor: pointer !important;
@@ -3846,7 +3877,6 @@ class HomeMinerFleetCard extends HTMLElement {
 
         select.modal-input:focus, select.modal-select:focus, .modal-select:focus {
           border-color: #38bdf8 !important;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
         }
 
         select.modal-input option, select.modal-select option, .modal-select option, option {
@@ -3854,7 +3884,7 @@ class HomeMinerFleetCard extends HTMLElement {
           color: #f8fafc !important;
           padding: 10px 14px !important;
           font-family: 'JetBrains Mono', monospace !important;
-          font-size: 13px !important;
+          font-size: 12px !important;
         }
 
         select.modal-input option:checked, select.modal-select option:checked, .modal-select option:checked {
@@ -3873,125 +3903,141 @@ class HomeMinerFleetCard extends HTMLElement {
           justify-content: flex-end;
           gap: 10px;
           padding-top: 14px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid #1f2737;
           margin-top: 6px;
         }
 
-        /* 3 Visual Hero Ring Gauges */
-        .hero-orbit-grid {
+        /* --- COMPACT KPI TELEMETRY RIBBON (Replaces Oversized Donut Gauges) --- */
+        .kpi-ribbon {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 16px;
-          margin-bottom: 24px;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        @media (max-width: 1024px) {
+          .kpi-ribbon {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+        @media (max-width: 640px) {
+          .kpi-ribbon {
+            grid-template-columns: 1fr 1fr;
+          }
         }
 
-        .gauge-card {
-          padding: 20px 16px;
+        .kpi-cell {
+          background: #111620;
+          border: 1px solid #1f2737;
+          border-radius: 8px;
+          padding: 10px 14px;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          text-align: center;
-          margin-bottom: 0;
-        }
-
-        .gauge-wrapper {
+          justify-content: space-between;
+          gap: 5px;
           position: relative;
-          width: 130px;
-          height: 130px;
-          margin: 10px 0 14px 0;
-        }
-
-        .gauge-svg {
-          transform: rotate(-90deg);
-          width: 100%;
-          height: 100%;
-        }
-
-        .gauge-bg-ring {
-          fill: none;
-          stroke: rgba(255, 255, 255, 0.08);
-          stroke-width: 9;
-        }
-
-        .gauge-prog-ring {
-          fill: none;
-          stroke-width: 9;
-          stroke-linecap: round;
-          transition: stroke-dashoffset 0.8s ease;
-        }
-
-        .gauge-inner-content {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .gauge-main-val {
-          font-size: 24px;
-          font-weight: 800;
-          line-height: 1;
-          font-family: 'JetBrains Mono', monospace;
-        }
-
-        .gauge-sub-unit {
-          font-size: 10px;
-          font-weight: 600;
-          color: #94a3b8;
-          margin-top: 3px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .gauge-header-label {
-          font-size: 11px;
-          font-weight: 600;
-          color: #94a3b8;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-        }
-
-        .gauge-footer-pill {
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          padding: 3px 10px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #cbd5e1;
-        }
-
-        /* --- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY) --- */
-        .pipeline-card {
-          background: rgba(15, 23, 42, 0.65);
-          backdrop-filter: blur(24px) saturate(160%);
-          -webkit-backdrop-filter: blur(24px) saturate(160%);
-          border: 1px solid var(--theme-card-border, rgba(56, 189, 248, 0.25));
-          border-radius: 14px;
           overflow: hidden;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 16px var(--theme-glow, rgba(56, 189, 248, 0.15));
-          margin-bottom: 20px;
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .kpi-cell-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+        }
+
+        .kpi-label {
+          font-size: 10px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .kpi-cell .kpi-val-row,
+        .kpi-main-row {
+          display: flex;
+          align-items: baseline;
+          gap: 5px;
+        }
+
+        .kpi-cell .kpi-value,
+        .kpi-val {
+          font-size: 22px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
+          line-height: 1.1;
+          color: #f8fafc;
+          letter-spacing: -0.02em;
+        }
+
+        .kpi-cell .kpi-unit,
+        .kpi-unit {
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
+          color: #64748b;
+        }
+
+        .kpi-cell .kpi-sub,
+        .kpi-sub-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 10.5px;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
+          color: #94a3b8;
+          gap: 6px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-top: 2px;
+        }
+
+        .kpi-cell .kpi-bar-track,
+        .kpi-bar {
+          height: 3px;
+          width: 100%;
+          background: #1a2232;
+          border-radius: 2px;
+          overflow: hidden;
+          margin-top: 4px;
+        }
+
+        .kpi-bar-fill {
+          height: 100%;
+          border-radius: 2px;
+          transition: width 0.4s ease;
+        }
+
+        /* --- SLIM STRATUM STATUS BAR & EXPANDABLE PIPELINE --- */
+        .pipeline-card {
+          background: #0e131c;
+          border: 1px solid #1f2737;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 12px;
         }
 
         .pipeline-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 8px 14px;
-          background: rgba(255, 255, 255, 0.03);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          padding: 7px 12px;
+          background: #0e131c;
+          border-bottom: 1px solid #1f2737;
           cursor: pointer;
           user-select: none;
-          transition: background 0.2s ease;
+          transition: background 0.15s ease;
+          gap: 8px;
         }
         .pipeline-header:hover {
-          background: rgba(255, 255, 255, 0.06);
+          background: #131a26;
         }
 
         .pipeline-header-left {
@@ -3999,53 +4045,52 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           gap: 10px;
           min-width: 0;
+          flex-wrap: wrap;
         }
 
         .pipeline-icon-badge {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 26px;
-          height: 26px;
-          border-radius: 7px;
-          background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.05));
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          font-size: 13px;
+          width: 22px;
+          height: 22px;
+          border-radius: 5px;
+          background: #161d2b;
+          border: 1px solid #283347;
+          color: #38bdf8;
           flex-shrink: 0;
         }
 
         .pipeline-title {
-          font-size: 12.5px;
+          font-size: 11px;
           font-weight: 700;
-          letter-spacing: 0.3px;
+          font-family: 'JetBrains Mono', monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #cbd5e1;
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: 6px;
           white-space: nowrap;
         }
 
         .live-dot {
-          width: 7px;
-          height: 7px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
-          background: #34d399;
-          box-shadow: 0 0 8px #34d399;
-          animation: pulse-live 1.8s infinite ease-in-out;
+          background: #10b981;
           flex-shrink: 0;
-        }
-        @keyframes pulse-live {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0.6; }
         }
 
         .pipeline-summary-pill {
           font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #94a3b8;
-          background: rgba(255, 255, 255, 0.05);
+          background: #141b28;
           padding: 2px 8px;
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 4px;
+          border: 1px solid #222d40;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -4055,20 +4100,21 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 5px;
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          border-radius: 7px;
+          background: #141b28;
+          border: 1px solid #28344a;
+          border-radius: 5px;
           padding: 2px 7px;
           position: relative;
-          transition: all 0.2s ease;
           flex-shrink: 0;
         }
         .pipeline-coin-wrap:hover {
-          border-color: rgba(56, 189, 248, 0.6);
-          box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+          border-color: #38bdf8;
         }
         .pipeline-coin-icon {
-          font-size: 11.5px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          font-weight: 700;
+          color: #fbbf24;
           line-height: 1;
         }
         .pipeline-coin-select {
@@ -4077,7 +4123,7 @@ class HomeMinerFleetCard extends HTMLElement {
           color: #f8fafc;
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 600;
           cursor: pointer;
           outline: none;
           padding: 0 2px;
@@ -4108,32 +4154,33 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .hud-action-btn {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
+          background: #161d2b;
+          border: 1px solid #263145;
+          border-radius: 5px;
           color: #94a3b8;
-          font-size: 11px;
+          font-size: 10.5px;
+          font-family: 'JetBrains Mono', monospace;
           font-weight: 600;
           padding: 3px 8px;
           cursor: pointer;
           display: flex;
           align-items: center;
-          gap: 5px;
-          transition: all 0.2s ease;
+          gap: 4px;
+          transition: all 0.15s ease;
         }
         .hud-action-btn:hover {
           color: #f8fafc;
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
+          background: #1e2738;
+          border-color: #3b4b66;
         }
 
         /* 4-Stage Horizontal Assembly */
         .pipeline-body {
           display: grid;
           grid-template-columns: 1.1fr 1.3fr 1.1fr 1.3fr;
-          gap: 10px;
-          padding: 12px 14px;
-          background: rgba(10, 15, 28, 0.5);
+          gap: 8px;
+          padding: 10px 12px;
+          background: #0b0e14;
           align-items: center;
         }
 
@@ -4145,15 +4192,15 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .pipeline-stage {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-          padding: 9px 11px;
+          background: #111620;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
+          padding: 8px 10px;
           display: flex;
           flex-direction: column;
-          gap: 5px;
+          gap: 4px;
           position: relative;
-          height: 102px;
+          height: 92px;
           justify-content: space-between;
         }
 
@@ -4161,30 +4208,32 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          font-size: 10.5px;
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
           font-weight: 700;
-          color: #94a3b8;
+          color: #64748b;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.05em;
         }
         .stage-header span:first-child {
           display: flex;
           align-items: center;
           gap: 5px;
-          color: #cbd5e1;
+          color: #94a3b8;
         }
 
         .stage-tag {
           font-size: 9px;
           padding: 1px 5px;
-          border-radius: 4px;
-          background: rgba(56, 189, 248, 0.15);
+          border-radius: 3px;
+          background: rgba(56, 189, 248, 0.12);
           color: #38bdf8;
           font-family: 'JetBrains Mono', monospace;
         }
 
         .stage-mono {
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           font-size: 11px;
           color: #f8fafc;
           white-space: nowrap;
@@ -4194,6 +4243,8 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .stage-sub-meta {
           font-size: 9.5px;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #64748b;
           display: flex;
           justify-content: space-between;
@@ -4201,15 +4252,15 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .conduit-stage {
-          padding: 7px 9px;
+          padding: 6px 8px;
           position: relative;
         }
         .particle-canvas {
           width: 100%;
-          height: 44px;
-          border-radius: 6px;
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(56, 189, 248, 0.15);
+          height: 38px;
+          border-radius: 4px;
+          background: #080a0f;
+          border: 1px solid #1a2232;
           display: block;
         }
 
@@ -4217,24 +4268,24 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5px 8px;
-          background: rgba(0, 0, 0, 0.35);
-          border-radius: 6px;
-          border: 1px solid rgba(245, 158, 11, 0.2);
+          padding: 4px 8px;
+          background: #080a0f;
+          border-radius: 4px;
+          border: 1px solid #262115;
         }
         .scanner-text {
           font-family: 'JetBrains Mono', monospace;
-          font-size: 11.5px;
+          font-variant-numeric: tabular-nums;
+          font-size: 11px;
           font-weight: 700;
-          color: #fbbf24;
-          letter-spacing: 1px;
-          text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+          color: #f59e0b;
+          letter-spacing: 0.5px;
         }
 
         .pulse-bar {
-          height: 3px;
+          height: 2px;
           width: 100%;
-          background: rgba(255, 255, 255, 0.06);
+          background: #1a2232;
           border-radius: 2px;
           overflow: hidden;
           position: relative;
@@ -4242,8 +4293,8 @@ class HomeMinerFleetCard extends HTMLElement {
         .pulse-bar-fill {
           height: 100%;
           width: 45%;
-          background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-          animation: conduit-flow 1.5s infinite linear;
+          background: #38bdf8;
+          animation: conduit-flow 1.8s infinite linear;
         }
         @keyframes conduit-flow {
           0% { transform: translateX(-100%); }
@@ -4264,35 +4315,32 @@ class HomeMinerFleetCard extends HTMLElement {
           }
         }
 
-        /* --- AERO-GLASS SEGMENTED WORKSPACE TAB BAR --- */
+        /* --- PRECISION SEGMENTED WORKSPACE TAB BAR --- */
         .workspace-tab-bar {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 5px;
-          background: rgba(15, 23, 42, 0.65);
-          backdrop-filter: blur(24px) saturate(160%);
-          -webkit-backdrop-filter: blur(24px) saturate(160%);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 14px;
-          margin-bottom: 22px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+          gap: 4px;
+          padding: 4px;
+          background: #0e131c;
+          border: 1px solid #1f2737;
+          border-radius: 8px;
+          margin-bottom: 16px;
           position: sticky;
-          top: 10px;
+          top: 8px;
           z-index: 50;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-x: contain;
           scroll-behavior: smooth;
           scrollbar-width: thin;
-          scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
+          scrollbar-color: #283347 transparent;
         }
 
         .workspace-tab-bar::-webkit-scrollbar {
           height: 3px;
         }
         .workspace-tab-bar::-webkit-scrollbar-thumb {
-          background: rgba(56, 189, 248, 0.25);
+          background: #283347;
           border-radius: 3px;
         }
 
@@ -4302,17 +4350,17 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 5px;
-          padding: 7px 10px;
-          border-radius: 10px;
+          gap: 6px;
+          padding: 7px 12px;
+          border-radius: 6px;
           font-size: 11.5px;
-          font-weight: 700;
+          font-weight: 600;
           font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
           color: #94a3b8;
           background: transparent;
           border: 1px solid transparent;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.15s ease;
           user-select: none;
           text-align: center;
           white-space: nowrap;
@@ -4320,9 +4368,9 @@ class HomeMinerFleetCard extends HTMLElement {
 
         @media (max-width: 950px) {
           .tab-pill {
-            padding: 6px 7px;
+            padding: 6px 8px;
             font-size: 11px;
-            gap: 3px;
+            gap: 4px;
           }
           .tab-pill .tab-badge {
             font-size: 9.5px;
@@ -4331,25 +4379,27 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .tab-pill:hover {
-          color: #f8fafc;
-          background: rgba(255, 255, 255, 0.05);
+          color: #f1f5f9;
+          background: #141b28;
         }
 
         .tab-pill.active {
-          color: #ffffff;
-          background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5));
-          border: 1px solid #38bdf8;
-          box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          color: #f8fafc;
+          background: #1a2333;
+          border: 1px solid #2e3d59;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .tab-pill .tab-badge {
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
-          padding: 2px 6px;
-          border-radius: 999px;
-          background: rgba(56, 189, 248, 0.2);
+          font-variant-numeric: tabular-nums;
+          padding: 1px 6px;
+          border-radius: 4px;
+          background: #141c2b;
+          border: 1px solid #26334d;
           color: #38bdf8;
-          font-weight: 700;
+          font-weight: 600;
         }
 
         .tab-pane {
@@ -4383,9 +4433,9 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           flex-wrap: wrap;
           gap: 12px;
-          padding-bottom: 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          margin-bottom: 16px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid #1f2737;
+          margin-bottom: 14px;
         }
 
         .pod-identity {
@@ -4395,25 +4445,24 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .pod-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.15);
+          width: 38px;
+          height: 38px;
+          border-radius: 6px;
+          background: #161d2b;
+          border: 1px solid #263147;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
+          font-size: 18px;
           flex-shrink: 0;
         }
 
         .pod-icon svg {
           display: block;
-          filter: drop-shadow(0 0 6px currentColor);
         }
 
         .pod-name {
-          font-size: 17px;
+          font-size: 16px;
           font-weight: 700;
           color: #f8fafc;
         }
@@ -4421,6 +4470,7 @@ class HomeMinerFleetCard extends HTMLElement {
         .pod-meta-strip {
           font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #94a3b8;
           display: flex;
           align-items: center;
@@ -4432,15 +4482,15 @@ class HomeMinerFleetCard extends HTMLElement {
         .telemetry-tile-row {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          gap: 12px;
-          margin-bottom: 18px;
+          gap: 10px;
+          margin-bottom: 14px;
         }
 
         .tile-glass-box {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 12px;
-          padding: 12px 14px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
+          padding: 10px 12px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -4449,9 +4499,9 @@ class HomeMinerFleetCard extends HTMLElement {
         .tile-label {
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
+          color: #64748b;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
         }
 
         .tile-val-row {
@@ -4462,9 +4512,10 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .tile-num {
-          font-size: 20px;
+          font-size: 19px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
         }
 
         .tile-unit {
@@ -4474,24 +4525,24 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .tile-prog-bar {
-          height: 4px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.08);
+          height: 3px;
+          border-radius: 2px;
+          background: #1e293b;
           margin-top: 8px;
           overflow: hidden;
         }
 
         .tile-prog-fill {
           height: 100%;
-          border-radius: 999px;
+          border-radius: 2px;
         }
 
         /* Tactile Bay */
         .tactile-bay {
-          background: rgba(10, 15, 26, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 14px;
-          padding: 16px 18px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
+          padding: 14px 16px;
         }
 
         .bay-header-row {
@@ -4504,11 +4555,11 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .bay-title {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
-          letter-spacing: 0.03em;
-          color: #fbbf24;
+          letter-spacing: 0.05em;
+          color: #94a3b8;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -4516,34 +4567,36 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .profile-pill-rack {
           display: flex;
-          gap: 8px;
+          gap: 6px;
           flex-wrap: wrap;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .pill-btn {
-          padding: 6px 14px;
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 5px 12px;
+          border-radius: 5px;
+          background: #141c2b;
+          border: 1px solid #26334d;
           color: #94a3b8;
           font-size: 11px;
           font-weight: 600;
           font-family: 'JetBrains Mono', monospace;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
         }
 
         .pill-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #ffffff;
+          background: #1e293b;
+          color: #f8fafc;
         }
 
         .pill-btn.active {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.15));
-          border-color: #fbbf24;
-          color: #fef08a;
-          box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+          background: rgba(245, 158, 11, 0.15);
+          border-color: #f59e0b;
+          color: #fbbf24;
           font-weight: 700;
         }
 
@@ -4568,15 +4621,16 @@ class HomeMinerFleetCard extends HTMLElement {
           justify-content: space-between;
           font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #94a3b8;
         }
 
         input[type="range"] {
           -webkit-appearance: none;
           width: 100%;
-          height: 6px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 999px;
+          height: 5px;
+          background: #1e293b;
+          border-radius: 3px;
           outline: none;
           cursor: pointer;
           margin: 6px 0;
@@ -4584,29 +4638,27 @@ class HomeMinerFleetCard extends HTMLElement {
 
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: #ffffff;
-          border: 3px solid #fbbf24;
-          box-shadow: 0 0 10px #fbbf24;
+          width: 14px;
+          height: 14px;
+          border-radius: 3px;
+          background: #f8fafc;
+          border: 2px solid #f59e0b;
           cursor: pointer;
         }
 
         input[type="range"].cyan-thumb::-webkit-slider-thumb {
           border-color: #38bdf8;
-          box-shadow: 0 0 10px #38bdf8;
         }
 
         /* Stratum Strip */
         .stratum-card-strip {
-          background: rgba(10, 15, 26, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.07);
-          border-radius: 14px;
-          padding: 14px 18px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
+          padding: 12px 14px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 8px;
         }
 
         .stratum-chips-row {
@@ -4628,9 +4680,10 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .shares-metric-rack {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           flex-wrap: wrap;
         }
 
@@ -4638,23 +4691,23 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 4px 8px;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: #141c2b;
+          border: 1px solid #26334d;
         }
 
         /* --- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE VFX --- */
         .lottery-radar-console {
-          margin-bottom: 24px;
-          padding: 22px 24px;
+          margin-bottom: 18px;
+          padding: 18px 20px;
         }
 
         .lottery-header-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 18px;
+          margin-bottom: 16px;
           flex-wrap: wrap;
           gap: 12px;
         }
@@ -4666,61 +4719,60 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .lottery-icon-box {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          background: rgba(245, 158, 11, 0.15);
-          border: 1px solid rgba(245, 158, 11, 0.35);
+          width: 36px;
+          height: 36px;
+          border-radius: 6px;
+          background: #161d2b;
+          border: 1px solid #263147;
+          color: #f59e0b;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 19px;
-          box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+          font-size: 16px;
         }
 
         .lottery-title {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 700;
           color: #f8fafc;
           font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.03em;
         }
 
         .lottery-coin-wrap {
           display: inline-flex;
           align-items: center;
           gap: 7px;
-          background: rgba(15, 23, 42, 0.75);
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          border-radius: 999px;
-          padding: 3px 8px 3px 12px;
-          box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+          background: #0d121b;
+          border: 1px solid #263147;
+          border-radius: 6px;
+          padding: 3px 8px 3px 10px;
         }
 
         .lottery-coin-label {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
-          color: #fbbf24;
+          color: #94a3b8;
           font-family: 'JetBrains Mono', monospace;
           letter-spacing: 0.5px;
           white-space: nowrap;
         }
 
         .lottery-coin-select {
-          background: #0f172a !important;
-          border: 1px solid rgba(245, 158, 11, 0.5) !important;
+          background: #111620 !important;
+          border: 1px solid #263147 !important;
           color: #f8fafc !important;
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           font-weight: 700;
           padding: 3px 8px;
-          border-radius: 6px;
+          border-radius: 4px;
           cursor: pointer;
           outline: none;
         }
 
         .lottery-coin-select:focus {
-          border-color: #fbbf24 !important;
-          box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+          border-color: #38bdf8 !important;
         }
 
         .lottery-coin-select option {
@@ -4733,7 +4785,7 @@ class HomeMinerFleetCard extends HTMLElement {
           grid-template-columns: 180px 1fr;
           gap: 20px;
           align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: 18px;
         }
 
         @media (max-width: 768px) {
@@ -4753,7 +4805,6 @@ class HomeMinerFleetCard extends HTMLElement {
         .radar-svg {
           width: 160px;
           height: 160px;
-          filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.2));
         }
 
         .radar-sweep-beam {
@@ -4791,7 +4842,6 @@ class HomeMinerFleetCard extends HTMLElement {
           height: 6px;
           border-radius: 50%;
           background: #10b981;
-          box-shadow: 0 0 6px #10b981;
           animation: dot-blink 1.2s ease-in-out infinite alternate;
         }
 
@@ -4803,15 +4853,16 @@ class HomeMinerFleetCard extends HTMLElement {
         .lottery-metrics-column {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 12px;
           width: 100%;
         }
 
         .jackpot-banner {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.06));
-          border: 1px solid rgba(245, 158, 11, 0.3);
-          border-radius: 12px;
-          padding: 14px 18px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-left: 3px solid #f59e0b;
+          border-radius: 6px;
+          padding: 12px 16px;
           display: flex;
           flex-direction: column;
           gap: 4px;
@@ -4819,21 +4870,10 @@ class HomeMinerFleetCard extends HTMLElement {
           overflow: hidden;
         }
 
-        .jackpot-banner::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          bottom: 0;
-          width: 3px;
-          background: #fbbf24;
-          box-shadow: 0 0 8px #fbbf24;
-        }
-
         .jackpot-label {
           font-size: 10px;
           font-weight: 700;
-          color: #fbbf24;
+          color: #94a3b8;
           letter-spacing: 0.06em;
         }
 
@@ -4845,26 +4885,28 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .jackpot-amount {
-          font-size: 26px;
+          font-size: 24px;
           font-weight: 800;
-          color: #ffffff;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           letter-spacing: -0.02em;
-          text-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
         }
 
         .jackpot-btc-badge {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
           color: #fbbf24;
-          background: rgba(245, 158, 11, 0.18);
-          border: 1px solid rgba(245, 158, 11, 0.4);
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px solid rgba(245, 158, 11, 0.3);
           padding: 2px 8px;
-          border-radius: 6px;
+          border-radius: 4px;
         }
 
         .jackpot-sub {
           font-size: 11px;
-          color: #94a3b8;
+          color: #64748b;
         }
 
         .lottery-stat-tiles {
@@ -4880,9 +4922,9 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .lottery-mini-tile {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
           padding: 10px 14px;
           display: flex;
           flex-direction: column;
@@ -4892,7 +4934,7 @@ class HomeMinerFleetCard extends HTMLElement {
         .mini-tile-label {
           font-size: 10px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #64748b;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
@@ -4900,6 +4942,8 @@ class HomeMinerFleetCard extends HTMLElement {
         .mini-tile-val {
           font-size: 15px;
           font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
         }
 
         .mini-tile-sub {
@@ -4908,11 +4952,11 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .share-progress-container {
-          background: rgba(0, 0, 0, 0.25);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 14px 18px;
-          margin-top: 6px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 6px;
+          padding: 14px 16px;
+          margin-top: 4px;
         }
 
         .share-progress-header {
@@ -4927,18 +4971,17 @@ class HomeMinerFleetCard extends HTMLElement {
         .share-progress-track {
           position: relative;
           width: 100%;
-          height: 10px;
-          background: rgba(255, 255, 255, 0.06);
-          border-radius: 999px;
+          height: 8px;
+          background: #1e293b;
+          border-radius: 4px;
           overflow: visible;
           margin-bottom: 12px;
         }
 
         .share-progress-fill {
           height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg, #38bdf8 0%, #a78bfa 30%, #fbbf24 60%, #10b981 100%);
-          box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+          border-radius: 4px;
+          background: linear-gradient(90deg, #38bdf8 0%, #f59e0b 65%, #10b981 100%);
           transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -4953,12 +4996,11 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .share-pin-glow {
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           background: #fbbf24;
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 10px #fbbf24, 0 0 20px rgba(245, 158, 11, 0.6);
+          border: 2px solid #0b0e14;
         }
 
         .share-pin-label {
@@ -4966,100 +5008,70 @@ class HomeMinerFleetCard extends HTMLElement {
           top: -24px;
           font-size: 9px;
           font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
           color: #fbbf24;
           background: #0f172a;
           border: 1px solid rgba(245, 158, 11, 0.5);
           padding: 1px 6px;
           border-radius: 4px;
           white-space: nowrap;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
         .share-milestone-row {
           display: flex;
           justify-content: space-between;
           font-size: 9px;
+          font-family: 'JetBrains Mono', monospace;
           color: #64748b;
           padding: 0 4px;
         }
 
-        /* Mega-Share Rig Card Aura & Pills */
+        /* Mega-Share Rig Card Highlights & Pills */
         .mega-share-card {
-          border-color: rgba(245, 158, 11, 0.45) !important;
-          box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.6),
-                      0 0 35px -5px rgba(245, 158, 11, 0.22),
-                      inset 0 1px 0 rgba(245, 158, 11, 0.5) !important;
-          animation: mega-card-aura 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes mega-card-aura {
-          0% {
-            box-shadow: 0 16px 45px -8px rgba(0, 0, 0, 0.6), 0 0 22px -5px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(245, 158, 11, 0.4);
-          }
-          100% {
-            box-shadow: 0 20px 50px -6px rgba(0, 0, 0, 0.7), 0 0 42px 0px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(245, 158, 11, 0.7);
-          }
+          border-color: rgba(245, 158, 11, 0.5) !important;
+          border-top: 2px solid #f59e0b !important;
         }
 
         .mega-share-pill {
-          font-size: 11px;
+          font-size: 10.5px;
           font-weight: 700;
-          padding: 3px 10px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35));
-          border: 1px solid rgba(245, 158, 11, 0.6);
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 9px;
+          border-radius: 4px;
+          background: rgba(245, 158, 11, 0.14);
+          border: 1px solid rgba(245, 158, 11, 0.45);
           color: #fbbf24;
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .mega-share-pill::after {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -60%;
-          width: 40%;
-          height: 200%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-          transform: rotate(25deg);
-          animation: mega-shimmer 2.5s infinite;
-        }
-
-        @keyframes mega-shimmer {
-          0% { left: -60%; }
-          100% { left: 160%; }
         }
 
         .super-share-pill {
-          font-size: 11px;
+          font-size: 10.5px;
           font-weight: 700;
-          padding: 3px 10px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.3));
-          border: 1px solid rgba(56, 189, 248, 0.5);
+          font-family: 'JetBrains Mono', monospace;
+          padding: 3px 9px;
+          border-radius: 4px;
+          background: rgba(56, 189, 248, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.4);
           color: #38bdf8;
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
         }
 
-        /* --- RPG PROGRESSION & TROPHY CABINET STYLES --- */
+        /* --- ENGINEERING MILESTONES & BENCHMARK CABINET STYLES --- */
         .glass-card.gold-glow {
-          border-color: rgba(245, 158, 11, 0.35);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(245, 158, 11, 0.22);
+          border-color: #1f2737;
+          border-top: 2px solid #f59e0b;
         }
 
         .rpg-hero-banner {
           display: grid;
           grid-template-columns: auto 1fr;
-          gap: 24px;
-          padding: 24px;
-          margin-bottom: 24px;
+          gap: 20px;
+          padding: 20px;
+          margin-bottom: 18px;
           align-items: center;
         }
         @media (max-width: 768px) {
@@ -5068,8 +5080,8 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .level-orb-box {
           position: relative;
-          width: 124px;
-          height: 124px;
+          width: 112px;
+          height: 112px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -5077,8 +5089,8 @@ class HomeMinerFleetCard extends HTMLElement {
           margin: 0 auto;
         }
         .level-orb-svg {
-          width: 124px;
-          height: 124px;
+          width: 112px;
+          height: 112px;
           transform: rotate(-90deg);
         }
         .level-orb-inner {
@@ -5090,26 +5102,26 @@ class HomeMinerFleetCard extends HTMLElement {
           text-align: center;
         }
         .level-orb-num {
-          font-size: 34px;
+          font-size: 30px;
           font-weight: 800;
           font-family: 'JetBrains Mono', monospace;
-          color: #fbbf24;
+          font-variant-numeric: tabular-nums;
+          color: #f8fafc;
           line-height: 1;
-          text-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
         }
         .level-orb-sub {
           font-size: 9px;
           font-weight: 700;
-          color: #94a3b8;
+          color: #64748b;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          margin-top: 2px;
+          margin-top: 3px;
         }
 
         .rpg-hero-main {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
         }
         .rpg-rank-badge-row {
           display: flex;
@@ -5121,44 +5133,44 @@ class HomeMinerFleetCard extends HTMLElement {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 6px 14px;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.35));
-          border: 1px solid rgba(245, 158, 11, 0.5);
-          border-radius: 999px;
-          font-size: 15px;
-          font-weight: 800;
-          color: #fde68a;
-          box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+          padding: 5px 12px;
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #fbbf24;
         }
         .rpg-tier-label {
-          font-size: 12px;
+          font-size: 11.5px;
           color: #94a3b8;
           font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
         }
 
         .rpg-progress-track {
           width: 100%;
-          height: 14px;
-          background: rgba(0, 0, 0, 0.5);
-          border-radius: 999px;
+          height: 10px;
+          background: #0d121b;
+          border-radius: 4px;
           overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid #1f2737;
           position: relative;
-          box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
         .rpg-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #38bdf8, #f59e0b, #fbbf24);
-          border-radius: 999px;
+          background: linear-gradient(90deg, #38bdf8, #f59e0b);
+          border-radius: 4px;
           position: relative;
-          box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
           transition: width 0.4s ease;
         }
         .rpg-xp-stats-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          font-size: 12px;
+          font-size: 11.5px;
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #cbd5e1;
           flex-wrap: wrap;
           gap: 8px;
@@ -5166,28 +5178,28 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .rpg-meta-chips {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           flex-wrap: wrap;
-          margin-top: 4px;
+          margin-top: 2px;
         }
         .rpg-meta-chip {
-          padding: 5px 12px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 8px;
+          padding: 4px 10px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
+          border-radius: 5px;
           font-size: 11px;
           color: #94a3b8;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .rpg-meta-chip b { color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
+        .rpg-meta-chip b { color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
 
-        /* Trophy Filter Bar */
+        /* Milestone Filter Bar */
         .trophy-filter-bar {
           display: flex;
-          gap: 8px;
-          margin-bottom: 20px;
+          gap: 6px;
+          margin-bottom: 16px;
           overflow-x: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
@@ -5197,55 +5209,51 @@ class HomeMinerFleetCard extends HTMLElement {
           display: none;
         }
         .trophy-filter-pill {
-          padding: 6px 14px;
-          border-radius: 999px;
+          padding: 5px 12px;
+          border-radius: 5px;
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 600;
           cursor: pointer;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #111620;
+          border: 1px solid #1f2737;
           color: #94a3b8;
           white-space: nowrap;
-          transition: all 0.2s;
+          transition: all 0.15s;
         }
         .trophy-filter-pill:hover {
           color: #f8fafc;
-          background: rgba(255, 255, 255, 0.08);
+          background: #161d2b;
         }
         .trophy-filter-pill.active {
-          background: rgba(245, 158, 11, 0.2);
-          border-color: #fbbf24;
-          color: #fde68a;
-          box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+          background: #1a2333;
+          border-color: #38bdf8;
+          color: #f8fafc;
         }
 
-        /* Trophy Grid */
+        /* Milestone Grid */
         .trophy-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-          gap: 16px;
-          margin-bottom: 28px;
+          gap: 12px;
+          margin-bottom: 22px;
         }
 
         .trophy-card {
-          padding: 18px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          border-radius: 16px;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .trophy-card:hover {
-          transform: translateY(-2px);
+          gap: 10px;
+          border-radius: 8px;
+          transition: border-color 0.15s;
         }
         .trophy-card.unlocked {
-          background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.65));
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          box-shadow: 0 8px 24px -6px rgba(0,0,0,0.4), 0 0 20px -6px rgba(245, 158, 11, 0.18);
+          background: #111620;
+          border: 1px solid #26334d;
+          border-left: 3px solid #10b981;
         }
         .trophy-card.locked {
-          background: rgba(15, 23, 42, 0.45);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: #0d121b;
+          border: 1px solid #1a2232;
           opacity: 0.72;
         }
 
@@ -5255,138 +5263,137 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 12px;
         }
         .trophy-icon-box {
-          width: 46px;
-          height: 46px;
-          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 24px;
+          font-size: 18px;
           flex-shrink: 0;
         }
         .trophy-card.unlocked .trophy-icon-box {
-          background: rgba(245, 158, 11, 0.15);
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+          background: rgba(16, 185, 129, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.35);
+          color: #10b981;
         }
         .trophy-card.locked .trophy-icon-box {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          filter: grayscale(1);
-          opacity: 0.5;
+          background: #141c2b;
+          border: 1px solid #1f2737;
+          color: #64748b;
         }
 
         .trophy-title-wrap {
           flex: 1;
         }
         .trophy-category {
-          font-size: 10px;
+          font-size: 9.5px;
           font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: #94a3b8;
+          color: #64748b;
         }
         .trophy-name {
-          font-size: 14px;
+          font-size: 13.5px;
           font-weight: 700;
           color: #f8fafc;
           margin-top: 2px;
         }
         .trophy-status-pill {
-          font-size: 10px;
+          font-size: 9.5px;
           font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 999px;
+          padding: 2px 7px;
+          border-radius: 4px;
           font-family: 'JetBrains Mono', monospace;
           white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
         }
         .trophy-status-pill.unlocked {
-          background: rgba(16, 185, 129, 0.2);
-          border: 1px solid #10b981;
+          background: rgba(16, 185, 129, 0.14);
+          border: 1px solid rgba(16, 185, 129, 0.4);
           color: #34d399;
         }
         .trophy-status-pill.locked {
-          background: rgba(148, 163, 184, 0.1);
-          border: 1px solid rgba(148, 163, 184, 0.2);
-          color: #94a3b8;
+          background: #141c2b;
+          border: 1px solid #26334d;
+          color: #64748b;
         }
 
         .trophy-desc {
-          font-size: 12px;
+          font-size: 11.5px;
           color: #94a3b8;
           line-height: 1.4;
         }
 
         .trophy-micro-bar {
           width: 100%;
-          height: 6px;
-          background: rgba(0, 0, 0, 0.4);
-          border-radius: 999px;
+          height: 4px;
+          background: #1a2232;
+          border-radius: 2px;
           overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.06);
           margin-top: 4px;
         }
         .trophy-micro-fill {
           height: 100%;
-          border-radius: 999px;
+          border-radius: 2px;
         }
         .trophy-micro-fill.complete {
           background: #10b981;
-          box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
         }
         .trophy-micro-fill.pending {
           background: #38bdf8;
-          box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
         }
 
         .trophy-footer-val {
           display: flex;
           justify-content: space-between;
-          font-size: 11px;
+          font-size: 10.5px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
           color: #cbd5e1;
         }
 
         /* Milestone Roadmap Strip */
         .roadmap-section-title {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: #94a3b8;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
           display: flex;
           align-items: center;
           gap: 8px;
         }
         .roadmap-strip {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           overflow-x: auto;
           scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-          padding-bottom: 12px;
+          scrollbar-color: #26334d transparent;
+          padding-bottom: 10px;
         }
         .roadmap-strip::-webkit-scrollbar {
-          height: 6px;
+          height: 5px;
         }
         .roadmap-strip::-webkit-scrollbar-track {
-          background: rgba(15, 23, 42, 0.5);
-          border-radius: 999px;
+          background: #0d121b;
+          border-radius: 3px;
         }
         .roadmap-strip::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 999px;
-        }
-        .roadmap-strip::-webkit-scrollbar-thumb:hover {
-          background: rgba(245, 158, 11, 0.5);
+          background: #26334d;
+          border-radius: 3px;
         }
         .roadmap-item {
-          min-width: 170px;
-          padding: 14px;
-          border-radius: 12px;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          min-width: 165px;
+          padding: 12px;
+          border-radius: 6px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
           display: flex;
           flex-direction: column;
           gap: 6px;
@@ -5394,13 +5401,12 @@ class HomeMinerFleetCard extends HTMLElement {
           flex-shrink: 0;
         }
         .roadmap-item.current {
-          border-color: #fbbf24;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.8));
-          box-shadow: 0 0 18px rgba(245, 158, 11, 0.25);
+          border-color: #f59e0b;
+          background: #141c2b;
         }
         .roadmap-item.unlocked {
-          border-color: rgba(16, 185, 129, 0.4);
-          background: rgba(16, 185, 129, 0.08);
+          border-color: rgba(16, 185, 129, 0.35);
+          background: #111620;
         }
         .roadmap-lvl-pill {
           font-size: 10px;
@@ -5408,28 +5414,32 @@ class HomeMinerFleetCard extends HTMLElement {
           font-family: 'JetBrains Mono', monospace;
         }
         .roadmap-title {
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
         .roadmap-xp {
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
         }
 
         /* --- MINING HISTORY & DECENTRALIZED CHRONICLES STYLES --- */
         .chronicles-console {
-          padding: 22px 24px;
-          margin-top: 26px;
-          margin-bottom: 26px;
-          border-radius: 16px;
-          border: 1px solid var(--theme-card-border, rgba(56, 189, 248, 0.25));
+          padding: 18px 20px;
+          margin-top: 20px;
+          margin-bottom: 20px;
+          border-radius: 8px;
+          border: 1px solid #1f2737;
         }
 
         .chronicles-header-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
           flex-wrap: wrap;
           gap: 12px;
         }
@@ -5441,26 +5451,27 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .chronicles-icon-box {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
+          width: 36px;
+          height: 36px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.05));
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          font-size: 20px;
+          background: #161d2b;
+          border: 1px solid #263147;
+          color: #38bdf8;
+          font-size: 16px;
         }
 
         .chronicles-title {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 700;
           color: #f8fafc;
           font-family: 'JetBrains Mono', monospace;
         }
 
         .chronicles-subtitle {
-          font-size: 11.5px;
+          font-size: 11px;
           color: #94a3b8;
           margin-top: 2px;
         }
@@ -5469,54 +5480,55 @@ class HomeMinerFleetCard extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 5px 12px;
-          border-radius: 20px;
-          font-size: 11px;
+          padding: 4px 10px;
+          border-radius: 5px;
+          font-size: 10.5px;
           font-weight: 600;
-          background: rgba(56, 189, 248, 0.1);
-          border: 1px solid rgba(56, 189, 248, 0.35);
+          font-family: 'JetBrains Mono', monospace;
+          background: #141c2b;
+          border: 1px solid #26334d;
           color: #38bdf8;
         }
         .chronicles-status-badge.unlocked {
-          background: rgba(245, 158, 11, 0.12);
-          border-color: rgba(245, 158, 11, 0.4);
-          color: #fbbf24;
+          background: rgba(16, 185, 129, 0.12);
+          border-color: rgba(16, 185, 129, 0.35);
+          color: #10b981;
         }
 
         .chronicle-filter-bar {
           display: flex;
-          gap: 8px;
-          margin-bottom: 16px;
+          gap: 6px;
+          margin-bottom: 14px;
           flex-wrap: wrap;
         }
 
         .chronicle-filter-pill {
-          padding: 5px 12px;
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.04);
+          padding: 4px 10px;
+          border-radius: 5px;
+          border: 1px solid #1f2737;
+          background: #0d121b;
           color: #94a3b8;
           font-size: 11px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
         }
 
         .chronicle-filter-pill:hover {
           color: #f8fafc;
-          border-color: rgba(255, 255, 255, 0.25);
+          border-color: #2e3d59;
         }
 
         .chronicle-filter-pill.active {
-          background: var(--theme-pill-gradient, linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(8, 47, 73, 0.5)));
-          border-color: var(--theme-accent, #38bdf8);
+          background: #1a2333;
+          border-color: #38bdf8;
           color: #f8fafc;
         }
 
         .chronicles-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-          gap: 14px;
+          gap: 12px;
           max-height: 480px;
           overflow-y: auto;
           padding-right: 6px;
@@ -5526,39 +5538,37 @@ class HomeMinerFleetCard extends HTMLElement {
           width: 5px;
         }
         .chronicles-grid::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.25);
+          background: #0d121b;
           border-radius: 4px;
         }
         .chronicles-grid::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.15);
+          background: #26334d;
           border-radius: 4px;
         }
 
         .chronicle-card {
-          padding: 15px;
-          border-radius: 12px;
+          padding: 14px;
+          border-radius: 6px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.02);
+          transition: border-color 0.15s ease;
+          border: 1px solid #1f2737;
+          background: #0d121b;
         }
 
         .chronicle-card.unlocked {
-          border-color: rgba(56, 189, 248, 0.25);
-          background: rgba(15, 23, 42, 0.55);
+          border-color: #26334d;
+          background: #111620;
         }
 
         .chronicle-card.unlocked:hover {
-          transform: translateY(-2px);
-          border-color: var(--theme-accent, #38bdf8);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 12px var(--theme-glow, rgba(56, 189, 248, 0.2));
+          border-color: #38bdf8;
         }
 
         .chronicle-card.locked {
           opacity: 0.65;
-          background: rgba(15, 23, 42, 0.25);
+          background: #0d121b;
         }
 
         .chronicle-card-header {
@@ -5570,32 +5580,36 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .chronicle-lvl-pill {
           padding: 2px 7px;
-          border-radius: 6px;
+          border-radius: 4px;
           font-size: 10px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
         }
 
         .chronicle-lvl-pill.unlocked {
-          background: rgba(245, 158, 11, 0.15);
-          color: #fbbf24;
-          border: 1px solid rgba(245, 158, 11, 0.35);
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .chronicle-lvl-pill.locked {
-          background: rgba(255, 255, 255, 0.05);
-          color: #94a3b8;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #141c2b;
+          color: #64748b;
+          border: 1px solid #1f2737;
         }
 
         .chronicle-era-tag {
-          font-size: 10.5px;
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
           color: #38bdf8;
           font-weight: 600;
         }
 
         .chronicle-card-title {
-          font-size: 13.5px;
+          font-size: 13px;
           font-weight: 700;
           color: #f8fafc;
           margin-bottom: 6px;
@@ -5612,39 +5626,39 @@ class HomeMinerFleetCard extends HTMLElement {
         .chronicle-locked-msg {
           font-size: 10.5px;
           color: #64748b;
-          font-style: italic;
+          font-family: 'JetBrains Mono', monospace;
           text-align: center;
           padding: 4px;
         }
 
         .chronicle-takeaway-box {
-          background: rgba(56, 189, 248, 0.08);
-          border: 1px solid rgba(56, 189, 248, 0.25);
-          border-radius: 8px;
+          background: #0d121b;
+          border: 1px solid #26334d;
+          border-left: 3px solid #38bdf8;
+          border-radius: 6px;
           padding: 12px 14px;
         }
 
-        /* --- PRESTIGE THEME ENGINE STYLES --- */
+        /* --- WORKSTATION SURFACE THEME ENGINE STYLES --- */
         #card-root {
-          background: var(--theme-hero-bg, radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.10) 0px, transparent 50%), radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%));
-          border-radius: 20px;
+          background: var(--theme-hero-bg, #0b0e14);
+          border-radius: 10px;
           position: relative;
-          transition: background 0.5s ease;
         }
 
         .theme-console {
-          padding: 20px 24px;
-          margin-bottom: 24px;
+          padding: 18px 20px;
+          margin-bottom: 20px;
         }
         .theme-console.locked-engine {
-          background: rgba(15, 23, 42, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0d121b;
+          border: 1px solid #1f2737;
         }
         .theme-header-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 18px;
+          margin-bottom: 16px;
           flex-wrap: wrap;
           gap: 12px;
         }
@@ -5654,32 +5668,33 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 12px;
         }
         .theme-icon-box {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.35));
-          border: 1px solid rgba(245, 158, 11, 0.5);
+          width: 36px;
+          height: 36px;
+          border-radius: 6px;
+          background: #161d2b;
+          border: 1px solid #263147;
+          color: #38bdf8;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
-          box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+          font-size: 16px;
           flex-shrink: 0;
         }
         .theme-title {
-          font-size: 16px;
-          font-weight: 800;
+          font-size: 14px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
           color: #f8fafc;
         }
         .theme-subtitle {
-          font-size: 12px;
+          font-size: 11.5px;
           color: #94a3b8;
           margin-top: 2px;
         }
         .theme-status-badge {
-          padding: 5px 12px;
-          border-radius: 999px;
-          font-size: 11px;
+          padding: 4px 10px;
+          border-radius: 5px;
+          font-size: 10.5px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
           display: inline-flex;
@@ -5687,77 +5702,58 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 6px;
         }
         .theme-status-badge.unlocked {
-          background: rgba(16, 185, 129, 0.2);
-          border: 1px solid #10b981;
+          background: rgba(16, 185, 129, 0.14);
+          border: 1px solid rgba(16, 185, 129, 0.4);
           color: #34d399;
-          box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
         }
         .theme-status-badge.locked {
-          background: rgba(148, 163, 184, 0.1);
-          border: 1px solid rgba(148, 163, 184, 0.25);
-          color: #94a3b8;
+          background: #141c2b;
+          border: 1px solid #26334d;
+          color: #64748b;
         }
 
         .theme-teaser-body {
-          padding: 14px 18px;
-          border-radius: 12px;
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          padding: 12px 16px;
+          border-radius: 6px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
         }
         .theme-teaser-text {
-          font-size: 13px;
+          font-size: 12.5px;
           color: #cbd5e1;
           line-height: 1.5;
         }
 
         .theme-cards-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 12px;
         }
         .theme-option-card {
-          padding: 16px;
-          border-radius: 14px;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 14px;
+          border-radius: 6px;
+          background: #0d121b;
+          border: 1px solid #1f2737;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           position: relative;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .theme-option-card:hover {
-          transform: translateY(-2px);
         }
         .theme-option-card.active {
-          border-color: #fbbf24;
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(15, 23, 42, 0.85));
-          box-shadow: 0 0 24px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          border-color: #38bdf8;
+          background: #111620;
         }
         .theme-option-card.locked {
-          opacity: 0.62;
-          background: rgba(15, 23, 42, 0.4);
+          opacity: 0.6;
         }
 
         .theme-swatch-bar {
           width: 100%;
-          height: 38px;
-          border-radius: 8px;
-          box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0,0,0,0.4);
+          height: 28px;
+          border-radius: 4px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
           position: relative;
           overflow: hidden;
-        }
-        .theme-swatch-bar::after {
-          content: '';
-          position: absolute;
-          top: 0; left: -100%; width: 50%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-          transform: skewX(-20deg);
-          animation: theme-shimmer 3.5s infinite;
-        }
-        @keyframes theme-shimmer {
-          0% { left: -100%; }
-          50%, 100% { left: 200%; }
         }
 
         .theme-card-info {
@@ -5767,107 +5763,77 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 8px;
         }
         .theme-card-name {
-          font-size: 14px;
-          font-weight: 800;
+          font-size: 13px;
+          font-weight: 700;
           color: #f8fafc;
           display: flex;
           align-items: center;
           gap: 6px;
         }
         .theme-card-tier {
-          font-size: 11px;
-          color: #94a3b8;
+          font-size: 10.5px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #64748b;
           margin-top: 2px;
         }
 
         .theme-btn {
           width: 100%;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 700;
+          padding: 7px 12px;
+          border-radius: 5px;
+          font-size: 11.5px;
+          font-weight: 600;
           cursor: pointer;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: 'JetBrains Mono', monospace;
           border: 1px solid transparent;
-          transition: all 0.2s;
+          transition: all 0.15s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 6px;
         }
         .theme-btn.active-btn {
-          background: rgba(245, 158, 11, 0.25);
-          border-color: #fbbf24;
-          color: #fde68a;
-          box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
-        }
-        .theme-btn.apply-btn {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.15);
-          color: #f8fafc;
-        }
-        .theme-btn.apply-btn:hover {
-          background: rgba(56, 189, 248, 0.2);
+          background: rgba(56, 189, 248, 0.14);
           border-color: #38bdf8;
           color: #38bdf8;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+        .theme-btn.apply-btn {
+          background: #161d2b;
+          border-color: #263147;
+          color: #e2e8f0;
+        }
+        .theme-btn.apply-btn:hover {
+          background: #1e293b;
+          border-color: #38bdf8;
+          color: #f8fafc;
         }
         .theme-btn.locked-btn {
-          background: rgba(255, 255, 255, 0.03);
-          border-color: rgba(255, 255, 255, 0.06);
+          background: #0d121b;
+          border-color: #1a2232;
           color: #64748b;
           cursor: not-allowed;
         }
 
         /* --- THEME SPECIFIC OVERRIDES --- */
         #card-root[data-theme="solar_flare"] .tab-pill.active {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(120, 53, 15, 0.6));
-          border-color: #fbbf24;
-          box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+          border-color: #f59e0b;
+          color: #fbbf24;
         }
-        #card-root[data-theme="solar_flare"] .cyan-glow {
-          border-color: rgba(245, 158, 11, 0.35);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(245, 158, 11, 0.25);
-        }
-
         #card-root[data-theme="thermal_magma"] .tab-pill.active {
-          background: linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(136, 19, 55, 0.6));
           border-color: #f43f5e;
-          box-shadow: 0 0 20px rgba(244, 63, 94, 0.45);
+          color: #fb7185;
         }
-        #card-root[data-theme="thermal_magma"] .cyan-glow {
-          border-color: rgba(244, 63, 94, 0.35);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(244, 63, 94, 0.25);
-        }
-
         #card-root[data-theme="emerald_matrix"] .tab-pill.active {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 78, 59, 0.6));
           border-color: #10b981;
-          box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
+          color: #34d399;
         }
-        #card-root[data-theme="emerald_matrix"] .cyan-glow {
-          border-color: rgba(16, 185, 129, 0.35);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(16, 185, 129, 0.25);
-        }
-
         #card-root[data-theme="amethyst_nebula"] .tab-pill.active {
-          background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 7, 100, 0.6));
           border-color: #a855f7;
-          box-shadow: 0 0 20px rgba(168, 85, 247, 0.45);
+          color: #c084fc;
         }
-        #card-root[data-theme="amethyst_nebula"] .cyan-glow {
-          border-color: rgba(168, 85, 247, 0.35);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 35px -8px rgba(168, 85, 247, 0.25);
-        }
-
         #card-root[data-theme="celestial_diamond"] .tab-pill.active {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(56, 189, 248, 0.4));
-          border-color: #ffffff;
-          box-shadow: 0 0 25px rgba(255, 255, 255, 0.5), 0 0 15px rgba(56, 189, 248, 0.4);
-        }
-        #card-root[data-theme="celestial_diamond"] .cyan-glow {
-          border-color: rgba(255, 255, 255, 0.4);
-          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 0 40px -6px rgba(255, 255, 255, 0.35), 0 0 20px rgba(56, 189, 248, 0.25);
+          border-color: #e2e8f0;
+          color: #ffffff;
         }
 
         /* ==========================================================================
@@ -5875,23 +5841,23 @@ class HomeMinerFleetCard extends HTMLElement {
            ========================================================================== */
         @media (max-width: 640px) {
           :host {
-            padding: 12px 8px !important;
-            border-radius: 14px !important;
+            padding: 10px 8px !important;
+            border-radius: 10px !important;
           }
 
           .glass-card {
-            padding: 14px 12px !important;
-            border-radius: 14px !important;
-            margin-bottom: 12px !important;
+            padding: 12px 10px !important;
+            border-radius: 8px !important;
+            margin-bottom: 10px !important;
           }
 
           /* Top Command Bar */
           .top-bar {
-            padding: 12px 10px !important;
-            margin-bottom: 14px !important;
+            padding: 10px !important;
+            margin-bottom: 10px !important;
             flex-direction: column !important;
             align-items: stretch !important;
-            gap: 12px !important;
+            gap: 10px !important;
           }
 
           .brand-cluster {
@@ -5899,7 +5865,7 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           .brand-title {
-            font-size: 16px !important;
+            font-size: 14px !important;
           }
 
           .top-actions {
@@ -5912,40 +5878,34 @@ class HomeMinerFleetCard extends HTMLElement {
           .top-actions .glass-btn {
             justify-content: center !important;
             text-align: center !important;
-            padding: 7px 6px !important;
+            padding: 6px !important;
             font-size: 10px !important;
             width: 100% !important;
-            min-height: 36px !important;
+            min-height: 34px !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
           }
 
-          /* 3 Hero Ring Gauges */
-          .hero-orbit-grid {
-            grid-template-columns: 1fr !important;
-            gap: 10px !important;
-            margin-bottom: 14px !important;
+          /* Compact KPI Ribbon */
+          .kpi-ribbon {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            margin-bottom: 10px !important;
           }
 
-          .gauge-card {
-            padding: 14px 10px !important;
+          .kpi-cell {
+            padding: 10px 12px !important;
           }
 
-          .gauge-wrapper {
-            width: 105px !important;
-            height: 105px !important;
-            margin: 6px 0 8px 0 !important;
+          .kpi-value {
+            font-size: 18px !important;
           }
 
-          .gauge-main-val {
-            font-size: 20px !important;
-          }
-
-          /* Stratum Particle Pipeline */
+          /* Slim Stratum Status Bar */
           .pipeline-card {
-            border-radius: 12px !important;
-            margin-bottom: 14px !important;
+            border-radius: 8px !important;
+            margin-bottom: 10px !important;
           }
 
           .pipeline-header {
@@ -5953,7 +5913,7 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           .pipeline-title {
-            font-size: 11px !important;
+            font-size: 10.5px !important;
           }
 
           .pipeline-summary-pill {
@@ -5985,7 +5945,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
           .pipeline-stage {
             height: auto !important;
-            min-height: 80px !important;
+            min-height: 76px !important;
             padding: 8px 10px !important;
           }
 
@@ -5999,17 +5959,17 @@ class HomeMinerFleetCard extends HTMLElement {
             position: sticky !important;
             top: 4px !important;
             padding: 4px !important;
-            margin-bottom: 14px !important;
-            border-radius: 12px !important;
+            margin-bottom: 10px !important;
+            border-radius: 8px !important;
             gap: 4px !important;
             -webkit-overflow-scrolling: touch !important;
           }
 
           .tab-pill {
-            padding: 7px 8px !important;
+            padding: 6px 8px !important;
             font-size: 11px !important;
-            border-radius: 8px !important;
-            min-height: 36px !important;
+            border-radius: 5px !important;
+            min-height: 34px !important;
             -webkit-tap-highlight-color: transparent !important;
           }
 
@@ -6682,7 +6642,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'WOJAK': {
         name: 'Wojak',
         symbol: 'WOJAK',
-        sign: '🎭',
+        sign: 'W',
         reward: 10000,
         diffNum: 5.0e7,
         diffStr: '50.00 M',
@@ -6693,7 +6653,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'WJK': {
         name: 'Wojak',
         symbol: 'WJK',
-        sign: '🎭',
+        sign: 'W',
         reward: 10000,
         diffNum: 5.0e7,
         diffStr: '50.00 M',
@@ -6715,7 +6675,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'BCH': {
         name: 'Bitcoin Cash',
         symbol: 'BCH',
-        sign: '💚',
+        sign: '₿',
         reward: 3.125,
         diffNum: 6.5e11,
         diffStr: '650.00 G',
@@ -6726,7 +6686,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'BELLS': {
         name: 'Bellscoin',
         symbol: 'BELLS',
-        sign: '🔔',
+        sign: 'B',
         reward: 50,
         diffNum: 1.2e8,
         diffStr: '120.00 M',
@@ -6737,7 +6697,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'BEL': {
         name: 'Bellscoin',
         symbol: 'BEL',
-        sign: '🔔',
+        sign: 'B',
         reward: 50,
         diffNum: 1.2e8,
         diffStr: '120.00 M',
@@ -6748,7 +6708,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'DGB': {
         name: 'DigiByte',
         symbol: 'DGB',
-        sign: '⚡',
+        sign: 'Ɗ',
         reward: 350,
         diffNum: 1.5e10,
         diffStr: '15.00 G',
@@ -6770,7 +6730,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'DOGE': {
         name: 'Dogecoin',
         symbol: 'DOGE',
-        sign: '🐶',
+        sign: 'Ð',
         reward: 10000,
         diffNum: 1.8e7,
         diffStr: '18.00 M',
@@ -6781,7 +6741,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'PEPE': {
         name: 'Pepecoin',
         symbol: 'PEPE',
-        sign: '🐸',
+        sign: 'P',
         reward: 10000,
         diffNum: 8.5e7,
         diffStr: '85.00 M',
@@ -6792,7 +6752,7 @@ class HomeMinerFleetCard extends HTMLElement {
       'KAS': {
         name: 'Kaspa',
         symbol: 'KAS',
-        sign: '💎',
+        sign: 'K',
         reward: 22.5,
         diffNum: 1.2e15,
         diffStr: '1.20 P',
@@ -6824,7 +6784,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const selectedProfile = coinRadarProfiles[radarCoin] || {
       name: radarCoin,
       symbol: radarCoin,
-      sign: '🪙',
+      sign: radarCoin.charAt(0) || '₿',
       reward: 1,
       diffNum: 109.80 * 1e12,
       diffStr: '109.80 T',
@@ -6937,7 +6897,7 @@ class HomeMinerFleetCard extends HTMLElement {
     let activeChange24h = 2.39;
     let activeCoinSymbol = preferredCoin;
     let activeCoinName = preferredCoin === 'WOJAK' ? 'Wojak' : 'Bitcoin';
-    let activeCoinSign = preferredCoin === 'WOJAK' ? '🎭' : '₿';
+    let activeCoinSign = preferredCoin === 'WOJAK' ? 'W' : '₿';
     let activeHistory = JSON.parse(JSON.stringify(defaultMarketPrices));
     let activeStats = {
       '24h': { high: 0.000026, low: 0.000024, change_pct: 2.39 },
@@ -6974,7 +6934,7 @@ class HomeMinerFleetCard extends HTMLElement {
     }
 
     if (activeCoinSymbol === 'WOJAK' || activeCoinSymbol === 'WJK') {
-      activeCoinSign = '🎭';
+      activeCoinSign = 'W';
       activeCoinName = 'Wojak';
     }
 
@@ -7049,8 +7009,7 @@ class HomeMinerFleetCard extends HTMLElement {
       : (totalHashThs > 0 ? totalHashThs.toFixed(2) + ' TH/s' : '0.0 TH/s');
     const bestShareDisplay = maxBestDiff >= 1e9 ? (maxBestDiff / 1e9).toFixed(2) + ' G' : (maxBestDiff >= 1e6 ? (maxBestDiff / 1e6).toFixed(2) + ' M' : (maxBestDiff > 0 ? maxBestDiff.toLocaleString() : '--'));
 
-    // SVG Radial Arc Metrics
-    // Circumference = 2 * PI * 42 = 263.89
+    // KPI Ribbon Metrics
     const hashTarget = isSingleRigView ? (totalHashThs > 2.5 ? 6.0 : 2.0) : 7.0;
     const hashOffset = Math.max(0, 264 - Math.min(1, totalHashThs / hashTarget) * 264);
     const hashPct = Math.round((totalHashThs / hashTarget) * 100);
@@ -7061,14 +7020,14 @@ class HomeMinerFleetCard extends HTMLElement {
     const tempTarget = 80.0;
     const tempOffset = Math.max(0, 264 - Math.min(1, avgTempNum / tempTarget) * 264);
     const tempStrokeColor = avgTempNum > 68 ? '#fb7185' : avgTempNum > 60 ? '#fbbf24' : '#34d399';
-    const tempStatusLabel = avgTempNum > 68 ? '⚠️ High Load (> 68°C)' : avgTempNum > 60 ? '⚡ Warm Operation' : '● Optimal Zone (< 60°C)';
+    const tempStatusLabel = avgTempNum > 68 ? 'High Thermal (> 68°C)' : avgTempNum > 60 ? 'Warm Envelope' : 'Nominal (< 60°C)';
 
     // --- MULTI-COIN LIVE YIELD MATRIX & 1-CLICK STRATUM SWITCHER ---
     const yieldCoinsDef = [
       {
         coin: 'WOJAK',
         name: 'Wojak Coin',
-        sign: '🎭',
+        sign: 'W',
         algo: 'SHA-256d',
         reward: 10000,
         diff: 3500,
@@ -7116,7 +7075,7 @@ class HomeMinerFleetCard extends HTMLElement {
       {
         coin: 'BELLS',
         name: 'Bellcoin',
-        sign: '🔔',
+        sign: 'B',
         algo: 'SHA-256d',
         reward: 500,
         diff: 250e6,
@@ -7128,7 +7087,7 @@ class HomeMinerFleetCard extends HTMLElement {
       {
         coin: 'PEPE',
         name: 'Pepecoin',
-        sign: '🐸',
+        sign: 'P',
         algo: 'SHA-256d',
         reward: 10000,
         diff: 85e6,
@@ -7200,8 +7159,8 @@ class HomeMinerFleetCard extends HTMLElement {
     const activeTab = this._activeTab || 'hardware';
     const topYieldCoin = yieldRows[0]?.coin || 'WOJAK';
     const radarOddsBadge = isBlockSolved
-      ? '🎉 WIN!'
-      : (expectedDays < 365 ? (expectedDays.toFixed(1) + 'd Odds') : (expectedYears.toFixed(0) + 'y Odds'));
+      ? 'SOLVED'
+      : (expectedDays < 365 ? (expectedDays.toFixed(1) + 'd') : (expectedYears.toFixed(0) + 'y'));
 
     // --- RPG PROGRESSION & TROPHY CABINET (Lvl 500 Cap) ---
     // Rebalanced XP: 1 XP per verified accepted share + log-scaled difficulty bonus
@@ -7319,100 +7278,131 @@ class HomeMinerFleetCard extends HTMLElement {
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
         <div class="brand-cluster">
-          <div class="brand-icon-box">${isSingleRigView ? (filterType.includes('bitaxe') ? '⚡' : '🖥️') : '⛏'}</div>
+          <div class="brand-icon-box" style="color: #38bdf8;">${isSingleRigView ? svgIcon('cpu', 18) : svgIcon('server', 18)}</div>
           <div>
             <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
             <div class="badge-glass-pill" style="margin-top: 2px;">
               <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8; text-decoration: underline;" title="Click to force-purge browser cache and reload">v0.7.2 🔄</span>
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8;" title="Click to force-purge browser cache and reload">v0.7.3</span>
             </div>
           </div>
         </div>
 
         <div class="top-actions">
           <button class="glass-btn sound-toggle-btn ${this._soundMode !== 'off' ? 'active-audio' : ''}" id="sound-btn" title="Toggle Acoustic Share Feedback (Click to Cycle: Off / Geiger Clicks / Chimes)">
-            ${this._soundMode === 'off' ? '🔇 Audio: OFF' : (this._soundMode === 'geiger' ? '🔊 Geiger: ON' : '✨ Chimes: ON')}
+            ${this._soundMode === 'off' ? `${svgIcon('volume-off', 13)} Audio: OFF` : (this._soundMode === 'geiger' ? `${svgIcon('volume-on', 13)} Geiger: ON` : `${svgIcon('bell', 13)} Chimes: ON`)}
           </button>
-          <button class="glass-btn primary" id="add-miner-btn">➕ Add Miner</button>
-          <button class="glass-btn" id="import-btn">⚡ 1-Click Discovery</button>
-          <button class="glass-btn" id="reload-btn" title="Refresh Fleet Telemetry (Shift+Click to Force-Purge Browser Cache & Reload)">🔄 Refresh Fleet</button>
+          <button class="glass-btn primary" id="add-miner-btn">${svgIcon('plus', 13)} Add Miner</button>
+          <button class="glass-btn" id="import-btn">${svgIcon('search', 13)} Discovery</button>
+          <button class="glass-btn" id="reload-btn" title="Refresh Fleet Telemetry (Shift+Click to Force-Purge Browser Cache & Reload)">${svgIcon('refresh', 13)} Refresh</button>
         </div>
       </div>
 
-      <!-- 3 VISUAL HERO RING GAUGES -->
-      <div class="hero-orbit-grid">
-        
-        <!-- 1: Hashrate Gauge -->
-        <div class="glass-card cyan-glow gauge-card">
-          <div class="gauge-header-label">${isSingleRigView ? 'Miner Hashrate' : 'Fleet Hashrate'}</div>
-          <div class="gauge-wrapper">
-            <svg class="gauge-svg" viewBox="0 0 100 100">
-              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
-              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
-                      stroke="#38bdf8"
-                      stroke-dasharray="264"
-                      stroke-dashoffset="${hashOffset}"
-                      style="filter: drop-shadow(0 0 6px #38bdf8);"/>
-            </svg>
-            <div class="gauge-inner-content">
-              <div class="gauge-main-val" style="color: #38bdf8;">${totalHashThs.toFixed(2)}</div>
-              <div class="gauge-sub-unit">TH/s</div>
-            </div>
+      <!-- COMPACT 5-COLUMN KPI TELEMETRY RIBBON -->
+      <div class="kpi-ribbon">
+        <!-- 1: Hashrate -->
+        <div class="kpi-cell" style="border-top: 2px solid #38bdf8;">
+          <div class="kpi-cell-top">
+            <span class="kpi-label">${isSingleRigView ? 'Miner Hashrate' : 'Fleet Hashrate'}</span>
+            <span class="kpi-icon" style="color: #38bdf8;">${svgIcon('activity', 13)}</span>
           </div>
-          <div class="gauge-footer-pill">Rated: ${hashTarget.toFixed(1)} TH/s Target (${hashPct}%)</div>
+          <div class="kpi-val-row">
+            <span class="kpi-value" style="color: #f8fafc;">${totalHashThs.toFixed(2)}</span>
+            <span class="kpi-unit">TH/s</span>
+          </div>
+          <div class="kpi-sub">
+            <span>Target: ${hashTarget.toFixed(1)} TH/s</span>
+            <span style="color: #38bdf8; font-weight: 700;">${hashPct}%</span>
+          </div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, hashPct)}%; background: #38bdf8;"></div>
+          </div>
         </div>
 
         <!-- 2: Electrical Load -->
-        <div class="glass-card amber-glow gauge-card">
-          <div class="gauge-header-label">${isSingleRigView ? 'Electrical Load' : 'Total Electrical Load'}</div>
-          <div class="gauge-wrapper">
-            <svg class="gauge-svg" viewBox="0 0 100 100">
-              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
-              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
-                      stroke="#fbbf24"
-                      stroke-dasharray="264"
-                      stroke-dashoffset="${pwrOffset}"
-                      style="filter: drop-shadow(0 0 6px #fbbf24);"/>
-            </svg>
-            <div class="gauge-inner-content">
-              <div class="gauge-main-val" style="color: #fbbf24;">${totalWatts.toFixed(1)}</div>
-              <div class="gauge-sub-unit">Watts</div>
-            </div>
+        <div class="kpi-cell" style="border-top: 2px solid #f59e0b;">
+          <div class="kpi-cell-top">
+            <span class="kpi-label">${isSingleRigView ? 'Electrical Load' : 'Total Load'}</span>
+            <span class="kpi-icon" style="color: #f59e0b;">${svgIcon('zap', 13)}</span>
           </div>
-          <div class="gauge-footer-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
-            ⚡ ${fleetEfficiency} J/TH Efficiency
+          <div class="kpi-val-row">
+            <span class="kpi-value" style="color: #f8fafc;">${totalWatts.toFixed(1)}</span>
+            <span class="kpi-unit">W</span>
+          </div>
+          <div class="kpi-sub">
+            <span>Est. Cost</span>
+            <span style="color: #fbbf24; font-weight: 700;">$${fleetDailyPowerCost.toFixed(2)}/d</span>
+          </div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((totalWatts / pwrTarget) * 100))}%; background: #f59e0b;"></div>
           </div>
         </div>
 
-        <!-- 3: Temperature -->
-        <div class="glass-card gauge-card" style="border-color: rgba(52, 211, 153, 0.28); box-shadow: 0 16px 40px -10px rgba(0,0,0,0.5), 0 0 30px -8px rgba(52, 211, 153, 0.12);">
-          <div class="gauge-header-label">${isSingleRigView ? 'Thermal Core' : 'Average Thermal Core'}</div>
-          <div class="gauge-wrapper">
-            <svg class="gauge-svg" viewBox="0 0 100 100">
-              <circle class="gauge-bg-ring" cx="50" cy="50" r="42"/>
-              <circle class="gauge-prog-ring" cx="50" cy="50" r="42" 
-                      stroke="${tempStrokeColor}"
-                      stroke-dasharray="264"
-                      stroke-dashoffset="${tempOffset}"
-                      style="filter: drop-shadow(0 0 6px ${tempStrokeColor});"/>
-            </svg>
-            <div class="gauge-inner-content">
-              <div class="gauge-main-val" style="color: ${tempStrokeColor};">${avgTempStr}</div>
-              <div class="gauge-sub-unit">°C Core</div>
-            </div>
+        <!-- 3: Fleet Efficiency -->
+        <div class="kpi-cell" style="border-top: 2px solid #10b981;">
+          <div class="kpi-cell-top">
+            <span class="kpi-label">Efficiency</span>
+            <span class="kpi-icon" style="color: #10b981;">${svgIcon('sliders', 13)}</span>
           </div>
-          <div class="gauge-footer-pill" style="color: ${tempStrokeColor};">${tempStatusLabel}</div>
+          <div class="kpi-val-row">
+            <span class="kpi-value" style="color: #34d399;">${fleetEfficiency}</span>
+            <span class="kpi-unit">J/TH</span>
+          </div>
+          <div class="kpi-sub">
+            <span>Rate: $${estElectricityRate.toFixed(2)}/kWh</span>
+            <span style="color: #10b981; font-weight: 700;">Optimal</span>
+          </div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.max(15, 100 - (parseFloat(fleetEfficiency) || 20)))}%; background: #10b981;"></div>
+          </div>
         </div>
 
+        <!-- 4: Thermal Core -->
+        <div class="kpi-cell" style="border-top: 2px solid ${tempStrokeColor};">
+          <div class="kpi-cell-top">
+            <span class="kpi-label">${isSingleRigView ? 'ASIC Core Temp' : 'Avg Core Temp'}</span>
+            <span class="kpi-icon" style="color: ${tempStrokeColor};">${svgIcon('thermometer', 13)}</span>
+          </div>
+          <div class="kpi-val-row">
+            <span class="kpi-value" style="color: ${tempStrokeColor};">${avgTempStr}</span>
+            <span class="kpi-unit">°C</span>
+          </div>
+          <div class="kpi-sub">
+            <span>${tempStatusLabel}</span>
+            <span style="color: #94a3b8;">Max ${maxFan > 0 ? maxFan + ' RPM' : '--'}</span>
+          </div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((avgTempNum / 80) * 100))}%; background: ${tempStrokeColor};"></div>
+          </div>
+        </div>
+
+        <!-- 5: Shares & Best Diff -->
+        <div class="kpi-cell" style="border-top: 2px solid #a855f7;">
+          <div class="kpi-cell-top">
+            <span class="kpi-label">Verified Shares</span>
+            <span class="kpi-icon" style="color: #a855f7;">${svgIcon('target', 13)}</span>
+          </div>
+          <div class="kpi-val-row">
+            <span class="kpi-value" style="color: #f8fafc;">${totalFleetAccepted.toLocaleString()}</span>
+            <span class="kpi-unit">valid</span>
+          </div>
+          <div class="kpi-sub">
+            <span>Best Diff</span>
+            <span style="color: #c084fc; font-weight: 700;">${fleetBestShareStr}</span>
+          </div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar-fill" style="width: ${logProgressPct}%; background: #a855f7;"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- LIVE STRATUM PARTICLE PIPELINE (VISUAL BLOCK ASSEMBLY - COLLAPSIBLE & CONFIGURABLE) -->
+      <!-- SLIM STRATUM STATUS BAR (COLLAPSED BY DEFAULT, EXPANDABLE TELEMETRY) -->
       <div class="pipeline-card ${this._pipelineCollapsed ? 'collapsed' : ''}" id="pipeline-card">
         <div class="pipeline-header" id="pipeline-toggle">
           <div class="pipeline-header-left">
-            <div class="pipeline-icon-badge">🔬</div>
+            <div class="pipeline-icon-badge">${svgIcon('link', 13)}</div>
             <div class="pipeline-title">
-              <span>Stratum Pipeline</span>
+              <span>STRATUM</span>
               <span class="live-dot" title="Active Stratum session"></span>
             </div>
             <div class="pipeline-coin-wrap" title="Configure target coin and stratum telemetry architecture">
@@ -7422,11 +7412,11 @@ class HomeMinerFleetCard extends HTMLElement {
                   const groupCoins = Object.entries(PIPELINE_COIN_PROFILES).filter(([_, p]) => p.pool === group.id);
                   if (!groupCoins.length) return '';
                   return `
-                    <optgroup label="${group.icon} ${group.label}">
+                    <optgroup label="${group.label}">
                       ${groupCoins.map(([k, p]) => {
                         const isMining = (p.symbol === activeFleetCoin || k === activeFleetCoin || (activeFleetCoin === 'WJK' && p.symbol === 'WOJAK'));
                         const isSel = k === selectedCoinKey || (selectedCoinKey === p.symbol && p.pool === 'mining_dutch');
-                        return `<option value="${k}" ${isSel ? 'selected' : ''}>${p.icon} ${p.name || k} (${p.symbol})${isMining ? ' (Mining ⛏️)' : ''}</option>`;
+                        return `<option value="${k}" ${isSel ? 'selected' : ''}>${p.icon} • ${p.name || k} (${p.symbol})${isMining ? ' [ACTIVE]' : ''}</option>`;
                       }).join('')}
                     </optgroup>
                   `;
@@ -7434,17 +7424,17 @@ class HomeMinerFleetCard extends HTMLElement {
               </select>
             </div>
             <div class="pipeline-summary-pill">
-              ${activePoolProviderName} • Job #${jobIdHex.slice(0, 6)} • ${activeHashThs.toFixed(2)} TH/s • Block #${currentBlockHeight.toLocaleString()}
+              ${activePoolProviderName} • ${activeStratumHost}:${activeStratumPort} • Job #${jobIdHex.slice(0, 6)} • Block #${currentBlockHeight.toLocaleString()}
             </div>
           </div>
           <div class="pipeline-header-actions">
-            <button class="hud-action-btn" id="pipeline-anim-toggle" title="Pause/Resume particle canvas animation to save CPU/GPU resources">
+            <button class="hud-action-btn" id="pipeline-anim-toggle" title="Pause/Resume nonce stream canvas animation">
               <span id="pipeline-anim-icon">${this._pipelineAnimPaused ? '▶' : '⏸'}</span>
               <span id="pipeline-anim-label">${this._pipelineAnimPaused ? 'Resume' : 'Pause'}</span>
             </button>
             <button class="hud-action-btn" id="pipeline-collapse-toggle">
               <span id="pipeline-collapse-icon">${this._pipelineCollapsed ? '▼' : '▲'}</span>
-              <span id="pipeline-collapse-label">${this._pipelineCollapsed ? 'Expand' : 'Collapse'}</span>
+              <span id="pipeline-collapse-label">${this._pipelineCollapsed ? 'Inspect' : 'Hide'}</span>
             </button>
           </div>
         </div>
@@ -7453,8 +7443,8 @@ class HomeMinerFleetCard extends HTMLElement {
           <!-- 1: Stratum Ingress -->
           <div class="pipeline-stage">
             <div class="stage-header">
-              <span>🌐 1. Stratum Ingress</span>
-              <span class="stage-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
+              <span>01 / STRATUM INGRESS</span>
+              <span class="stage-tag" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8;">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
             </div>
             <div>
               <div class="stage-mono" style="color: #38bdf8;" title="${activeStratumHost}:${activeStratumPort}">${activeStratumHost}:${activeStratumPort}</div>
@@ -7471,31 +7461,31 @@ class HomeMinerFleetCard extends HTMLElement {
           <!-- 2: Nonce Stream (Canvas) -->
           <div class="pipeline-stage conduit-stage">
             <div class="stage-header">
-              <span>⚡ 2. Nonce Stream</span>
-              <span class="stage-tag" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">${activeHashThs.toFixed(2)} TH/s</span>
+              <span>02 / NONCE STREAM</span>
+              <span class="stage-tag" style="background: rgba(52, 211, 153, 0.12); color: #34d399;">${activeHashThs.toFixed(2)} TH/s</span>
             </div>
             <canvas class="particle-canvas" id="particle-canvas" width="220" height="44"></canvas>
             <div class="stage-sub-meta">
-              <span>Nonces: <strong style="color: #cbd5e1;">${noncesPerSecFormatted} /s</strong></span>
-              <span style="color: #38bdf8;">${displayedMiners.length} ASIC ${displayedMiners.length === 1 ? 'Rig' : 'Rigs'}</span>
+              <span>Rate: <strong style="color: #cbd5e1;">${noncesPerSecFormatted} H/s</strong></span>
+              <span style="color: #38bdf8;">${displayedMiners.length} ASIC ${displayedMiners.length === 1 ? 'Unit' : 'Units'}</span>
             </div>
           </div>
 
           <!-- 3: Diff Filter -->
           <div class="pipeline-stage">
             <div class="stage-header">
-              <span>🎯 3. Diff Filter</span>
-              <span class="stage-tag" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">Diff Gate</span>
+              <span>03 / DIFFICULTY GATE</span>
+              <span class="stage-tag" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">Gate</span>
             </div>
             <div>
               <div class="stage-mono" style="color: #cbd5e1; font-size: 10.5px;">Merkle: ${merkleRootHex}</div>
               <div class="stage-sub-meta" style="margin-top: 3px;">
-                <span>Share Target: <strong style="color: #38bdf8;">${shareTargetStr}</strong></span>
-                <span>Block: <strong style="color: #fbbf24;">${profile.diffStr}</strong></span>
+                <span>Best: <strong style="color: #38bdf8;">${shareTargetStr}</strong></span>
+                <span>Net: <strong style="color: #fbbf24;">${profile.diffStr}</strong></span>
               </div>
             </div>
-            <div class="stage-sub-meta" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 3px;">
-              <span>Shares: <strong style="color: #34d399;">${totalFleetAccepted.toLocaleString()} Valid</strong></span>
+            <div class="stage-sub-meta" style="border-top: 1px solid #1f2737; padding-top: 3px;">
+              <span>Accepted: <strong style="color: #34d399;">${totalFleetAccepted.toLocaleString()}</strong></span>
               <span style="color: #64748b;">0 Stale</span>
             </div>
           </div>
@@ -7503,67 +7493,67 @@ class HomeMinerFleetCard extends HTMLElement {
           <!-- 4: Block Assembly -->
           <div class="pipeline-stage">
             <div class="stage-header">
-              <span>📦 4. Block Assembly</span>
-              <span class="stage-tag" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">#${currentBlockHeight.toLocaleString()}</span>
+              <span>04 / BLOCK TEMPLATE</span>
+              <span class="stage-tag" style="background: rgba(168, 85, 247, 0.12); color: #c084fc;">#${currentBlockHeight.toLocaleString()}</span>
             </div>
             <div class="golden-scanner">
               <span class="scanner-text" id="golden-nonce-ticker" data-zeros="${profile.targetZeros}">0x${'0'.repeat(Math.min(16, profile.targetZeros))}7F2A...</span>
             </div>
             <div class="stage-sub-meta">
-              <span>Reward: <strong style="color: #fbbf24;">${profile.reward}</strong></span>
-              <span style="color: #f43f5e;">${profile.targetZeros} Zeros Target</span>
+              <span>Subsidy: <strong style="color: #fbbf24;">${profile.reward}</strong></span>
+              <span style="color: #94a3b8;">${profile.targetZeros} Zeros</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- AERO-GLASS SEGMENTED WORKSPACE TAB BAR -->
+      <!-- SEGMENTED WORKSPACE TAB BAR -->
       <div class="workspace-tab-bar">
         <div class="tab-pill ${activeTab === 'hardware' ? 'active' : ''}" data-tab="hardware">
-          <span>🖥️</span>
+          <span>${svgIcon('server', 13)}</span>
           <span>Fleet</span>
           <span class="tab-badge">${displayedMiners.length}</span>
         </div>
         <div class="tab-pill ${activeTab === 'yield' ? 'active' : ''}" data-tab="yield">
-          <span>⚡</span>
+          <span>${svgIcon('zap', 13)}</span>
           <span>Yield Matrix</span>
-          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">${topYieldCoin} 👑</span>
+          <span class="tab-badge" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);">${topYieldCoin}</span>
         </div>
         <div class="tab-pill ${activeTab === 'radar' ? 'active' : ''}" data-tab="radar">
-          <span>🎯</span>
+          <span>${svgIcon('target', 13)}</span>
           <span>Solo Radar</span>
-          <span class="tab-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399;">${radarOddsBadge}</span>
+          <span class="tab-badge" style="color: #34d399; border-color: rgba(16, 185, 129, 0.35);">${radarOddsBadge}</span>
         </div>
         <div class="tab-pill ${activeTab === 'market' ? 'active' : ''}" data-tab="market">
-          <span>📈</span>
+          <span>${svgIcon('chart', 13)}</span>
           <span>Market</span>
-          <span class="tab-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">${currentStats.change_pct >= 0 ? '+' : ''}${currentStats.change_pct.toFixed(1)}%</span>
+          <span class="tab-badge" style="color: #38bdf8;">${currentStats.change_pct >= 0 ? '+' : ''}${currentStats.change_pct.toFixed(1)}%</span>
         </div>
         <div class="tab-pill ${activeTab === 'trophies' ? 'active' : ''}" data-tab="trophies">
-          <span>🏆</span>
-          <span>Trophies</span>
-          <span class="tab-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24;">Lvl ${fleetLevel} ⚔️</span>
+          <span>${svgIcon('award', 13)}</span>
+          <span>Milestones</span>
+          <span class="tab-badge" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.35);">Lvl ${fleetLevel}</span>
         </div>
         <div class="tab-pill ${activeTab === 'all' ? 'active' : ''}" data-tab="all">
-          <span>🌐</span>
+          <span>${svgIcon('grid', 13)}</span>
           <span>Overview</span>
         </div>
       </div>
 
       ${(activeTab === 'trophies' || activeTab === 'all') ? `
-      <!-- RPG PROGRESSION & TROPHY CABINET CONSOLE -->
+      <!-- ENGINEERING MILESTONES & BENCHMARK CABINET CONSOLE -->
       <div class="tab-pane">
         <!-- Hero Level Banner -->
         <div class="glass-card gold-glow rpg-hero-banner">
           <!-- Level Orb -->
           <div class="level-orb-box">
             <svg class="level-orb-svg" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="8"/>
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#fbbf24" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="${orbOffset}" stroke-linecap="round" style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#1e293b" stroke-width="7"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#f59e0b" stroke-width="7" stroke-dasharray="264" stroke-dashoffset="${orbOffset}" stroke-linecap="round"/>
             </svg>
             <div class="level-orb-inner">
               <div class="level-orb-num">${fleetLevel}</div>
-              <div class="level-orb-sub">LEVEL / 500</div>
+              <div class="level-orb-sub">TIER / 500</div>
             </div>
           </div>
 
@@ -7574,14 +7564,14 @@ class HomeMinerFleetCard extends HTMLElement {
                 <span>${fleetTitle.badge}</span>
                 <span>${fleetTitle.title}</span>
               </div>
-              <span class="rpg-tier-label">Rank Milestone • Unlocked at Level ${fleetTitle.level}</span>
+              <span class="rpg-tier-label">Engineering Tier • Reached at Level ${fleetTitle.level}</span>
               ${nextMilestone ? `
-                <span class="mono" style="font-size: 11px; color: #38bdf8; margin-left: auto;">
-                  Next Rank: ${nextMilestone.badge} ${nextMilestone.title} (Lvl ${nextMilestone.level})
+                <span class="mono" style="font-size: 11px; color: #38bdf8; margin-left: auto; display: inline-flex; align-items: center; gap: 5px;">
+                  Next Tier: ${nextMilestone.badge} ${nextMilestone.title} (Lvl ${nextMilestone.level})
                 </span>
               ` : `
-                <span class="mono" style="font-size: 11px; color: #fbbf24; margin-left: auto;">
-                  👑 APEX RANK REACHED!
+                <span class="mono" style="font-size: 11px; color: #fbbf24; margin-left: auto; display: inline-flex; align-items: center; gap: 5px;">
+                  ${svgIcon('crown', 13)} MAX ENGINEERING TIER REACHED
                 </span>
               `}
             </div>
@@ -7592,47 +7582,47 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
 
             <div class="rpg-xp-stats-row">
-              <span><b>${totalFleetXp.toLocaleString()}</b> / ${nextLvlReqXp.toLocaleString()} Total XP (<span class="mono" style="color: #fbbf24;">${lvlProgressPct.toFixed(1)}% to Lvl ${Math.min(500, fleetLevel + 1)}</span>)</span>
-              <span class="mono" style="color: #38bdf8;">${fleetLevel >= 500 ? 'Max Level Cap Achieved' : `+${xpRemaining.toLocaleString()} XP remaining for next level`}</span>
+              <span><b>${totalFleetXp.toLocaleString()}</b> / ${nextLvlReqXp.toLocaleString()} Telemetry XP (<span class="mono" style="color: #fbbf24;">${lvlProgressPct.toFixed(1)}% to Lvl ${Math.min(500, fleetLevel + 1)}</span>)</span>
+              <span class="mono" style="color: #38bdf8;">${fleetLevel >= 500 ? 'Maximum Level Cap Achieved' : `+${xpRemaining.toLocaleString()} XP to next tier`}</span>
             </div>
 
             <div class="rpg-meta-chips">
               <div class="rpg-meta-chip">
-                <span>⛏️</span>
+                <span>${svgIcon('check', 12)}</span>
                 <span>Accepted Shares: <b>+${totalFleetAccepted.toLocaleString()} XP</b> (1 XP / share)</span>
               </div>
               <div class="rpg-meta-chip">
-                <span>🎯</span>
-                <span>Diff Bonus: <b>+${diffBonus.toLocaleString()} XP</b> (log-scaled)</span>
+                <span>${svgIcon('target', 12)}</span>
+                <span>Difficulty Bonus: <b>+${diffBonus.toLocaleString()} XP</b> (log-scaled)</span>
               </div>
               <div class="rpg-meta-chip">
-                <span>🏆</span>
-                <span>Trophy Cabinet: <b style="color: #34d399;">${unlockedBadgesCount} / ${rpgBadges.length} Badges Unlocked (${Math.round((unlockedBadgesCount / rpgBadges.length) * 100)}%)</b></span>
+                <span>${svgIcon('award', 12)}</span>
+                <span>Benchmarks: <b style="color: #34d399;">${unlockedBadgesCount} / ${rpgBadges.length} Verified (${Math.round((unlockedBadgesCount / rpgBadges.length) * 100)}%)</b></span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- PRESTIGE THEME ENGINE CONSOLE -->
+        <!-- WORKSTATION SURFACE THEME ENGINE CONSOLE -->
         <div class="glass-card theme-console ${!isThemeEngineUnlocked ? 'locked-engine' : ''}">
           <div class="theme-header-row">
             <div class="theme-title-cluster">
-              <div class="theme-icon-box" style="${!isThemeEngineUnlocked ? 'filter: grayscale(1); opacity: 0.6;' : ''}">🎨</div>
+              <div class="theme-icon-box" style="${!isThemeEngineUnlocked ? 'opacity: 0.5;' : ''}">${svgIcon('layers', 16)}</div>
               <div>
-                <div class="theme-title">Prestige Theme Engine ${!isThemeEngineUnlocked ? '<span class="mono" style="font-size: 11px; color: #94a3b8; font-weight: 700;">(LOCKED)</span>' : ''}</div>
-                <div class="theme-subtitle">Unlock bespoke aesthetic glass finishes every 100 levels • Level Cap: 500</div>
+                <div class="theme-title">Workstation Surface Themes ${!isThemeEngineUnlocked ? '<span class="mono" style="font-size: 11px; color: #64748b; font-weight: 700;">(LOCKED)</span>' : ''}</div>
+                <div class="theme-subtitle">Precision industrial accent palettes unlocked every 100 levels • Level Cap: 500</div>
               </div>
             </div>
             <div class="theme-status-badge ${isThemeEngineUnlocked ? 'unlocked' : 'locked'}">
-              <span>${isThemeEngineUnlocked ? '✨' : '🔒'}</span>
-              <span>${isThemeEngineUnlocked ? `ENGINE UNLOCKED • Active: ${activeTheme.name}` : `LOCKED • Lvl ${fleetLevel} / 100 (${100 - fleetLevel} lvls left)`}</span>
+              <span>${isThemeEngineUnlocked ? svgIcon('unlock', 12) : svgIcon('lock', 12)}</span>
+              <span>${isThemeEngineUnlocked ? `UNLOCKED • Active: ${activeTheme.name}` : `LOCKED • Lvl ${fleetLevel} / 100 (${100 - fleetLevel} lvls remaining)`}</span>
             </div>
           </div>
 
           ${!isThemeEngineUnlocked ? `
             <div class="theme-teaser-body">
               <div class="theme-teaser-text">
-                Ascend to <b>Level 100 (Volt Tamer)</b> to unlock the Prestige Theme Engine and your first custom luxury finish: <b>☀️ Solar Flare Gold</b>!
+                Reach <b>Level 100 (Undervolt Efficiency Tuner)</b> to unlock custom workstation surface themes starting with <b>Industrial Amber</b>.
               </div>
               <div class="rpg-progress-track" style="margin-top: 10px; margin-bottom: 6px;">
                 <div class="rpg-progress-fill" style="width: ${Math.min(100, Math.round((fleetLevel / 100) * 100))}%;"></div>
@@ -7657,16 +7647,16 @@ class HomeMinerFleetCard extends HTMLElement {
                         <div class="theme-card-name"><span>${theme.icon}</span> ${theme.name}</div>
                         <div class="theme-card-tier">${theme.subtitle}</div>
                       </div>
-                      <span class="mono" style="font-size: 10px; font-weight: 700; color: ${isActive ? '#fbbf24' : isUnlocked ? '#34d399' : '#64748b'};">
-                        ${isActive ? 'ACTIVE ⭐' : isUnlocked ? 'UNLOCKED' : (theme.reqLevel === 500 ? 'APEX LOCK' : 'LOCKED')}
+                      <span class="mono" style="font-size: 10px; font-weight: 700; color: ${isActive ? '#38bdf8' : isUnlocked ? '#34d399' : '#64748b'};">
+                        ${isActive ? 'ACTIVE' : isUnlocked ? 'UNLOCKED' : 'LOCKED'}
                       </span>
                     </div>
                     ${isActive ? `
-                      <button class="theme-btn active-btn" disabled>⭐ Active Palette</button>
+                      <button class="theme-btn active-btn" disabled>${svgIcon('check', 12)} Active Surface</button>
                     ` : isUnlocked ? `
-                      <button class="theme-btn apply-btn theme-apply-btn" data-theme="${theme.id}">⚡ Apply Theme</button>
+                      <button class="theme-btn apply-btn theme-apply-btn" data-theme="${theme.id}">Apply Surface</button>
                     ` : `
-                      <button class="theme-btn locked-btn" disabled>🔒 Unlocks at Lvl ${theme.reqLevel} (${lvlsLeft} lvls left)</button>
+                      <button class="theme-btn locked-btn" disabled>${svgIcon('lock', 12)} Unlocks at Lvl ${theme.reqLevel} (${lvlsLeft} lvls)</button>
                     `}
                   </div>
                 `;
@@ -7675,17 +7665,17 @@ class HomeMinerFleetCard extends HTMLElement {
           `}
         </div>
 
-        <!-- Trophy Filter Bar -->
+        <!-- Milestone Filter Bar -->
         <div class="trophy-filter-bar">
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'all' ? 'active' : ''}" data-filter="all">All Badges (${rpgBadges.length})</button>
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'shares' ? 'active' : ''}" data-filter="shares">⛏️ Nonces & Shares (${rpgBadges.filter(b => b.cat === 'shares').length})</button>
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'difficulty' ? 'active' : ''}" data-filter="difficulty">🎯 Difficulty & Luck (${rpgBadges.filter(b => b.cat === 'difficulty').length})</button>
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'hardware' ? 'active' : ''}" data-filter="hardware">⚙️ Tuning & Hardware (${rpgBadges.filter(b => b.cat === 'hardware').length})</button>
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'operations' ? 'active' : ''}" data-filter="operations">🌐 Stratum & Ops (${rpgBadges.filter(b => b.cat === 'operations').length})</button>
-          <button class="trophy-filter-pill ${currentTrophyFilter === 'prestige' ? 'active' : ''}" data-filter="prestige">🌟 Prestige Tiers (${rpgBadges.filter(b => b.cat === 'prestige').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'all' ? 'active' : ''}" data-filter="all">All Benchmarks (${rpgBadges.length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'shares' ? 'active' : ''}" data-filter="shares">Share Volume (${rpgBadges.filter(b => b.cat === 'shares').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'difficulty' ? 'active' : ''}" data-filter="difficulty">Difficulty Gates (${rpgBadges.filter(b => b.cat === 'difficulty').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'hardware' ? 'active' : ''}" data-filter="hardware">Hardware & Thermal (${rpgBadges.filter(b => b.cat === 'hardware').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'operations' ? 'active' : ''}" data-filter="operations">Stratum & Fleet (${rpgBadges.filter(b => b.cat === 'operations').length})</button>
+          <button class="trophy-filter-pill ${currentTrophyFilter === 'prestige' ? 'active' : ''}" data-filter="prestige">Engineering Tiers (${rpgBadges.filter(b => b.cat === 'prestige').length})</button>
         </div>
 
-        <!-- Trophy Cabinet Grid -->
+        <!-- Benchmark Grid -->
         <div class="trophy-grid">
           ${displayedBadges.map(badge => `
             <div class="glass-card trophy-card ${badge.unlocked ? 'unlocked' : 'locked'}">
@@ -7696,7 +7686,7 @@ class HomeMinerFleetCard extends HTMLElement {
                   <div class="trophy-name">${badge.name}</div>
                 </div>
                 <span class="trophy-status-pill ${badge.unlocked ? 'unlocked' : 'locked'}">
-                  ${badge.unlocked ? '✅ UNLOCKED' : `🔒 ${badge.progressPct}%`}
+                  ${badge.unlocked ? `${svgIcon('check', 10)} VERIFIED` : `${svgIcon('lock', 10)} ${badge.progressPct}%`}
                 </span>
               </div>
               <div class="trophy-desc">${badge.desc}</div>
@@ -7711,27 +7701,27 @@ class HomeMinerFleetCard extends HTMLElement {
           `).join('')}
         </div>
 
-        <!-- MINING HISTORY & DECENTRALIZED CHRONICLES (EVERY 10 LEVELS) -->
+        <!-- MINING HISTORY & TECHNICAL ARCHIVES (EVERY 10 LEVELS) -->
         <div class="glass-card chronicles-console">
           <div class="chronicles-header-row">
             <div class="chronicles-title-cluster">
-              <div class="chronicles-icon-box">📜</div>
+              <div class="chronicles-icon-box">${svgIcon('book', 16)}</div>
               <div>
-                <div class="chronicles-title">Mining History & Decentralized Chronicles</div>
-                <div class="chronicles-subtitle">Demystifying crypto mining & historical milestones • 50 unlockable chapters every 10 levels</div>
+                <div class="chronicles-title">Cryptographic & ASIC Engineering Archives</div>
+                <div class="chronicles-subtitle">Protocol whitepapers, SHA-256 architecture, and ASIC history • 50 chapters unlocked every 10 levels</div>
               </div>
             </div>
             <div class="chronicles-status-badge ${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length > 0 ? 'unlocked' : ''}">
-              <span>📖</span>
-              <span>${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length} / ${CHRONICLE_CHAPTERS.length} Chapters Unlocked</span>
+              <span>${svgIcon('book', 12)}</span>
+              <span>${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length} / ${CHRONICLE_CHAPTERS.length} Unlocked</span>
             </div>
           </div>
 
           <!-- Filter Pills -->
           <div class="chronicle-filter-bar">
-            <button class="chronicle-filter-pill ${this._chronicleFilter === 'all' ? 'active' : ''}" data-cfilter="all">All Chapters (${CHRONICLE_CHAPTERS.length})</button>
-            <button class="chronicle-filter-pill ${this._chronicleFilter === 'unlocked' ? 'active' : ''}" data-cfilter="unlocked">🔓 Unlocked (${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
-            <button class="chronicle-filter-pill ${this._chronicleFilter === 'locked' ? 'active' : ''}" data-cfilter="locked">🔒 Locked (${CHRONICLE_CHAPTERS.length - CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'all' ? 'active' : ''}" data-cfilter="all">All Archives (${CHRONICLE_CHAPTERS.length})</button>
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'unlocked' ? 'active' : ''}" data-cfilter="unlocked">Unlocked (${CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
+            <button class="chronicle-filter-pill ${this._chronicleFilter === 'locked' ? 'active' : ''}" data-cfilter="locked">Locked (${CHRONICLE_CHAPTERS.length - CHRONICLE_CHAPTERS.filter(c => fleetLevel >= c.level).length})</button>
           </div>
 
           <!-- Chronicles Grid -->
@@ -7746,21 +7736,21 @@ class HomeMinerFleetCard extends HTMLElement {
                 <div class="glass-card chronicle-card ${isUnlocked ? 'unlocked' : 'locked'}" data-clevel="${c.level}">
                   <div class="chronicle-card-header">
                     <div class="chronicle-lvl-pill ${isUnlocked ? 'unlocked' : 'locked'}">
-                      ${isUnlocked ? `LVL ${c.level}` : `🔒 LVL ${c.level}`}
+                      ${isUnlocked ? `LVL ${c.level}` : `${svgIcon('lock', 10)} LVL ${c.level}`}
                     </div>
                     <span class="chronicle-era-tag">${c.era} • ${c.tag}</span>
-                    <span class="mono" style="font-size: 10px; color: #94a3b8; margin-left: auto;">${c.readTime}</span>
+                    <span class="mono" style="font-size: 10px; color: #64748b; margin-left: auto;">${c.readTime}</span>
                   </div>
                   <div class="chronicle-card-title">${c.title}</div>
                   <div class="chronicle-card-teaser">${c.teaser}</div>
                   <div class="chronicle-card-footer">
                     ${isUnlocked ? `
-                      <button class="glass-btn chronicle-read-btn" data-clevel="${c.level}" style="padding: 5px 12px; font-size: 11px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); width: 100%;">
-                        📖 Read Chronicle
+                      <button class="glass-btn chronicle-read-btn" data-clevel="${c.level}" style="padding: 5px 12px; font-size: 11px; color: #38bdf8; border-color: #26334d; width: 100%; justify-content: center;">
+                        ${svgIcon('book', 12)} Read Technical Note
                       </button>
                     ` : `
                       <div class="chronicle-locked-msg">
-                        🔒 Unlocks at Level ${c.level} (+${Math.max(0, xpForRpgLevel(c.level) - totalFleetXp).toLocaleString()} XP needed)
+                        Requires Level ${c.level} (+${Math.max(0, xpForRpgLevel(c.level) - totalFleetXp).toLocaleString()} XP)
                       </div>
                     `}
                   </div>
@@ -7772,8 +7762,8 @@ class HomeMinerFleetCard extends HTMLElement {
 
         <!-- Milestone Roadmap Strip -->
         <div class="roadmap-section-title">
-          <span>🗺️</span>
-          <span>Fleet Rank Progression Roadmap (Every 25th Level • Cap: 500)</span>
+          <span>${svgIcon('layers', 13)}</span>
+          <span>Engineering Tier Progression Roadmap (Every 25 Levels • Cap: 500)</span>
         </div>
         <div class="roadmap-strip">
           ${RPG_TITLES.slice().reverse().map(tier => {
@@ -7782,14 +7772,14 @@ class HomeMinerFleetCard extends HTMLElement {
             const tierXp = xpForRpgLevel(tier.level);
             return `
               <div class="roadmap-item ${isCurrent ? 'current' : isUnlocked ? 'unlocked' : ''}">
-                <div class="roadmap-lvl-pill" style="${isCurrent ? 'color: #fbbf24;' : isUnlocked ? 'color: #34d399;' : 'color: #94a3b8;'}">
-                  LEVEL ${tier.level}${tier.level === 500 ? ' (MAX)' : ''}${isCurrent ? ' ⚔️ ACTIVE' : ''}
+                <div class="roadmap-lvl-pill" style="${isCurrent ? 'color: #fbbf24;' : isUnlocked ? 'color: #34d399;' : 'color: #64748b;'}">
+                  LEVEL ${tier.level}${tier.level === 500 ? ' (MAX)' : ''}${isCurrent ? ' • ACTIVE' : ''}
                 </div>
-                <div class="roadmap-title" style="${isCurrent ? 'color: #fde68a;' : isUnlocked ? 'color: #f8fafc;' : 'color: #94a3b8;'}">
-                  ${tier.badge} ${tier.title}
+                <div class="roadmap-title" style="${isCurrent ? 'color: #f8fafc;' : isUnlocked ? 'color: #e2e8f0;' : 'color: #64748b;'}">
+                  ${tier.badge} <span>${tier.title}</span>
                 </div>
                 <div class="roadmap-xp mono" style="${isCurrent ? 'color: #fbbf24;' : isUnlocked ? 'color: #34d399;' : 'color: #64748b;'}">
-                  ${tierXp.toLocaleString()} XP • ${isCurrent ? 'Current Rank' : isUnlocked ? 'Unlocked' : 'Locked'}
+                  ${tierXp.toLocaleString()} XP • ${isCurrent ? 'Current' : isUnlocked ? 'Verified' : 'Locked'}
                 </div>
               </div>
             `;
@@ -7801,13 +7791,13 @@ class HomeMinerFleetCard extends HTMLElement {
       ${(activeTab === 'market' || activeTab === 'all') ? `
       <!-- MARKET INTELLIGENCE CONSOLE & HISTORICAL COIN PRICE CHART -->
       <div class="tab-pane">
-        <div class="glass-card cyan-glow market-intelligence-console" style="margin-bottom: 24px; padding: 20px 22px;">
+        <div class="glass-card cyan-glow market-intelligence-console" style="margin-bottom: 18px; padding: 18px 20px;">
           <div class="market-console-header">
             <div class="market-title-cluster">
-              <span style="font-size: 24px;">${activeCoinSign}</span>
+              <div class="coin-symbol-circle" style="width: 34px; height: 34px; font-size: 15px;">${activeCoinSign}</div>
               <div>
-                <div style="font-size: 15px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
-                  <span>${activeCoinName} (${activeCoinSymbol}) Market Intelligence</span>
+                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
+                  <span>${activeCoinName} (${activeCoinSymbol}) Market Telemetry</span>
                   ${availableCoins.size > 1 ? `
                     <div style="display: flex; gap: 4px; margin-left: 8px;">
                       ${Array.from(availableCoins).map(c => `
@@ -7819,7 +7809,7 @@ class HomeMinerFleetCard extends HTMLElement {
                   ` : ''}
                 </div>
                 <div style="font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">
-                  Real-Time Coin Valuation & Historical Performance (15m Polling)
+                  Spot Valuation & Historical Performance (15m Polling)
                 </div>
               </div>
             </div>
@@ -7838,7 +7828,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="market-live-price">
               ${activeCoinPrice >= 1 ? '$' + Number(activeCoinPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '$' + Number(activeCoinPrice).toFixed(6)}
             </div>
-            <div class="coin-change-pill ${currentStats.change_pct >= 0 ? 'pos' : 'neg'}" style="font-size: 12px; padding: 4px 10px;">
+            <div class="coin-change-pill ${currentStats.change_pct >= 0 ? 'pos' : 'neg'}" style="font-size: 11.5px; padding: 3px 9px;">
               ${currentStats.change_pct >= 0 ? '▲ +' : '▼ '}${Number(currentStats.change_pct).toFixed(2)}% (${activeTf.toUpperCase()})
             </div>
             <div class="market-stat-chip">
@@ -7865,41 +7855,41 @@ class HomeMinerFleetCard extends HTMLElement {
       ` : ''}
 
       ${(activeTab === 'radar' || activeTab === 'all') ? `
-      <!-- SOLO BLOCK LOTTERY RADAR & MEGA-SHARE CONSOLE -->
+      <!-- SOLO BLOCK PROBABILITY RADAR & SHARE TELEMETRY CONSOLE -->
       <div class="tab-pane">
         <div class="glass-card amber-glow lottery-radar-console">
         <div class="lottery-header-row">
           <div class="lottery-title-cluster">
-            <div class="lottery-icon-box">${selectedProfile.sign || '🎯'}</div>
+            <div class="lottery-icon-box">${selectedProfile.sign || svgIcon('target', 16)}</div>
             <div>
-              <div class="lottery-title">Solo Block Lottery Radar • ${selectedProfile.name} (${radarCoin})</div>
+              <div class="lottery-title">Solo Block Probability Radar • ${selectedProfile.name} (${radarCoin})</div>
               <div class="mono" style="font-size: 11px; color: #94a3b8;">
-                Mathematical Block Bounty Odds • ${selectedProfile.algo} Difficulty Target Tracker
+                Poisson Block Arrival Probability • ${selectedProfile.algo} Difficulty Target Tracker
               </div>
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <!-- Interactive Coin Selector Dropdown -->
             <div class="lottery-coin-wrap">
-              <span class="lottery-coin-label">TRACK COIN:</span>
+              <span class="lottery-coin-label">NETWORK:</span>
               <select id="lottery-coin-select" class="lottery-coin-select">
                 ${allRadarCoins.map(c => {
                   const isMining = fleetCoins.includes(c);
                   const isSel = c === radarCoin;
-                  const tag = isMining ? ' (Mining ⛏️)' : '';
+                  const tag = isMining ? ' [ACTIVE]' : '';
                   return `<option value="${c}" ${isSel ? 'selected' : ''}>${c}${tag}</option>`;
                 }).join('')}
               </select>
             </div>
-            <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12);">
-              <span class="status-orb" style="background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></span>
-              Active Fleet: ${activeHashThs.toFixed(2)} TH/s
+            <span class="badge-glass-pill" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.1);">
+              <span class="status-orb" style="background: #fbbf24;"></span>
+              Fleet: ${activeHashThs.toFixed(2)} TH/s
             </span>
-            <button class="glass-btn primary" id="test-celebration-btn" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.5); color: #fbbf24;">
-              🎉 Test Win Celebration
+            <button class="glass-btn primary" id="test-celebration-btn" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;">
+              ${svgIcon('award', 13)} Simulate Block Solve
             </button>
-            <button class="glass-btn" id="test-audio-btn" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Test Synthesized Share Acoustic Feedback">
-              🔊 Test Share Audio
+            <button class="glass-btn" id="test-audio-btn" style="background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.35); color: #38bdf8;" title="Test Synthesized Share Acoustic Feedback">
+              ${svgIcon('volume-on', 13)} Test Audio
             </button>
           </div>
         </div>
@@ -7911,95 +7901,84 @@ class HomeMinerFleetCard extends HTMLElement {
             <svg class="radar-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <radialGradient id="radarGridGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#064e3b" stop-opacity="0.35" />
-                  <stop offset="70%" stop-color="#022c22" stop-opacity="0.6" />
-                  <stop offset="100%" stop-color="#021c15" stop-opacity="0.9" />
+                  <stop offset="0%" stop-color="#064e3b" stop-opacity="0.25" />
+                  <stop offset="70%" stop-color="#022c22" stop-opacity="0.5" />
+                  <stop offset="100%" stop-color="#0b0e14" stop-opacity="0.95" />
                 </radialGradient>
                 <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.6" />
-                  <stop offset="50%" stop-color="#10b981" stop-opacity="0.15" />
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.5" />
+                  <stop offset="50%" stop-color="#10b981" stop-opacity="0.12" />
                   <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
                 </linearGradient>
-                <filter id="blipGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
               </defs>
 
               <!-- Radar Outer Casing -->
-              <circle cx="80" cy="80" r="76" fill="url(#radarGridGlow)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="2" />
-              <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1" stroke-dasharray="3,3" />
+              <circle cx="80" cy="80" r="76" fill="url(#radarGridGlow)" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1.5" />
+              <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(16, 185, 129, 0.18)" stroke-width="1" stroke-dasharray="3,3" />
 
               <!-- Concentric Range Rings (25%, 50%, 75%) -->
-              <circle cx="80" cy="80" r="54" fill="none" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
-              <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
-              <circle cx="80" cy="80" r="18" fill="none" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" />
+              <circle cx="80" cy="80" r="54" fill="none" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1" />
+              <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" />
+              <circle cx="80" cy="80" r="18" fill="none" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1" />
 
               <!-- Crosshairs -->
-              <line x1="8" y1="80" x2="152" y2="80" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" stroke-dasharray="4,4" />
-              <line x1="80" y1="8" x2="80" y2="152" stroke="rgba(16, 185, 129, 0.35)" stroke-width="1" stroke-dasharray="4,4" />
-
-              <!-- 45-degree angle guides -->
-              <line x1="29" y1="29" x2="131" y2="131" stroke="rgba(16, 185, 129, 0.15)" stroke-width="1" stroke-dasharray="2,4" />
-              <line x1="131" y1="29" x2="29" y2="131" stroke="rgba(16, 185, 129, 0.15)" stroke-width="1" stroke-dasharray="2,4" />
+              <line x1="8" y1="80" x2="152" y2="80" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" stroke-dasharray="4,4" />
+              <line x1="80" y1="8" x2="80" y2="152" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1" stroke-dasharray="4,4" />
 
               <!-- Sweeping Beam -->
               <g class="radar-sweep-beam">
                 <path d="M 80 80 L 80 8 A 72 72 0 0 1 131 29 Z" fill="url(#sweepGradient)" />
-                <line x1="80" y1="80" x2="80" y2="8" stroke="#34d399" stroke-width="2" filter="drop-shadow(0 0 4px #34d399)" />
+                <line x1="80" y1="80" x2="80" y2="8" stroke="#34d399" stroke-width="1.5" />
               </g>
 
-              <!-- Blip: Mega-Share positioned at dynamic radius based on milestone progress -->
+              <!-- Blip: Best Share positioned at dynamic radius based on milestone progress -->
               <g class="radar-blip-mega" transform="translate(${blipX}, ${blipY})">
-                <circle cx="0" cy="0" r="4.5" fill="${blipColor}" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="4" fill="${blipColor}" />
                 <circle cx="0" cy="0" r="8" fill="none" stroke="${blipColor}" stroke-width="1.2" class="blip-pulse-ring" />
-                <text x="7" y="3" fill="${blipColor}" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">${fleetBestShareStr !== '--' ? fleetBestShareStr : '14.09G'}${isBlockSolved ? ' ★ WIN!' : ''}</text>
+                <text x="7" y="3" fill="${blipColor}" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700">${fleetBestShareStr !== '--' ? fleetBestShareStr : '14.09G'}${isBlockSolved ? ' SOLVED' : ''}</text>
               </g>
 
               <!-- Blip: Standard target difficulty milestone -->
               <g class="radar-blip-std" transform="translate(108, 98)">
-                <circle cx="0" cy="0" r="3" fill="#10b981" filter="url(#blipGlow)" />
+                <circle cx="0" cy="0" r="3" fill="#10b981" />
                 <circle cx="0" cy="0" r="6" fill="none" stroke="#10b981" stroke-width="1" class="blip-pulse-ring" />
                 <text x="5" y="2" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="7">Target</text>
               </g>
 
               <!-- Center Hub -->
-              <circle cx="80" cy="80" r="4" fill="#10b981" filter="url(#blipGlow)" />
-              <circle cx="80" cy="80" r="2" fill="#ffffff" />
+              <circle cx="80" cy="80" r="3.5" fill="#10b981" />
+              <circle cx="80" cy="80" r="1.5" fill="#ffffff" />
             </svg>
             <div class="radar-status-caption mono">
-              <span class="radar-live-dot"></span> RADAR SWEEP ACTIVE
+              <span class="radar-live-dot"></span> TELEMETRY SWEEP ACTIVE
             </div>
           </div>
 
           <!-- Metrics Column -->
           <div class="lottery-metrics-column">
-            <!-- Jackpot Banner -->
+            <!-- Subsidy Banner -->
             <div class="jackpot-banner">
-              <div class="jackpot-label mono">CURRENT ${radarCoin} BLOCK BOUNTY JACKPOT</div>
+              <div class="jackpot-label mono">CURRENT ${radarCoin} BLOCK SUBSIDY VALUE</div>
               <div class="jackpot-val-row">
                 <span class="jackpot-amount mono">$${blockBountyJackpotUsd >= 1 ? blockBountyJackpotUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : blockBountyJackpotUsd.toFixed(4)}</span>
-                <span class="jackpot-btc-badge mono" style="color: ${selectedProfile.accentColor}; border-color: ${selectedProfile.accentColor}; background: rgba(245, 158, 11, 0.15);">
+                <span class="jackpot-btc-badge mono" style="color: ${selectedProfile.accentColor}; border-color: ${selectedProfile.accentColor}; background: rgba(245, 158, 11, 0.12);">
                   ${selectedProfile.reward.toLocaleString()} ${radarCoin}
                 </span>
               </div>
-              <div class="jackpot-sub mono">Next block bounty awarded 100% to solo miner upon valid ${radarCoin} block hash</div>
+              <div class="jackpot-sub mono">Full coinbase reward paid directly to solo worker upon valid ${radarCoin} block solution</div>
             </div>
 
             <!-- Odds & Stats 3-Card Rack -->
             <div class="lottery-stat-tiles">
               <div class="lottery-mini-tile">
-                <div class="mini-tile-label">Solo Win Odds</div>
+                <div class="mini-tile-label">Expected Time to Block</div>
                 <div class="mini-tile-val mono" style="color: #38bdf8;">
-                  1 in ${expectedYears >= 100 ? Math.round(expectedYears).toLocaleString() + ' Yrs' : (expectedDays >= 1 ? Math.round(expectedDays).toLocaleString() + ' Days' : (expectedDays * 24).toFixed(1) + ' Hours')}
+                  1 in ${expectedYears >= 100 ? Math.round(expectedYears).toLocaleString() + ' Yrs' : (expectedDays >= 1 ? Math.round(expectedDays).toLocaleString() + ' Days' : (expectedDays * 24).toFixed(1) + ' Hrs')}
                 </div>
-                <div class="mini-tile-sub mono">${dailyChancePct >= 1 ? dailyChancePct.toFixed(2) + '%' : dailyChancePct.toFixed(7) + '%'} / day</div>
+                <div class="mini-tile-sub mono">${dailyChancePct >= 1 ? dailyChancePct.toFixed(2) + '%' : dailyChancePct.toFixed(7) + '%'} / 24h</div>
               </div>
               <div class="lottery-mini-tile">
-                <div class="mini-tile-label">Lifetime Best Share</div>
+                <div class="mini-tile-label">Peak Verified Share</div>
                 <div class="mini-tile-val mono" style="color: #fbbf24;">${fleetBestShareStr}</div>
                 <div class="mini-tile-sub mono">${fleetBestMinerName || 'Fleet Leader'}</div>
               </div>
@@ -8016,16 +7995,16 @@ class HomeMinerFleetCard extends HTMLElement {
         <div class="share-progress-container">
           <div class="share-progress-header">
             <span class="mono" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">
-              🚀 Fleet Share Difficulty Milestone to Solving ${radarCoin} Block (Log10 Scale)
+              Log10 Share Difficulty Progression Toward ${radarCoin} Block Target
             </span>
             <span class="mono" style="font-size: 11px; color: ${isBlockSolved ? '#34d399' : '#fbbf24'}; font-weight: 700;">
-              ${isBlockSolved ? `🎉 100% (${fleetBestShareStr} EXCEEDS ${radarCoin} TARGET!)` : `${fleetBestShareStr} (${logProgressStr}% to ${radarCoin} Target)`}
+              ${isBlockSolved ? `100% (${fleetBestShareStr} EXCEEDS ${radarCoin} TARGET)` : `${fleetBestShareStr} (${logProgressStr}% of Log10 Target)`}
             </span>
           </div>
           <div class="share-progress-track">
-            <div class="share-progress-fill" style="width: ${logProgressPct}%; background: ${isBlockSolved ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #f59e0b, #fbbf24)'};"></div>
+            <div class="share-progress-fill" style="width: ${logProgressPct}%; background: ${isBlockSolved ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #38bdf8, #f59e0b)'};"></div>
             <div class="share-progress-pin" style="left: ${logProgressPct}%;">
-              <div class="share-pin-glow" style="background: ${isBlockSolved ? '#34d399' : '#fbbf24'}; box-shadow: 0 0 12px ${isBlockSolved ? '#34d399' : '#fbbf24'};"></div>
+              <div class="share-pin-glow" style="background: ${isBlockSolved ? '#34d399' : '#fbbf24'};"></div>
               <div class="share-pin-label mono" style="color: ${isBlockSolved ? '#34d399' : '#fbbf24'};">${fleetBestShareStr}</div>
             </div>
           </div>
@@ -8033,7 +8012,7 @@ class HomeMinerFleetCard extends HTMLElement {
             ${(selectedProfile.milestones || ['1 M', '100 M', '1 G', '10 G', `${selectedProfile.diffStr} (WIN)`]).map((m, idx, arr) => {
               const isWin = idx === arr.length - 1;
               const isMega = m.includes('Mega') || m.includes('1 G');
-              const colorStyle = isWin ? 'color: #34d399; font-weight: 800;' : (isMega ? 'color: #fbbf24; font-weight: 700;' : '');
+              const colorStyle = isWin ? 'color: #34d399; font-weight: 700;' : (isMega ? 'color: #fbbf24; font-weight: 700;' : '');
               return `<span style="${colorStyle}">${m}</span>`;
             }).join('')}
           </div>
@@ -8045,11 +8024,11 @@ class HomeMinerFleetCard extends HTMLElement {
       ${(activeTab === 'hardware' || activeTab === 'all') ? `
       <!-- MINING POOL TELEMETRY RACK -->
       <div class="tab-pane">
-        <div class="glass-card cyan-glow" style="margin-bottom: 24px; padding: 18px 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 16px;">🏊</span>
-            <span style="font-size: 13px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;">Supported Mining Pool Providers</span>
+        <div class="glass-card cyan-glow" style="margin-bottom: 18px; padding: 16px 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #38bdf8;">
+            <span>${svgIcon('globe', 14)}</span>
+            <span style="font-size: 12px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;">Stratum Pool Telemetry</span>
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             ${Object.entries(poolProviderMap).map(([pid, pname]) => {
@@ -8058,10 +8037,10 @@ class HomeMinerFleetCard extends HTMLElement {
               return `
                 <span class="badge-glass-pill ${isActive ? 'active-pool-pill' : ''}" style="${
                   isActive
-                    ? 'color: #38bdf8; border-color: #38bdf8; background: rgba(56, 189, 248, 0.22); font-weight: 700; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);'
-                    : 'color: #94a3b8; border-color: rgba(255, 255, 255, 0.1); opacity: 0.65;'
+                    ? 'color: #38bdf8; border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.12); font-weight: 700;'
+                    : 'color: #64748b; border-color: #1f2737;'
                 }">
-                  ${isActive ? '🟢 ' : ''}${pname}${isActive ? ` (${activeCount} Active)` : ''}
+                  ${isActive ? '<span class="status-orb" style="width: 6px; height: 6px;"></span> ' : ''}${pname}${isActive ? ` (${activeCount})` : ''}
                 </span>
               `;
             }).join('')}
@@ -8090,7 +8069,7 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
           </div>
           <div class="tile-glass-box">
-            <span class="tile-label">Fleet Best Share</span>
+            <span class="tile-label">Peak Share Diff</span>
             <div class="tile-val-row">
               <span class="tile-num" style="color: #a78bfa;">${bestShareDisplay}</span>
               <span class="tile-unit">diff</span>
@@ -8107,17 +8086,17 @@ class HomeMinerFleetCard extends HTMLElement {
         <div class="glass-card yield-matrix-console">
         <div class="yield-header-row">
           <div class="yield-title-cluster">
-            <div class="yield-icon-box">⚡</div>
+            <div class="yield-icon-box">${svgIcon('zap', 16)}</div>
             <div>
-              <div class="yield-title">Multi-Coin Live Yield Matrix & 1-Click Stratum Switcher</div>
+              <div class="yield-title">SHA-256 Multi-Coin Yield Matrix & Stratum Switcher</div>
               <div class="mono" style="font-size: 11px; color: #94a3b8;">
-                Real-Time SHA-256 Profitability Leaderboard • Fleet Hashrate: ${activeHashThs.toFixed(2)} TH/s • Power: ${totalWatts.toFixed(1)} W ($${fleetDailyPowerCost.toFixed(2)}/day @ $${estElectricityRate.toFixed(2)}/kWh)
+                Real-Time SHA-256 Profitability • Fleet: ${activeHashThs.toFixed(2)} TH/s • Load: ${totalWatts.toFixed(1)} W ($${fleetDailyPowerCost.toFixed(2)}/day @ $${estElectricityRate.toFixed(2)}/kWh)
               </div>
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="glass-btn primary" id="open-stratum-modal-btn" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8; color: #fff; font-size: 12px; padding: 6px 14px;">
-              ⚡ Quick Stratum Switcher
+            <button class="glass-btn primary" id="open-stratum-modal-btn" style="font-size: 11.5px; padding: 6px 12px;">
+              ${svgIcon('zap', 13)} Stratum Switcher
             </button>
           </div>
         </div>
@@ -8163,9 +8142,9 @@ class HomeMinerFleetCard extends HTMLElement {
                         <div>
                           <div class="yield-coin-symbol">
                             ${row.name} (${row.coin})
-                            ${isTop ? '<span class="badge-glass-pill" style="margin-left: 6px; color: #fbbf24; border-color: #fbbf24; font-size: 9px; padding: 2px 6px;">TOP YIELD 👑</span>' : ''}
+                            ${isTop ? '<span class="badge-glass-pill" style="margin-left: 6px; color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-size: 9px; padding: 1px 6px;">TOP YIELD</span>' : ''}
                           </div>
-                          <div class="yield-coin-name">${row.algo} • Reward: ${row.reward.toLocaleString()} ${row.coin}</div>
+                          <div class="yield-coin-name">${row.algo} • Subsidy: ${row.reward.toLocaleString()} ${row.coin}</div>
                         </div>
                       </div>
                     </td>
@@ -8187,12 +8166,12 @@ class HomeMinerFleetCard extends HTMLElement {
                     <td style="text-align: right;">
                       ${row.isMining ? `
                         <span class="stratum-active-badge">
-                          <span class="status-orb" style="background: #34d399; box-shadow: 0 0 8px #34d399;"></span>
-                          Active (Mining)
+                          <span class="status-orb" style="background: #34d399;"></span>
+                          Active
                         </span>
                       ` : `
                         <button class="stratum-btn-action switch-coin-row-btn" data-coin="${row.coin}" data-host="${row.stratumHost}" data-port="${row.stratumPort}">
-                          ⚡ Switch Stratum
+                          ${svgIcon('zap', 11)} Switch Pool
                         </button>
                       `}
                     </td>
@@ -8209,14 +8188,14 @@ class HomeMinerFleetCard extends HTMLElement {
       ${(activeTab === 'hardware' || activeTab === 'all') ? `
       <!-- HARDWARE SECTION -->
       <div class="tab-pane">
-        <div class="hardware-section-title">${isSingleRigView ? 'Workstation Controls & Telemetry' : 'Hardware Workstations'}</div>
+        <div class="hardware-section-title">${isSingleRigView ? 'Workstation Controls & Telemetry' : 'ASIC Hardware Workstations'}</div>
 
         <div class="workstations-grid">
         ${displayedMiners.length === 0 ? `
           <div class="glass-card" style="text-align: center; padding: 40px; color: #94a3b8;">
-            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
-            <div style="font-size: 16px; font-weight: 600; color: #f8fafc;">No matching miner found for this view</div>
-            <div style="font-size: 13px; margin-top: 6px;">Filter: ${filterType || filterHost}</div>
+            <div style="color: #64748b; margin-bottom: 12px; display: flex; justify-content: center;">${svgIcon('search', 28)}</div>
+            <div style="font-size: 15px; font-weight: 600; color: #f8fafc;">No matching miner found for this view</div>
+            <div style="font-size: 12px; margin-top: 6px;">Filter: ${filterType || filterHost}</div>
           </div>
         ` : displayedMiners.map(miner => {
           const isNerdqaxe = miner.type === 'nerdqaxe';
@@ -8238,7 +8217,7 @@ class HomeMinerFleetCard extends HTMLElement {
           const tempBar = Math.min(100, Math.round((chipTemp / 80.0) * 100));
           const fanBar = Math.min(100, Math.round((fanRpm / (isBitaxe ? 8000 : 5000)) * 100));
 
-          // Workstation RPG Tier
+          // Workstation Engineering Tier
           const minerAccepted = miner.acceptedRaw || 0;
           const minerBestDiff = miner.bestDiffNum || 0;
           const minerDiffBonus = minerBestDiff > 1000 ? Math.floor(Math.log10(minerBestDiff) * 5) : 0;
@@ -8250,29 +8229,29 @@ class HomeMinerFleetCard extends HTMLElement {
             <div class="glass-card ${cardGlowClass}">
               <div class="pod-header-row">
                 <div class="pod-identity">
-                  <div class="pod-icon" style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'}; border-color: ${isBitaxe ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}; background: ${isBitaxe ? 'rgba(245, 158, 11, 0.1)' : 'rgba(56, 189, 248, 0.1)'};">
-                    ${this._getMinerTypeIconSvg(miner.type || (isBitaxe ? 'bitaxe' : 'avalon'), 24)}
+                  <div class="pod-icon" style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'}; border-color: ${isBitaxe ? 'rgba(245, 158, 11, 0.35)' : 'rgba(56, 189, 248, 0.35)'};">
+                    ${this._getMinerTypeIconSvg(miner.type || (isBitaxe ? 'bitaxe' : 'avalon'), 22)}
                   </div>
                   <div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span class="pod-name">${miner.name}</span>
-                      <span class="badge-glass-pill" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; font-weight: 700; font-size: 10px;">
+                      <span class="badge-glass-pill" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); color: #fbbf24; font-weight: 700; font-size: 10px;">
                         ${minerRank.badge} Lvl ${minerLvl} • ${minerRank.title}
                       </span>
                       ${isNerdqaxe ? `
-                        <span class="badge-glass-pill" style="background: rgba(148, 163, 184, 0.15); border-color: rgba(148, 163, 184, 0.4); color: #94a3b8; font-weight: 600; font-size: 10px;" title="Hardware implementation follows AxeOS specification; physical hardware testing is pending.">
-                          🧪 Untested Hardware
+                        <span class="badge-glass-pill" style="background: #141c2b; border-color: #26334d; color: #94a3b8; font-weight: 600; font-size: 10px;" title="Hardware implementation follows AxeOS specification; physical hardware testing is pending.">
+                          Untested Hardware
                         </span>
                       ` : ''}
                       ${isMega ? `
                         <span class="mega-share-pill mono">
-                          <span>🏆</span>
-                          <span>MEGA-SHARE ${miner.bestShareStr}</span>
+                          ${svgIcon('award', 11)}
+                          <span>1G+ SHARE ${miner.bestShareStr}</span>
                         </span>
                       ` : isSuper ? `
                         <span class="super-share-pill mono">
-                          <span>⚡</span>
-                          <span>SUPER-SHARE ${miner.bestShareStr}</span>
+                          ${svgIcon('zap', 11)}
+                          <span>100M+ SHARE ${miner.bestShareStr}</span>
                         </span>
                       ` : ''}
                     </div>
@@ -8287,21 +8266,20 @@ class HomeMinerFleetCard extends HTMLElement {
                   </div>
                 </div>
 
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}" data-coin="${miner.coin || 'BTC'}">⚙️ Edit</button>
-                  <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">🗑️ Delete</button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}" data-coin="${miner.coin || 'BTC'}">${svgIcon('settings', 12)} Edit</button>
+                  <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">${svgIcon('trash', 12)} Delete</button>
                   ${isBitaxe ? `
-                    <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart Proc</button>
+                    <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart</button>
                     <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot</button>
-                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ↗</a>
+                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
                   ` : `
                     <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot ASIC</button>
-                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ↗</a>
+                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
                   `}
                 </div>
               </div>
 
-              
               <!-- Per-Rig Active Coin Valuation Bar -->
               ${(() => {
                 const rigCoin = (miner.coin || 'BTC').toUpperCase();
@@ -8311,11 +8289,10 @@ class HomeMinerFleetCard extends HTMLElement {
                 let rigName = activeCoinName;
 
                 if (rigCoin === 'WOJAK' || rigCoin === 'WJK') {
-                  rigSign = '🎭';
+                  rigSign = 'W';
                   rigName = 'Wojak';
                   rigPrice = 0.00002513;
                   rigChange = 2.39;
-                  // Look up live Wojak sensor if present in HA
                   Object.keys(states).forEach(eid => {
                     if (eid.includes('wojak') && eid.endsWith('_coin_price_usd')) {
                       const p = parseFloat(states[eid]?.state);
@@ -8346,7 +8323,7 @@ class HomeMinerFleetCard extends HTMLElement {
                       <div class="coin-symbol-circle">${rigSign}</div>
                       <div>
                         <div class="coin-name-label">${rigName} (${rigCoin})</div>
-                        <div class="mono" style="font-size: 10px; color: #94a3b8;">Active Mined Currency</div>
+                        <div class="mono" style="font-size: 10px; color: #64748b;">Active Mined Asset</div>
                       </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -8368,7 +8345,7 @@ class HomeMinerFleetCard extends HTMLElement {
                     <span class="tile-unit">TH/s</span>
                   </div>
                   <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${hashBar}%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></div>
+                    <div class="tile-prog-fill" style="width: ${hashBar}%; background: #38bdf8;"></div>
                   </div>
                 </div>
 
@@ -8379,12 +8356,12 @@ class HomeMinerFleetCard extends HTMLElement {
                     <span class="tile-unit">Watts</span>
                   </div>
                   <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${pwrBar}%; background: #fbbf24; box-shadow: 0 0 8px #fbbf24;"></div>
+                    <div class="tile-prog-fill" style="width: ${pwrBar}%; background: #fbbf24;"></div>
                   </div>
                 </div>
 
                 <div class="tile-glass-box">
-                  <div class="tile-label">Chip Temp</div>
+                  <div class="tile-label">ASIC Temp</div>
                   <div class="tile-val-row">
                     <span class="tile-num" style="color: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#34d399'};">
                       ${chipTemp > 0 ? chipTemp.toFixed(1) : '--'}
@@ -8403,7 +8380,7 @@ class HomeMinerFleetCard extends HTMLElement {
                     <span class="tile-unit">RPM</span>
                   </div>
                   <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${fanBar}%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></div>
+                    <div class="tile-prog-fill" style="width: ${fanBar}%; background: #38bdf8;"></div>
                   </div>
                 </div>
               </div>
@@ -8412,7 +8389,7 @@ class HomeMinerFleetCard extends HTMLElement {
               ${isBitaxe ? `
                 <div class="tactile-bay">
                   <div class="bay-header-row">
-                    <span class="bay-title">⚡ Interactive ${isNerdqaxe ? 'NerdQaxe' : 'AxeOS'} Overclocking Console</span>
+                    <span class="bay-title">${svgIcon('sliders', 13)} ${isNerdqaxe ? 'NERDQAXE' : 'AXEOS'} CLOCK & VOLTAGE TUNING</span>
                     <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt ? miner.inVolt + 'V Input | ' : ''}${miner.inAmps ? miner.inAmps + 'A Draw' : (isNerdqaxe ? 'Quad-ASIC Matrix' : 'Single ASIC')}</span>
                   </div>
 
@@ -8421,7 +8398,7 @@ class HomeMinerFleetCard extends HTMLElement {
                       <button class="pill-btn ${miner.profile === prof ? 'active' : ''}" 
                               data-profile="${prof}"
                               data-entity="${miner.profileEntity}">
-                        ${prof === 'Eco' ? '🌱 Eco' : prof === 'Standard' ? '⚡ Standard' : prof === 'Turbo' ? '🔥 Turbo' : '★ Custom'}
+                        ${prof === 'Eco' ? `${svgIcon('leaf', 11)} Eco` : prof === 'Standard' ? `${svgIcon('zap', 11)} Standard` : prof === 'Turbo' ? `${svgIcon('flame', 11)} Turbo` : `${svgIcon('sliders', 11)} Custom`}
                       </button>
                     `).join('')}
                   </div>
@@ -8453,20 +8430,20 @@ class HomeMinerFleetCard extends HTMLElement {
               ` : ''}
 
               <!-- Active Pool Integration Header -->
-              <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; margin-top: 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+              <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #0d121b; border: 1px solid #1f2737; border-radius: 6px; margin-top: 12px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #34d399; box-shadow: 0 0 10px #34d399;"></span>
-                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">Active Pool Integration:</span>
-                  <span style="font-size: 13px; font-weight: 800; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">
+                  <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+                  <span style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-family: 'JetBrains Mono', monospace;">Pool Provider:</span>
+                  <span style="font-size: 12px; font-weight: 700; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">
                     ${poolProviderMap[miner.poolProvider] || miner.poolProvider || 'Direct Stratum'}
                   </span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
                   <span style="color: #94a3b8;">Worker: <b style="color: #fbbf24;">${miner.poolUser || miner.poolWallet || 'Auto'}</b></span>
-                  <span style="color: rgba(255,255,255,0.2);">|</span>
+                  <span style="color: #263147;">|</span>
                   <span style="color: #34d399; font-weight: 700;">● ${miner.poolStatus || 'Alive'}</span>
                   ${miner.ths > 0 ? `
-                    <span style="color: rgba(255,255,255,0.2);">|</span>
+                    <span style="color: #263147;">|</span>
                     <span style="color: #38bdf8; font-weight: 700;">${miner.ths.toFixed(2)} TH/s</span>
                   ` : ''}
                 </div>
@@ -8475,36 +8452,36 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="stratum-card-strip">
                   <div class="stratum-chips-row">
                     <div class="stratum-host-pill">
-                      <span style="color: #94a3b8;">Stratum Pool:</span>
+                      <span style="color: #64748b;">Endpoint:</span>
                       <span style="color: #38bdf8; font-weight: 600;">${miner.poolUrl}</span>
-                      <span style="color: rgba(255,255,255,0.2);">|</span>
+                      <span style="color: #263147;">|</span>
                       <span style="color: #fbbf24;">Worker: ${miner.poolUser}</span>
                     </div>
-                    <div class="badge-glass-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.1);">
-                      ● Pool: ${miner.poolStatus}
+                    <div class="badge-glass-pill" style="color: #34d399; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
+                      ● ${miner.poolStatus}
                     </div>
                   </div>
 
                   <div class="shares-metric-rack">
                     <div class="share-tag">
-                      <span style="color: #94a3b8;">Accepted:</span>
+                      <span style="color: #64748b;">Accepted:</span>
                       <span style="color: #34d399; font-weight: 700;">${miner.accepted}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #94a3b8;">Rejected:</span>
+                      <span style="color: #64748b;">Rejected:</span>
                       <span style="color: #fb7185; font-weight: 700;">${miner.rejected}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #94a3b8;">HW Errors:</span>
+                      <span style="color: #64748b;">HW Errors:</span>
                       <span style="color: #fbbf24; font-weight: 700;">${miner.hwErrors}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #94a3b8;">Best Share:</span>
+                      <span style="color: #64748b;">Best Share:</span>
                       <span style="color: #38bdf8; font-weight: 700;">${miner.bestShareStr}</span>
                     </div>
                     ${miner.blocksFound !== '--' ? `
                       <div class="share-tag">
-                        <span style="color: #94a3b8;">Found Blocks:</span>
+                        <span style="color: #64748b;">Found Blocks:</span>
                         <span style="color: #34d399; font-weight: 700;">${miner.blocksFound}</span>
                       </div>
                     ` : ''}
@@ -8639,15 +8616,15 @@ class HomeMinerFleetCard extends HTMLElement {
     const btn = this.shadowRoot?.querySelector('#test-celebration-btn');
     if (btn) {
       const origHtml = btn.innerHTML;
-      btn.innerHTML = `🎉 SOLO BLOCK: +${reward.toLocaleString()} ${coin}!`;
-      btn.style.background = 'rgba(52, 211, 153, 0.35)';
-      btn.style.borderColor = '#34d399';
-      btn.style.color = '#34d399';
+      btn.innerHTML = `${svgIcon('trophy', 12)} SOLO BLOCK: +${reward.toLocaleString()} ${coin}!`;
+      btn.style.background = 'rgba(16, 185, 129, 0.25)';
+      btn.style.borderColor = '#10b981';
+      btn.style.color = '#10b981';
       setTimeout(() => {
         btn.innerHTML = origHtml;
-        btn.style.background = 'rgba(245, 158, 11, 0.2)';
-        btn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
-        btn.style.color = '#fbbf24';
+        btn.style.background = '#161d2b';
+        btn.style.borderColor = '#263042';
+        btn.style.color = '#cbd5e1';
       }, 3500);
     }
     const canvas = this.shadowRoot?.querySelector('#celebration-canvas');
@@ -8799,9 +8776,9 @@ class HomeMinerFleetCard extends HTMLElement {
     if (testAudioBtn) {
       testAudioBtn.addEventListener('click', () => {
         const origText = testAudioBtn.innerHTML;
-        testAudioBtn.innerHTML = '🔊 Playing Audio...';
-        testAudioBtn.style.color = '#34d399';
-        testAudioBtn.style.borderColor = '#34d399';
+        testAudioBtn.innerHTML = `${svgIcon('volume-on', 12)} Playing Audio...`;
+        testAudioBtn.style.color = '#10b981';
+        testAudioBtn.style.borderColor = '#10b981';
 
         // Play 3 rapid geiger clicks followed by a milestone chime (forced playback)
         this._playGeigerClick(1.2, true);
@@ -8811,8 +8788,8 @@ class HomeMinerFleetCard extends HTMLElement {
 
         setTimeout(() => {
           testAudioBtn.innerHTML = origText;
-          testAudioBtn.style.color = '#38bdf8';
-          testAudioBtn.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+          testAudioBtn.style.color = '#cbd5e1';
+          testAudioBtn.style.borderColor = '#263042';
         }, 900);
       });
     }

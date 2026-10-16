@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Precision Hardware Workstation UI/UX Overhaul** ([#44](https://github.com/everyday3d/home-miner-studio/issues/44)):
+  - **Matte Carbon/Slate Surface System**: Replaced blurry neon radial-gradient glassmorphic backgrounds, drop-shadow halos, and gradient text clips with a Braiins OS+ / AxeOS / Linear-inspired Precision Hardware Workstation palette (`#0b0e14` base, `#111620` card surface, `#161d2b` inset bay, `1px solid #1f2737` structural hairlines, and `font-variant-numeric: tabular-nums` monospace readouts).
+  - **Compact 5-Column KPI Telemetry Ribbon**: Replaced the 3 oversized 300px circular donut ring gauges with a high-density 5-column `.kpi-ribbon` displaying **Fleet Hashrate** (`TH/s`), **Total Load** (`W` & `$/d`), **Efficiency** (`J/TH`), **Avg Core Temp** (`°C` & peak `RPM`), and **Verified Shares** (valid count & best difficulty), bringing ASIC Hardware Workstation cards immediately above the fold.
+  - **Slim Collapsed-by-Default Stratum Status Bar**: Defaulted the Stratum Pipeline card (`#pipeline-card`) to a single-line status strip showing active coin, pool host, job ID, and block height, expandable on demand via the `Inspect` button.
+  - **Monochrome Inline SVG Icon System (`svgIcon`)**: Replaced Unicode OS emojis across command bar buttons, segmented workspace tabs, modals, tuning presets, and status pills with crisp, scalable monochrome inline SVG vector icons.
+  - **Mining Engineering Milestones & Workstation Surface Themes**: Reframed RPG titles, trophy badges, and prestige themes into authentic mining engineering tiers (`Home Lab Operator`, `ASIC Bench Technician`, `Stratum Pool Operator`, `Principal Protocol Architect (MAX)`), verified hardware benchmarks, and matte industrial workstation surface themes.
+
 ## [0.7.3] - 2026-10-15
 
 ### Added
