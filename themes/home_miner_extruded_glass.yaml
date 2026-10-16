@@ -1,0 +1,91 @@
+# ==============================================================================
+# Home Miner Studio — Tactile Extruded Glassmorphism Theme (themes.yaml)
+# Supports both Bright Refined Frosted Glass (light) & High-Contrast Obsidian (dark)
+# Geometry: Sharp 4px–6px edges, 1px specular borders, blur(16px), raised box-shadows
+# ==============================================================================
+Home Miner Extruded Glass:
+  # Typography
+  primary-font-family: "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+  paper-font-common-base_-_font-family: "var(--primary-font-family)"
+  paper-font-common-code_-_font-family: "'JetBrains Mono', monospace"
+  ha-card-header-font-family: "var(--primary-font-family)"
+
+  # Sharp Geometric Edges (4px to 6px)
+  ha-card-border-radius: "5px"
+  ha-card-border-width: "1px"
+  mdc-shape-small: "4px"
+  mdc-shape-medium: "5px"
+  mdc-shape-large: "6px"
+
+  # Core Semantic Accents (Electric Cyan, Thermal Amber/Coral, Active Emerald)
+  primary-color: "#00e5ff"
+  accent-color: "#10b981"
+  info-color: "#00e5ff"
+  success-color: "#10b981"
+  warning-color: "#f59e0b"
+  error-color: "#fb7185"
+  state-icon-color: "#64748b"
+  state-icon-active-color: "#00e5ff"
+
+  # Global Backdrop Filter
+  ha-card-backdrop-filter: "blur(16px) saturate(160%)"
+
+  modes:
+    # --------------------------------------------------------------------------
+    # LIGHT MODE: Bright Refined Frosted Glass (rgba(255, 255, 255, 0.75))
+    # --------------------------------------------------------------------------
+    light:
+      primary-background-color: "#e2e8f0"
+      secondary-background-color: "#f1f5f9"
+      lovelace-background: "radial-gradient(circle at 12% 10%, rgba(0, 229, 255, 0.16) 0%, transparent 45%), radial-gradient(circle at 88% 90%, rgba(16, 185, 129, 0.14) 0%, transparent 45%), linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)"
+      app-header-background-color: "rgba(255, 255, 255, 0.80)"
+      app-header-text-color: "#0f172a"
+      sidebar-background-color: "rgba(255, 255, 255, 0.82)"
+      sidebar-text-color: "#1e293b"
+      sidebar-selected-text-color: "#0284c7"
+      sidebar-selected-icon-color: "#0284c7"
+      card-background-color: "rgba(255, 255, 255, 0.75)"
+      ha-card-background: "rgba(255, 255, 255, 0.75)"
+      ha-card-border-color: "rgba(15, 23, 42, 0.14)"
+      ha-card-box-shadow: "0 10px 24px -4px rgba(15, 23, 42, 0.12), 0 3px 6px -1px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.96)"
+      primary-text-color: "#0f172a"
+      secondary-text-color: "#334155"
+      text-primary-color: "#0f172a"
+      disabled-text-color: "#94a3b8"
+      divider-color: "rgba(15, 23, 42, 0.10)"
+
+    # --------------------------------------------------------------------------
+    # DARK MODE: High-Contrast Obsidian Frosted Glass (rgba(17, 24, 39, 0.76))
+    # --------------------------------------------------------------------------
+    dark:
+      primary-background-color: "#080b11"
+      secondary-background-color: "#0f172a"
+      lovelace-background: "radial-gradient(circle at 12% 10%, rgba(0, 229, 255, 0.10) 0%, transparent 45%), radial-gradient(circle at 88% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 45%), linear-gradient(180deg, #080b11 0%, #0d131f 100%)"
+      app-header-background-color: "rgba(15, 23, 42, 0.82)"
+      app-header-text-color: "#f8fafc"
+      sidebar-background-color: "rgba(11, 15, 25, 0.88)"
+      sidebar-text-color: "#94a3b8"
+      sidebar-selected-text-color: "#00e5ff"
+      sidebar-selected-icon-color: "#00e5ff"
+      card-background-color: "rgba(17, 24, 39, 0.76)"
+      ha-card-background: "rgba(17, 24, 39, 0.76)"
+      ha-card-border-color: "rgba(148, 163, 184, 0.22)"
+      ha-card-box-shadow: "0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16)"
+      primary-text-color: "#f8fafc"
+      secondary-text-color: "#94a3b8"
+      text-primary-color: "#f8fafc"
+      disabled-text-color: "#475569"
+      divider-color: "rgba(148, 163, 184, 0.16)"
+
+  # Global card-mod Theme Injection for Tactile Extruded Glass Surfaces
+  card-mod-theme: "Home Miner Extruded Glass"
+  card-mod-card-yaml: |
+    .: |
+      ha-card {
+        border-radius: 5px !important;
+        backdrop-filter: blur(16px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+        border: 1px solid var(--ha-card-border-color, rgba(148, 163, 184, 0.22)) !important;
+        box-shadow: var(--ha-card-box-shadow, 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16)) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+      }

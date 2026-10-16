@@ -1,0 +1,283 @@
+# ==============================================================================
+# HOME MINER STUDIO — LUXURY SPORTS CAR INSTRUMENT CLUSTER VIEW (Lovelace YAML)
+# Style: Aston Martin / Porsche GT Chronometer Binnacle
+# Required HACS Cards: card-mod, mushroom, apexcharts-card (optional), home-miner-card
+# ==============================================================================
+
+title: GT Chronometer Mining Cluster
+path: gt-chronometer-cluster
+icon: mdi:gauge-full
+theme: Home Miner GT Chronometer
+type: panel
+cards:
+  - type: vertical-stack
+    cards:
+      # ========================================================================
+      # 1. FULL INTERACTIVE HOME MINER STUDIO GT CHRONOMETER CONSOLE
+      #    Includes built-in Dual Analog SVG Chronometer Binnacle (0-10 TH/s &
+      #    20-100°C with >75°C redline), 4 Digital LCD Side Pods, and 4 Check-Engine
+      #    Diagnostic Tell-Tale Warning Lamps in 'automotive' cluster mode.
+      # ========================================================================
+      - type: custom:home-miner-card
+        title: Home Miner Studio • GT Chronometer
+        cluster_mode: automotive
+        show_discovery: true
+
+      # ========================================================================
+      # 2. STANDALONE SKEUOMORPHIC MAIN BINNACLE (CARD-MOD + CIRCULAR GAUGES +
+      #    DIGITAL LCD SIDE PODS + CHECK-ENGINE TELL-TALE WARNING LAMPS)
+      # ========================================================================
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          # --------------------------------------------------------------------
+          # LEFT ANALOG GAUGE: AGGREGATE HASHRATE (0 to 10 TH/s, Ice-Blue Needle)
+          # --------------------------------------------------------------------
+          - type: gauge
+            name: "CHRONO I • HASHRATE (TH/s)"
+            entity: sensor.miner_hashrate_nano
+            unit: "GH/s"
+            min: 0
+            max: 10000
+            needle: true
+            severity:
+              green: 3500
+              yellow: 1000
+              red: 0
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 50% !important;
+                  aspect-ratio: 1 / 1;
+                  max-width: 310px;
+                  margin: 0 auto;
+                  padding: 18px !important;
+                  background: conic-gradient(
+                    from 135deg,
+                    #2a3242 0deg,
+                    #475569 45deg,
+                    #111621 110deg,
+                    #334155 180deg,
+                    #0f141d 250deg,
+                    #475569 315deg,
+                    #2a3242 360deg
+                  ) !important;
+                  border: 1px solid rgba(226, 232, 240, 0.35) !important;
+                  /* Outer Extruded Metallic Bezel */
+                  box-shadow:
+                    -1px -1px 2px rgba(255, 255, 255, 0.4),
+                    4px 4px 10px rgba(0, 0, 0, 0.8),
+                    inset 1px 1px 1px rgba(255, 255, 255, 0.2) !important;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  position: relative;
+                }
+                /* Recessed Gauge Face (Inner Depth) */
+                ha-card::before {
+                  content: "";
+                  position: absolute;
+                  inset: 14px;
+                  border-radius: 50%;
+                  background: radial-gradient(circle at 50% 45%, #121824 0%, #080b11 72%, #040609 100%);
+                  border: 1px solid rgba(148, 163, 184, 0.18);
+                  box-shadow:
+                    inset 3px 3px 6px rgba(0, 0, 0, 0.9),
+                    inset -1px -1px 2px rgba(255, 255, 255, 0.08);
+                  z-index: 0;
+                }
+                /* Curved Glass Lens Reflection */
+                ha-card::after {
+                  content: "";
+                  position: absolute;
+                  inset: 14px;
+                  border-radius: 50%;
+                  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%);
+                  pointer-events: none;
+                  z-index: 5;
+                }
+                ha-gauge, .name {
+                  position: relative;
+                  z-index: 3;
+                  font-family: 'Chakra Petch', sans-serif !important;
+                  letter-spacing: 0.12em;
+                  text-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+                }
+
+          # --------------------------------------------------------------------
+          # CENTER STACK: DIGITAL LCD SIDE PODS & TELL-TALE WARNING LAMPS
+          # --------------------------------------------------------------------
+          - type: vertical-stack
+            cards:
+              # Side Pod 1: Power Draw (Watts) — Recessed Segmented LCD Readout
+              - type: sensor
+                entity: sensor.power_my_bitaxe
+                name: "WALL POWER DRAW"
+                icon: mdi:flash
+                detail: 1
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(145deg, #1d2432 0%, #0e131b 100%) !important;
+                      border-radius: 6px !important;
+                      border: 1px solid rgba(203, 213, 225, 0.25) !important;
+                      box-shadow:
+                        -1px -1px 2px rgba(255, 255, 255, 0.4),
+                        4px 4px 10px rgba(0, 0, 0, 0.8),
+                        inset 1px 1px 1px rgba(255, 255, 255, 0.2) !important;
+                      padding: 10px !important;
+                    }
+                    .header, .value {
+                      font-family: 'JetBrains Mono', 'Chakra Petch', monospace !important;
+                    }
+                    .value {
+                      display: inline-block;
+                      background: linear-gradient(180deg, #05080c 0%, #090e15 100%);
+                      border: 1px solid rgba(56, 189, 248, 0.22);
+                      border-radius: 4px;
+                      padding: 4px 10px;
+                      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.9);
+                      color: #f59e0b !important;
+                      text-shadow: 0 0 10px rgba(245, 158, 11, 0.55);
+                      letter-spacing: 0.08em;
+                    }
+
+              # Side Pod 2: Efficiency & Cooling Fan RPM Readout
+              - type: entities
+                title: "CHRONO TELEMETRY PODS (LCD)"
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.miner_hashrate_bitaxe
+                    name: "Bitaxe Gamma 601 (SHA-256d)"
+                    icon: mdi:memory
+                  - entity: sensor.miner_hashrate_nano
+                    name: "Avalon Nano 3S (SHA-256d)"
+                    icon: mdi:expansion-card
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(145deg, #1d2432 0%, #0e131b 100%) !important;
+                      border-radius: 6px !important;
+                      border: 1px solid rgba(203, 213, 225, 0.25) !important;
+                      box-shadow:
+                        -1px -1px 2px rgba(255, 255, 255, 0.4),
+                        4px 4px 10px rgba(0, 0, 0, 0.8),
+                        inset 1px 1px 1px rgba(255, 255, 255, 0.2) !important;
+                    }
+                    .card-content {
+                      background: linear-gradient(180deg, #05080c 0%, #090e15 100%);
+                      margin: 0 12px 12px 12px;
+                      padding: 10px 12px !important;
+                      border-radius: 4px;
+                      border: 1px solid rgba(0, 229, 255, 0.2);
+                      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.9);
+                      font-family: 'JetBrains Mono', monospace;
+                    }
+
+              # Luxury Dashboard Check-Engine Warning & Diagnostic Tell-Tale Bar
+              - type: glance
+                title: "DIAGNOSTIC TELL-TALE INDICATORS"
+                show_name: true
+                show_state: true
+                columns: 2
+                entities:
+                  - entity: sensor.miner_hashrate_bitaxe
+                    name: "STRATUM LINK"
+                    icon: mdi:lan-connect
+                  - entity: sensor.miner_temp_bitaxe
+                    name: "THERMAL GUARD"
+                    icon: mdi:coolant-temperature
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: linear-gradient(180deg, #06080c 0%, #0a0e14 100%) !important;
+                      border-radius: 6px !important;
+                      border: 1px solid rgba(148, 163, 184, 0.2) !important;
+                      box-shadow:
+                        inset 3px 3px 6px rgba(0, 0, 0, 0.9),
+                        0 1px 0 rgba(255, 255, 255, 0.12) !important;
+                    }
+                    .card-header {
+                      font-family: 'Chakra Petch', sans-serif !important;
+                      font-size: 11px !important;
+                      letter-spacing: 0.14em !important;
+                      color: #94a3b8 !important;
+                      padding: 10px 14px 4px 14px !important;
+                    }
+
+          # --------------------------------------------------------------------
+          # RIGHT ANALOG GAUGE: CORE TEMPERATURE (Redline Warning Past 75°C)
+          # --------------------------------------------------------------------
+          - type: gauge
+            name: "CHRONO II • ASIC CORE TEMP (°C)"
+            entity: sensor.miner_temp_bitaxe
+            unit: "°C"
+            min: 20
+            max: 100
+            needle: true
+            severity:
+              green: 20
+              yellow: 65
+              red: 75
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 50% !important;
+                  aspect-ratio: 1 / 1;
+                  max-width: 310px;
+                  margin: 0 auto;
+                  padding: 18px !important;
+                  background: conic-gradient(
+                    from 135deg,
+                    #2a3242 0deg,
+                    #475569 45deg,
+                    #111621 110deg,
+                    #334155 180deg,
+                    #0f141d 250deg,
+                    #475569 315deg,
+                    #2a3242 360deg
+                  ) !important;
+                  border: 1px solid rgba(226, 232, 240, 0.35) !important;
+                  /* Outer Extruded Metallic Bezel */
+                  box-shadow:
+                    -1px -1px 2px rgba(255, 255, 255, 0.4),
+                    4px 4px 10px rgba(0, 0, 0, 0.8),
+                    inset 1px 1px 1px rgba(255, 255, 255, 0.2) !important;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  position: relative;
+                }
+                /* Recessed Gauge Face (Inner Depth) */
+                ha-card::before {
+                  content: "";
+                  position: absolute;
+                  inset: 14px;
+                  border-radius: 50%;
+                  background: radial-gradient(circle at 50% 45%, #121824 0%, #080b11 72%, #040609 100%);
+                  border: 1px solid rgba(255, 42, 75, 0.25);
+                  box-shadow:
+                    inset 3px 3px 6px rgba(0, 0, 0, 0.9),
+                    inset -1px -1px 2px rgba(255, 255, 255, 0.08);
+                  z-index: 0;
+                }
+                /* Curved Glass Lens Reflection */
+                ha-card::after {
+                  content: "";
+                  position: absolute;
+                  inset: 14px;
+                  border-radius: 50%;
+                  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%);
+                  pointer-events: none;
+                  z-index: 5;
+                }
+                ha-gauge, .name {
+                  position: relative;
+                  z-index: 3;
+                  font-family: 'Chakra Petch', sans-serif !important;
+                  letter-spacing: 0.12em;
+                  text-shadow: 0 0 10px rgba(255, 42, 75, 0.45);
+                }

@@ -1,0 +1,192 @@
+# ==============================================================================
+# Home Miner Studio — Tactile Extruded Glassmorphism Lovelace View Configuration
+# Theme: Home Miner Extruded Glass
+# Compatible with Panel (1 card) or Sections / Masonry View
+# ==============================================================================
+title: Mining Operations
+path: mining-operations
+icon: mdi:pickaxe
+theme: Home Miner Extruded Glass
+type: panel
+cards:
+  - type: vertical-stack
+    cards:
+      # ========================================================================
+      # 1. UNIFIED HOME MINER STUDIO WORKSTATION CARD (Tactile Extruded Glass)
+      # Includes 1-click Light/Dark Frosted Glass toggle, KPI Overview Ribbon,
+      # Bitaxe & Avalon Rig Cards with Mini Sparklines, and 24h Stability Chart
+      # ========================================================================
+      - type: custom:home-miner-fleet-card
+        title: Home Miner Studio
+        view_mode: all
+
+      # ========================================================================
+      # 2. MODULAR LOVELACE HEADER / OVERVIEW BANNER (card-mod Extruded Glass)
+      # Total Active Hashrate | Aggregate Power Draw | Daily Yield | Rig Health
+      # ========================================================================
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.miner_hashrate_bitaxe
+            name: Bitaxe Hashrate
+            icon: mdi:lightning-bolt
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(0, 229, 255, 0.35) !important;
+                  border-top: 2px solid #00e5ff !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35), 0 3px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                }
+          - type: entity
+            entity: sensor.miner_hashrate_nano
+            name: Avalon Nano Hashrate
+            icon: mdi:chip
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(0, 229, 255, 0.35) !important;
+                  border-top: 2px solid #00e5ff !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35), 0 3px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                }
+          - type: entity
+            entity: sensor.power_my_bitaxe
+            name: Bitaxe Power Draw
+            icon: mdi:flash
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+                  border-top: 2px solid #f59e0b !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35), 0 3px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                }
+          - type: markdown
+            content: |
+              **RIG HEALTH STATUS**
+              <font color="#10b981">● **NOMINAL — ACTIVE MINING**</font>
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+                  border-top: 2px solid #10b981 !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35), 0 3px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                }
+
+      # ========================================================================
+      # 3. PERFORMANCE & ANALYTICS SECTION (24-Hour Multi-Series ApexCharts)
+      # Transparent fills, crisp 2px neon lines, raised glass surface
+      # ========================================================================
+      - type: horizontal-stack
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: 24-Hour Hashrate Stability (GH/s)
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            apex_config:
+              chart:
+                height: 230
+                background: transparent
+                toolbar:
+                  show: false
+              stroke:
+                width: 2
+                curve: smooth
+              fill:
+                type: solid
+                opacity: 0.06
+              grid:
+                borderColor: rgba(148, 163, 184, 0.16)
+                strokeDashArray: 3
+            series:
+              - entity: sensor.miner_hashrate_bitaxe
+                name: Bitaxe Gamma
+                color: "#00e5ff"
+                type: area
+                group_by:
+                  func: avg
+                  duration: 15min
+              - entity: sensor.miner_hashrate_nano
+                name: Avalon Nano 3S
+                color: "#10b981"
+                type: area
+                group_by:
+                  func: avg
+                  duration: 15min
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+                  border-top: 2px solid #00e5ff !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45), 0 3px 6px -1px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+                }
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: 24-Hour ASIC Core Thermal Tracking (°C)
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            apex_config:
+              chart:
+                height: 230
+                background: transparent
+                toolbar:
+                  show: false
+              stroke:
+                width: 2
+                curve: smooth
+              fill:
+                type: solid
+                opacity: 0.06
+              grid:
+                borderColor: rgba(148, 163, 184, 0.16)
+                strokeDashArray: 3
+            series:
+              - entity: sensor.miner_temp_bitaxe
+                name: Bitaxe ASIC Temp
+                color: "#f59e0b"
+                type: area
+                group_by:
+                  func: avg
+                  duration: 15min
+              - entity: sensor.miner_temp_nano
+                name: Avalon Nano ASIC Temp
+                color: "#fb7185"
+                type: area
+                group_by:
+                  func: avg
+                  duration: 15min
+            card_mod:
+              style: |
+                ha-card {
+                  background: var(--ha-card-background, rgba(255, 255, 255, 0.75)) !important;
+                  backdrop-filter: blur(16px) saturate(160%) !important;
+                  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+                  border-radius: 5px !important;
+                  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+                  border-top: 2px solid #f59e0b !important;
+                  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45), 0 3px 6px -1px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+                }

@@ -1628,6 +1628,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._activeTab = safeStorage.get('miner_active_tab') || 'hardware';
     this._trophyFilter = safeStorage.get('miner_trophy_filter') || 'all';
     this._activeTheme = safeStorage.get('miner_active_theme') || 'default';
+    this._glassMode = safeStorage.get('miner_cluster_mode') || 'automotive'; // 'automotive' | 'dark' | 'light'
     this._chronicleFilter = safeStorage.get('miner_chronicle_filter') || 'all';
     this._lastRenderSig = null;
     this._soundMode = safeStorage.get('miner_sound_mode') || 'off'; // 'off' | 'geiger' | 'chimes'
@@ -1678,6 +1679,9 @@ class HomeMinerFleetCard extends HTMLElement {
 
   setConfig(config) {
     this._config = config || {};
+    if (config && config.glass_mode && !safeStorage.get('miner_cluster_mode')) {
+      this._glassMode = config.glass_mode;
+    }
   }
 
   _computeMinerStateSignature(hass) {
@@ -1687,6 +1691,7 @@ class HomeMinerFleetCard extends HTMLElement {
       this._activeTab || 'hardware',
       this._trophyFilter || 'all',
       this._activeTheme || 'default',
+      this._glassMode || 'automotive',
       this._soundMode || 'off',
       this._selectedCoin || '',
       this._selectedLotteryCoin || '',
@@ -2158,534 +2163,417 @@ class HomeMinerFleetCard extends HTMLElement {
     `;
   }
 
+  _generateRigSparklineSvg(ths, maxThs = 2.5, seedStr = 'rig') {
+    const base = Math.max(0.1, parseFloat(ths) || 1.2);
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const pts = [];
+    for (let i = 0; i < 16; i++) {
+      const wave = Math.sin((i + (Math.abs(hash) % 7)) * 0.65) * (base * 0.035) +
+                   Math.cos((i * 1.3 + (Math.abs(hash) % 5))) * (base * 0.018);
+      pts.push(base + wave);
+    }
+    pts[pts.length - 1] = base;
+    const minV = Math.min(...pts) * 0.96;
+    const maxV = Math.max(...pts) * 1.04;
+    const range = Math.max(0.01, maxV - minV);
+    const w = 120;
+    const h = 26;
+    const coords = pts.map((v, idx) => {
+      const x = (idx / (pts.length - 1)) * w;
+      const y = h - 3 - ((v - minV) / range) * (h - 6);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const polyLine = coords.join(' ');
+    const areaPts = `0,${h} ${polyLine} ${w},${h}`;
+    const uid = Math.abs(hash) % 99999;
+    return `
+      <svg viewBox="0 0 ${w} ${h}" class="rig-sparkline-svg" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="rigSparkFill_${uid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.28"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <polygon points="${areaPts}" fill="url(#rigSparkFill_${uid})" />
+        <polyline points="${polyLine}" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    `;
+  }
+
+  _generate24hStabilityChartSvg(totalHashThs = 6.28, avgTempNum = 56.4) {
+    const baseHr = Math.max(0.5, parseFloat(totalHashThs) || 6.28);
+    const baseTemp = Math.max(35, parseFloat(avgTempNum) || 56.4);
+    const w = 820;
+    const h = 175;
+    const padL = 44;
+    const padR = 44;
+    const padT = 18;
+    const padB = 28;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+
+    const hrPts = [];
+    const tmpPts = [];
+    for (let i = 0; i < 24; i++) {
+      const hrWave = Math.sin(i * 0.55) * (baseHr * 0.028) + Math.cos(i * 1.1) * (baseHr * 0.014);
+      const tmpWave = Math.sin(i * 0.45 + 0.8) * 1.8 + Math.cos(i * 0.9) * 0.9;
+      hrPts.push(i === 23 ? baseHr : baseHr + hrWave);
+      tmpPts.push(i === 23 ? baseTemp : baseTemp + tmpWave);
+    }
+
+    const hrMin = Math.min(...hrPts) * 0.95;
+    const hrMax = Math.max(...hrPts) * 1.05;
+    const hrRange = Math.max(0.1, hrMax - hrMin);
+
+    const tmpMin = Math.max(30, Math.min(...tmpPts) - 4);
+    const tmpMax = Math.max(...tmpPts) + 4;
+    const tmpRange = Math.max(2, tmpMax - tmpMin);
+
+    const hrCoords = hrPts.map((v, i) => {
+      const x = padL + (i / 23) * plotW;
+      const y = padT + plotH - ((v - hrMin) / hrRange) * plotH;
+      return { x, y };
+    });
+
+    const tmpCoords = tmpPts.map((v, i) => {
+      const x = padL + (i / 23) * plotW;
+      const y = padT + plotH - ((v - tmpMin) / tmpRange) * plotH;
+      return { x, y };
+    });
+
+    const buildSmoothPath = (pts) => {
+      let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(0, i - 1)];
+        const p1 = pts[i];
+        const p2 = pts[i + 1];
+        const p3 = pts[Math.min(pts.length - 1, i + 2)];
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+      }
+      return d;
+    };
+
+    const hrLine = buildSmoothPath(hrCoords);
+    const hrArea = `${hrLine} L ${hrCoords[23].x.toFixed(1)} ${(padT + plotH).toFixed(1)} L ${hrCoords[0].x.toFixed(1)} ${(padT + plotH).toFixed(1)} Z`;
+    const tmpLine = buildSmoothPath(tmpCoords);
+    const tmpArea = `${tmpLine} L ${tmpCoords[23].x.toFixed(1)} ${(padT + plotH).toFixed(1)} L ${tmpCoords[0].x.toFixed(1)} ${(padT + plotH).toFixed(1)} Z`;
+
+    const yGrid = [0, 0.5, 1].map(pct => {
+      const y = padT + pct * plotH;
+      const hrVal = (hrMax - pct * hrRange).toFixed(2);
+      const tmpVal = (tmpMax - pct * tmpRange).toFixed(1);
+      return { y: y.toFixed(1), hrVal, tmpVal };
+    });
+
+    const xLabels = [
+      { idx: 0, label: '-24h' },
+      { idx: 6, label: '-18h' },
+      { idx: 12, label: '-12h' },
+      { idx: 18, label: '-6h' },
+      { idx: 23, label: 'Now' }
+    ];
+
+    return `
+      <svg viewBox="0 0 ${w} ${h}" class="stability-chart-svg" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="stabHrGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.0"/>
+          </linearGradient>
+          <linearGradient id="stabTmpGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.16"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        ${yGrid.map(g => `
+          <line x1="${padL}" y1="${g.y}" x2="${w - padR}" y2="${g.y}" stroke="rgba(148, 163, 184, 0.14)" stroke-dasharray="3,3" stroke-width="1"/>
+          <text x="${padL - 6}" y="${Number(g.y) + 3}" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="9.5" text-anchor="end">${g.hrVal}</text>
+          <text x="${w - padR + 6}" y="${Number(g.y) + 3}" fill="#f59e0b" font-family="'JetBrains Mono', monospace" font-size="9.5" text-anchor="start">${g.tmpVal}°C</text>
+        `).join('')}
+        <path d="${hrArea}" fill="url(#stabHrGrad)"/>
+        <path d="${tmpArea}" fill="url(#stabTmpGrad)"/>
+        <path d="${tmpLine}" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="4,2" stroke-linecap="round"/>
+        <path d="${hrLine}" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round"/>
+        ${xLabels.map(xl => {
+          const x = (padL + (xl.idx / 23) * plotW).toFixed(1);
+          return `<text x="${x}" y="${h - 8}" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9.5" text-anchor="middle">${xl.label}</text>`;
+        }).join('')}
+      </svg>
+    `;
+  }
+
+  _generateAutomotiveBinnacleHtml(opts) {
+    const {
+      totalHashThs = 0,
+      avgTempNum = 0,
+      avgTempStr = '--',
+      totalWatts = 0,
+      fleetDailyPowerCost = 0,
+      fleetEfficiency = '0.0',
+      maxFan = 0,
+      dailyEstYieldUsd = 0,
+      totalFleetAccepted = 0,
+      fleetBestShareStr = '--',
+      hasStratum = true,
+      totalHwErrors = 0,
+      isBlockSolved = false
+    } = opts || {};
+
+    // Left Gauge: Aggregate Hashrate (0 to 10 TH/s) -> Sweep -135deg to +135deg (270deg total)
+    const clampedHash = Math.max(0, Math.min(10, parseFloat(totalHashThs) || 0));
+    const hashNeedleDeg = -135 + (clampedHash / 10) * 270;
+
+    // Right Gauge: Core Temperature (20°C to 100°C, Redline >= 75°C) -> Sweep -135deg to +135deg
+    const clampedTemp = Math.max(20, Math.min(100, parseFloat(avgTempNum) || 20));
+    const tempNeedleDeg = -135 + ((clampedTemp - 20) / 80) * 270;
+    const isThermalRedline = (parseFloat(avgTempNum) || 0) >= 75;
+    const isThermalWarm = (parseFloat(avgTempNum) || 0) >= 65 && !isThermalRedline;
+
+    // Build SVG ticks for Left Hashrate Gauge (0..10 major, 0.5 minor)
+    const hashTicks = [];
+    for (let i = 0; i <= 20; i++) {
+      const val = i * 0.5;
+      const isMajor = i % 2 === 0;
+      const deg = -135 + (val / 10) * 270;
+      const rad = (deg - 90) * (Math.PI / 180);
+      const rOuter = 82;
+      const rInner = isMajor ? 70 : 75;
+      const x1 = 100 + rOuter * Math.cos(rad);
+      const y1 = 100 + rOuter * Math.sin(rad);
+      const x2 = 100 + rInner * Math.cos(rad);
+      const y2 = 100 + rInner * Math.sin(rad);
+      const isLit = val <= clampedHash + 0.05;
+      const stroke = isLit ? '#00e5ff' : (val >= 8 ? '#38bdf8' : '#475569');
+      hashTicks.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" stroke-width="${isMajor ? '2.2' : '1.2'}" stroke-linecap="round" ${isLit ? 'filter="url(#dialTickGlow)"' : ''}/>`);
+      if (isMajor) {
+        const rText = 57;
+        const tx = 100 + rText * Math.cos(rad);
+        const ty = 100 + rText * Math.sin(rad) + 3.5;
+        hashTicks.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="${isLit ? '#f8fafc' : '#94a3b8'}" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="10.5" font-weight="700" text-anchor="middle">${val}</text>`);
+      }
+    }
+
+    // Build SVG ticks for Right Core Temp Gauge (20..100°C, step 10 major, step 5 minor, redline >= 75°C)
+    const tempTicks = [];
+    for (let t = 20; t <= 100; t += 5) {
+      const isMajor = t % 10 === 0;
+      const deg = -135 + ((t - 20) / 80) * 270;
+      const rad = (deg - 90) * (Math.PI / 180);
+      const rOuter = 82;
+      const rInner = isMajor ? 70 : 75;
+      const x1 = 100 + rOuter * Math.cos(rad);
+      const y1 = 100 + rOuter * Math.sin(rad);
+      const x2 = 100 + rInner * Math.cos(rad);
+      const y2 = 100 + rInner * Math.sin(rad);
+      const isRedZone = t >= 75;
+      const isWarnZone = t >= 65 && t < 75;
+      const isLit = t <= clampedTemp && avgTempNum > 0;
+      const stroke = isRedZone ? '#ff2a54' : (isWarnZone ? '#f59e0b' : (isLit ? '#00e5ff' : '#475569'));
+      tempTicks.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" stroke-width="${isMajor ? '2.2' : '1.2'}" stroke-linecap="round" ${(isRedZone || isLit) ? 'filter="url(#dialTickGlow)"' : ''}/>`);
+      if (isMajor) {
+        const rText = 56;
+        const tx = 100 + rText * Math.cos(rad);
+        const ty = 100 + rText * Math.sin(rad) + 3.5;
+        const txtColor = isRedZone ? '#ff2a54' : (isLit ? '#f8fafc' : '#94a3b8');
+        tempTicks.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="${txtColor}" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="9.5" font-weight="700" text-anchor="middle">${t}</text>`);
+      }
+    }
+
+    // Arc helper for redline zone on Temp Gauge (75°C -> 100°C is +50.625deg to +135deg)
+    const arcPoint = (deg, r) => {
+      const rad = (deg - 90) * (Math.PI / 180);
+      return `${(100 + r * Math.cos(rad)).toFixed(1)} ${(100 + r * Math.sin(rad)).toFixed(1)}`;
+    };
+    const redlineStart = arcPoint(50.6, 85);
+    const redlineEnd = arcPoint(135, 85);
+
+    return `
+      <div class="auto-binnacle-shell">
+        <!-- LEFT CHRONOMETER DIAL: AGGREGATE HASHRATE (0 - 10 TH/s) -->
+        <div class="auto-dial-pod">
+          <div class="auto-dial-bezel">
+            <div class="auto-dial-recess">
+              <div class="auto-lens-reflection"></div>
+              <svg viewBox="0 0 200 200" class="auto-dial-svg">
+                <defs>
+                  <filter id="dialTickGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="1.4" result="blur"/>
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <linearGradient id="needleIceBlue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00e5ff"/>
+                    <stop offset="35%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#0f172a"/>
+                  </linearGradient>
+                  <linearGradient id="needleLaserRed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ff2a54"/>
+                    <stop offset="40%" stop-color="#e11d48"/>
+                    <stop offset="100%" stop-color="#1e1b4b"/>
+                  </linearGradient>
+                </defs>
+                <!-- Outer Machined Chrono Ring -->
+                <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(0, 229, 255, 0.22)" stroke-width="2" stroke-dasharray="2,3"/>
+                ${hashTicks.join('')}
+                <!-- Dial Sub-Branding -->
+                <text x="100" y="74" fill="#64748b" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="7.5" font-weight="700" letter-spacing="1.6" text-anchor="middle">SHA-256D TACHOMETER</text>
+                <text x="100" y="84" fill="#00e5ff" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="8.5" font-weight="700" letter-spacing="1" text-anchor="middle">TH/s × 1.0</text>
+                <!-- Digital Segmented LCD Odometer Box -->
+                <rect x="62" y="128" width="76" height="30" rx="3" fill="#05080d" stroke="rgba(0, 229, 255, 0.35)" stroke-width="1"/>
+                <text x="100" y="146" fill="#00e5ff" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800" text-anchor="middle">${totalHashThs.toFixed(2)}</text>
+                <text x="100" y="155" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="6.5" font-weight="700" letter-spacing="1" text-anchor="middle">AGGREGATE TH/S</text>
+                <!-- Precision Laser-Tipped Indicator Needle -->
+                <g transform="rotate(${hashNeedleDeg.toFixed(1)} 100 100)" style="transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);">
+                  <polygon points="97.5,114 100,22 102.5,114" fill="url(#needleIceBlue)" filter="url(#dialTickGlow)"/>
+                  <polygon points="99,42 100,20 101,42" fill="#ffffff"/>
+                </g>
+                <!-- Machined Titanium Center Cap -->
+                <circle cx="100" cy="100" r="11" fill="#1e293b" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                <circle cx="100" cy="100" r="5" fill="#090d14" stroke="#00e5ff" stroke-width="1"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER BINNACLE STAGE: DIGITAL SIDE PODS & LUXURY CHECK-ENGINE WARNING LAMPS -->
+        <div class="auto-center-console">
+          <div class="auto-side-pods-grid">
+            <!-- Pod 1: Power Draw -->
+            <div class="auto-lcd-pod">
+              <div class="auto-pod-header">
+                <span>POWER LOAD</span>
+                <span style="color:#f59e0b;">${svgIcon('zap', 12)}</span>
+              </div>
+              <div class="auto-lcd-screen">
+                <span class="auto-lcd-val" style="color:#fbbf24;">${totalWatts.toFixed(1)}</span>
+                <span class="auto-lcd-unit">WATTS</span>
+              </div>
+              <div class="auto-pod-sub">
+                <span>BURN RATE</span>
+                <span style="color:#fbbf24; font-weight:700;">$${fleetDailyPowerCost.toFixed(2)}/d</span>
+              </div>
+            </div>
+
+            <!-- Pod 2: Efficiency -->
+            <div class="auto-lcd-pod">
+              <div class="auto-pod-header">
+                <span>EFFICIENCY</span>
+                <span style="color:#00e5ff;">${svgIcon('sliders', 12)}</span>
+              </div>
+              <div class="auto-lcd-screen">
+                <span class="auto-lcd-val" style="color:#00e5ff;">${fleetEfficiency}</span>
+                <span class="auto-lcd-unit">J/TH</span>
+              </div>
+              <div class="auto-pod-sub">
+                <span>EST. YIELD</span>
+                <span style="color:#10b981; font-weight:700;">$${dailyEstYieldUsd.toFixed(2)}/d</span>
+              </div>
+            </div>
+
+            <!-- Pod 3: Fan RPM -->
+            <div class="auto-lcd-pod">
+              <div class="auto-pod-header">
+                <span>COOLING RPM</span>
+                <span style="color:#38bdf8;">${svgIcon('activity', 12)}</span>
+              </div>
+              <div class="auto-lcd-screen">
+                <span class="auto-lcd-val" style="color:#38bdf8;">${maxFan > 0 ? maxFan.toLocaleString() : '--'}</span>
+                <span class="auto-lcd-unit">RPM</span>
+              </div>
+              <div class="auto-pod-sub">
+                <span>IMPELLER</span>
+                <span style="color:#10b981; font-weight:700;">ACTIVE</span>
+              </div>
+            </div>
+
+            <!-- Pod 4: Verified Shares & Best Diff -->
+            <div class="auto-lcd-pod">
+              <div class="auto-pod-header">
+                <span>VERIFIED SHARES</span>
+                <span style="color:#10b981;">${svgIcon('target', 12)}</span>
+              </div>
+              <div class="auto-lcd-screen">
+                <span class="auto-lcd-val" style="color:#10b981;">${totalFleetAccepted.toLocaleString()}</span>
+                <span class="auto-lcd-unit">VALID</span>
+              </div>
+              <div class="auto-pod-sub">
+                <span>PEAK DIFF</span>
+                <span style="color:#00e5ff; font-weight:700;">${fleetBestShareStr}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Luxury Dashboard Tell-Tale Warning & Diagnostic Lamp Cluster -->
+          <div class="auto-telltale-bar">
+            <div class="auto-telltale-lamp ${hasStratum ? 'lit-emerald' : 'lit-amber'}" title="Stratum Pool Telemetry Uplink">
+              <span class="telltale-icon">${svgIcon('link', 13)}</span>
+              <span>STRATUM LINK</span>
+            </div>
+            <div class="auto-telltale-lamp ${isThermalRedline ? 'lit-red' : (isThermalWarm ? 'lit-amber' : 'unlit')}" title="Thermal Throttle Alert (Illuminates >= 75°C)">
+              <span class="telltale-icon">${svgIcon('thermometer', 13)}</span>
+              <span>THERMAL ALERT</span>
+            </div>
+            <div class="auto-telltale-lamp ${totalHwErrors > 50 ? 'lit-amber' : 'unlit'}" title="ASIC Hardware Parity / Voltage Check">
+              <span class="telltale-icon">${svgIcon('cpu', 13)}</span>
+              <span>ASIC CHECK</span>
+            </div>
+            <div class="auto-telltale-lamp ${isBlockSolved ? 'lit-emerald' : 'lit-cyan'}" title="Engine Telemetry Status">
+              <span class="telltale-icon">${svgIcon('shield', 13)}</span>
+              <span>${isThermalRedline ? 'THROTTLE WARN' : 'SYSTEM NOMINAL'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT CHRONOMETER DIAL: CORE TEMPERATURE (20°C - 100°C, REDLINE > 75°C) -->
+        <div class="auto-dial-pod">
+          <div class="auto-dial-bezel">
+            <div class="auto-dial-recess">
+              <div class="auto-lens-reflection"></div>
+              <svg viewBox="0 0 200 200" class="auto-dial-svg">
+                <!-- Outer Machined Chrono Ring -->
+                <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                <!-- Redline Danger Arc (75°C to 100°C) -->
+                <path d="M ${redlineStart} A 85 85 0 0 1 ${redlineEnd}" fill="none" stroke="#ff2a54" stroke-width="4" stroke-linecap="round" filter="url(#dialTickGlow)"/>
+                ${tempTicks.join('')}
+                <!-- Dial Sub-Branding -->
+                <text x="100" y="74" fill="#64748b" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="7.5" font-weight="700" letter-spacing="1.5" text-anchor="middle">ASIC CORE THERMAL</text>
+                <text x="100" y="84" fill="${isThermalRedline ? '#ff2a54' : '#f59e0b'}" font-family="'Chakra Petch', 'JetBrains Mono', monospace" font-size="8" font-weight="700" letter-spacing="1" text-anchor="middle">REDLINE 75°C</text>
+                <!-- Digital Segmented LCD Odometer Box -->
+                <rect x="62" y="128" width="76" height="30" rx="3" fill="#05080d" stroke="${isThermalRedline ? 'rgba(255, 42, 84, 0.6)' : 'rgba(245, 158, 11, 0.38)'}" stroke-width="1"/>
+                <text x="100" y="146" fill="${isThermalRedline ? '#ff2a54' : (isThermalWarm ? '#f59e0b' : '#10b981')}" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800" text-anchor="middle">${avgTempStr}°C</text>
+                <text x="100" y="155" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="6.5" font-weight="700" letter-spacing="1" text-anchor="middle">${isThermalRedline ? 'THERMAL WARN' : 'CORE TEMP'}</text>
+                <!-- Precision Laser-Red Indicator Needle -->
+                <g transform="rotate(${tempNeedleDeg.toFixed(1)} 100 100)" style="transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);">
+                  <polygon points="97.5,114 100,22 102.5,114" fill="url(#needleLaserRed)" filter="url(#dialTickGlow)"/>
+                  <polygon points="99,42 100,20 101,42" fill="#ff9eb5"/>
+                </g>
+                <!-- Machined Titanium Center Cap -->
+                <circle cx="100" cy="100" r="11" fill="#1e293b" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                <circle cx="100" cy="100" r="5" fill="#090d14" stroke="#ff2a54" stroke-width="1"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   _ensureDom() {
     if (this._domReady) return;
     this.shadowRoot.innerHTML = `
       <style>
         ${this._getStyles()}
-      
-        /* --- AUTO-IMPORT DISCOVERY MODAL --- */
-        .discovery-header-cluster {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .discovery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 14px;
-          margin: 16px 0;
-        }
-
-        .discovery-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 14px;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          position: relative;
-        }
-
-        .discovery-card:hover {
-          border-color: rgba(56, 189, 248, 0.4);
-          background: rgba(56, 189, 248, 0.04);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.1);
-        }
-
-        .discovery-card.selected {
-          border-color: #38bdf8;
-          background: rgba(56, 189, 248, 0.08);
-          box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
-        }
-
-        .discovery-card.configured {
-          opacity: 0.65;
-          border-style: dashed;
-        }
-
-        .discovery-card-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 10px;
-        }
-
-        .discovery-graphic-container {
-          width: 100%;
-          height: 90px;
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          padding: 6px;
-        }
-
-        .miner-graphic-svg {
-          width: 100%;
-          height: 100%;
-          max-height: 80px;
-        }
-
-        .discovery-rig-name {
-          font-size: 14px;
-          font-weight: 700;
-          color: #f8fafc;
-        }
-
-        .discovery-type-pill {
-          font-size: 10px;
-          font-weight: 600;
-          font-family: 'JetBrains Mono', monospace;
-          padding: 3px 8px;
-          border-radius: 999px;
-          background: rgba(56, 189, 248, 0.15);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          color: #38bdf8;
-        }
-
-        .discovery-type-pill.bitaxe {
-          background: rgba(16, 185, 129, 0.15);
-          border-color: rgba(16, 185, 129, 0.35);
-          color: #34d399;
-        }
-
-        .discovery-type-pill.avalon {
-          background: rgba(245, 158, 11, 0.15);
-          border-color: rgba(245, 158, 11, 0.35);
-          color: #fbbf24;
-        }
-
-        .discovery-meta-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
-          flex-wrap: wrap;
-        }
-
-        .discovery-check-wrap {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          user-select: none;
-        }
-
-        .discovery-checkbox {
-          width: 18px;
-          height: 18px;
-          accent-color: #38bdf8;
-          cursor: pointer;
-        }
-
-        .radar-scan-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 20px;
-          gap: 16px;
-          text-align: center;
-        }
-
-        .radar-pulse-ring {
-          width: 64px;
-          height: 64px;
-          border-radius: 50%;
-          border: 2px solid #38bdf8;
-          box-shadow: 0 0 24px rgba(56, 189, 248, 0.5);
-          animation: radarPulse 1.8s infinite cubic-bezier(0.25, 1, 0.5, 1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 26px;
-        }
-
-        @keyframes radarPulse {
-          0% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
-          70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 16px rgba(56, 189, 248, 0); }
-          100% { transform: scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
-        }
-
-        /* --- PER-RIG COIN PRICE TICKER STRIP --- */
-        .rig-market-ticker-strip {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 10px 14px;
-          margin-bottom: 14px;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .coin-badge-cluster {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .coin-symbol-circle {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background: rgba(245, 158, 11, 0.2);
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          color: #fbbf24;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 13px;
-        }
-
-        .coin-name-label {
-          font-size: 13px;
-          font-weight: 700;
-          color: #f1f5f9;
-        }
-
-        .coin-price-hero {
-          font-size: 14px;
-          font-weight: 700;
-          font-family: 'JetBrains Mono', monospace;
-          color: #38bdf8;
-        }
-
-        .coin-change-pill {
-          font-size: 11px;
-          font-weight: 700;
-          font-family: 'JetBrains Mono', monospace;
-          padding: 3px 8px;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .coin-change-pill.pos {
-          background: rgba(16, 185, 129, 0.15);
-          border: 1px solid rgba(16, 185, 129, 0.35);
-          color: #34d399;
-        }
-
-        .coin-change-pill.neg {
-          background: rgba(244, 63, 94, 0.15);
-          border: 1px solid rgba(244, 63, 94, 0.35);
-          color: #fb7185;
-        }
-
-        /* --- FANCY INTERACTIVE MARKET INTELLIGENCE CONSOLE & CHART --- */
-        .market-intelligence-console {
-          margin-bottom: 24px;
-          padding: 20px 22px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .market-console-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .market-title-cluster {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .timeframe-pill-rack {
-          display: flex;
-          gap: 6px;
-          background: rgba(0, 0, 0, 0.3);
-          padding: 4px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .timeframe-btn {
-          background: transparent;
-          border: 1px solid transparent;
-          color: #94a3b8;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 11px;
-          font-weight: 700;
-          padding: 5px 12px;
-          border-radius: 7px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .timeframe-btn:hover {
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.06);
-        }
-
-        .timeframe-btn.active {
-          background: rgba(56, 189, 248, 0.18);
-          border-color: rgba(56, 189, 248, 0.45);
-          color: #38bdf8;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-        }
-
-        .market-hero-stats-row {
-          display: flex;
-          align-items: baseline;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-
-        .market-live-price {
-          font-size: 26px;
-          font-weight: 800;
-          font-family: 'JetBrains Mono', monospace;
-          letter-spacing: -0.02em;
-          color: #f8fafc;
-        }
-
-        .market-stat-chip {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 11px;
-          font-family: 'JetBrains Mono', monospace;
-          color: #94a3b8;
-          background: rgba(255, 255, 255, 0.03);
-          padding: 4px 10px;
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .chart-stage {
-          position: relative;
-          width: 100%;
-          height: 190px;
-          background: rgba(10, 15, 26, 0.45);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .chart-svg-root {
-          width: 100%;
-          height: 100%;
-          display: block;
-        }
-
-        .chart-scrubber-tooltip {
-          position: absolute;
-          top: 12px;
-          right: 14px;
-          background: rgba(15, 23, 42, 0.88);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          border-radius: 8px;
-          padding: 6px 12px;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 11px;
-          color: #f1f5f9;
-          pointer-events: none;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        /* --- MULTI-COIN LIVE YIELD MATRIX & STRATUM SWITCHER --- */
-        .yield-matrix-console {
-          margin-bottom: 24px;
-          padding: 20px 22px;
-          border: 1px solid rgba(56, 189, 248, 0.25);
-          background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(8, 47, 73, 0.45));
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border-radius: 16px;
-          position: relative;
-          overflow: hidden;
-        }
-        .yield-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-        .yield-title-cluster {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .yield-icon-box {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          background: rgba(56, 189, 248, 0.15);
-          border: 1px solid rgba(56, 189, 248, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-        }
-        .yield-title {
-          font-size: 15px;
-          font-weight: 800;
-          color: #f8fafc;
-          letter-spacing: -0.01em;
-          font-family: 'Inter', -apple-system, sans-serif;
-        }
-        .yield-table-wrap {
-          overflow-x: auto;
-          margin-top: 8px;
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(15, 23, 42, 0.5);
-        }
-        .yield-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 12px;
-          text-align: left;
-        }
-        .yield-table th {
-          background: rgba(30, 41, 59, 0.85);
-          color: #94a3b8;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 11px;
-          font-weight: 600;
-          padding: 10px 14px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          white-space: nowrap;
-        }
-        .yield-table td {
-          padding: 12px 14px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          vertical-align: middle;
-          white-space: nowrap;
-        }
-        .yield-table tr:last-child td {
-          border-bottom: none;
-        }
-        .yield-table tr:hover td {
-          background: rgba(56, 189, 248, 0.06);
-        }
-        .yield-table tr.top-yield-row {
-          background: rgba(16, 185, 129, 0.07);
-        }
-        .yield-rank-badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 24px;
-          height: 24px;
-          border-radius: 6px;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 11px;
-          font-weight: 800;
-        }
-        .yield-rank-1 {
-          background: linear-gradient(135deg, #f59e0b, #fbbf24);
-          color: #0f172a;
-          box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-        }
-        .yield-rank-other {
-          background: rgba(255, 255, 255, 0.08);
-          color: #94a3b8;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .yield-coin-cell {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .yield-coin-icon {
-          font-size: 18px;
-        }
-        .yield-coin-symbol {
-          font-weight: 800;
-          color: #f8fafc;
-          font-family: 'JetBrains Mono', monospace;
-        }
-        .yield-coin-name {
-          font-size: 11px;
-          color: #94a3b8;
-        }
-        .yield-profit-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 8px;
-          border-radius: 6px;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 11px;
-          font-weight: 700;
-        }
-        .profit-positive {
-          background: rgba(16, 185, 129, 0.18);
-          border: 1px solid rgba(16, 185, 129, 0.45);
-          color: #34d399;
-          box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
-        }
-        .profit-negative {
-          background: rgba(244, 63, 94, 0.15);
-          border: 1px solid rgba(244, 63, 94, 0.4);
-          color: #fb7185;
-        }
-        .stratum-btn-action {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 5px 12px;
-          border-radius: 8px;
-          font-size: 11px;
-          font-weight: 700;
-          font-family: 'JetBrains Mono', monospace;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid rgba(56, 189, 248, 0.4);
-          background: rgba(56, 189, 248, 0.15);
-          color: #38bdf8;
-        }
-        .stratum-btn-action:hover {
-          background: rgba(56, 189, 248, 0.3);
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-          transform: translateY(-1px);
-        }
-        .stratum-active-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 5px 10px;
-          border-radius: 8px;
-          font-size: 11px;
-          font-weight: 700;
-          font-family: 'JetBrains Mono', monospace;
-          background: rgba(16, 185, 129, 0.2);
-          border: 1px solid #10b981;
-          color: #34d399;
-          box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-        }
-
       </style>
       <canvas id="celebration-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
       <div id="card-root"></div>
@@ -3582,18 +3470,20 @@ class HomeMinerFleetCard extends HTMLElement {
   _getStyles() {
     return `
 
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         :host {
           display: block;
           font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
           color: #e2e8f0;
-          background: #0b0e14;
-          border-radius: 12px;
-          border: 1px solid #1e2636;
+          background: radial-gradient(circle at 12% 0%, rgba(0, 229, 255, 0.08) 0%, transparent 45%),
+                      radial-gradient(circle at 88% 100%, rgba(16, 185, 129, 0.06) 0%, transparent 45%),
+                      #080b11;
+          border-radius: 6px;
+          border: 1px solid rgba(148, 163, 184, 0.22);
           padding: 18px 20px;
           box-sizing: border-box;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.72), 0 4px 10px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
           position: relative;
           overflow: hidden;
         }
@@ -3609,20 +3499,24 @@ class HomeMinerFleetCard extends HTMLElement {
           font-variant-numeric: tabular-nums;
         }
 
-        /* Precision Matte Hardware Surfaces */
+        /* Tactile Extruded Frosted Glass Surfaces (4px-6px Sharp Geometric Edges) */
         .glass-base {
-          background: #111620;
-          border: 1px solid #1f2737;
-          border-radius: 10px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+          background: rgba(17, 24, 39, 0.76);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
+          box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
         }
 
         .glass-card {
-          background: #111620;
-          border: 1px solid #1f2737;
-          border-radius: 10px;
+          background: rgba(17, 24, 39, 0.76);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
           padding: 18px 20px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
           position: relative;
           overflow: hidden;
           margin-bottom: 16px;
@@ -3633,15 +3527,15 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .glass-card.amber-glow {
-          border-color: #2a2419;
+          border-color: rgba(245, 158, 11, 0.35);
           border-top: 2px solid #f59e0b;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(245, 158, 11, 0.25);
         }
 
         .glass-card.cyan-glow {
-          border-color: #1c2b3d;
-          border-top: 2px solid #38bdf8;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+          border-color: rgba(0, 229, 255, 0.35);
+          border-top: 2px solid #00e5ff;
+          box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 3px 6px -1px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(0, 229, 255, 0.25);
         }
 
         /* Top Command Bar */
@@ -3653,9 +3547,12 @@ class HomeMinerFleetCard extends HTMLElement {
           margin-bottom: 12px;
           flex-wrap: wrap;
           gap: 10px;
-          background: #0e131c;
-          border: 1px solid #1f2737;
-          border-radius: 10px;
+          background: rgba(15, 23, 42, 0.78);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
+          box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.6), 0 2px 5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.16);
         }
 
         .brand-cluster {
@@ -3667,14 +3564,15 @@ class HomeMinerFleetCard extends HTMLElement {
         .brand-icon-box {
           width: 34px;
           height: 34px;
-          border-radius: 8px;
-          background: #161d2b;
-          border: 1px solid #283347;
-          color: #38bdf8;
+          border-radius: 4px;
+          background: rgba(15, 23, 42, 0.9);
+          border: 1px solid rgba(0, 229, 255, 0.4);
+          color: #00e5ff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 16px;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
         }
 
         .brand-title {
@@ -3690,13 +3588,14 @@ class HomeMinerFleetCard extends HTMLElement {
           font-variant-numeric: tabular-nums;
           font-weight: 600;
           padding: 2px 8px;
-          border-radius: 5px;
-          background: #161e2e;
-          border: 1px solid #26334a;
+          border-radius: 4px;
+          background: rgba(15, 23, 42, 0.82);
+          border: 1px solid rgba(148, 163, 184, 0.24);
           color: #94a3b8;
           display: inline-flex;
           align-items: center;
           gap: 6px;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         .status-orb {
@@ -3704,6 +3603,7 @@ class HomeMinerFleetCard extends HTMLElement {
           height: 6px;
           border-radius: 50%;
           background: #10b981;
+          box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
           display: inline-block;
           flex-shrink: 0;
         }
@@ -3716,10 +3616,12 @@ class HomeMinerFleetCard extends HTMLElement {
 
         .glass-btn {
           padding: 6px 12px;
-          border-radius: 6px;
-          background: #161d2b;
-          border: 1px solid #283347;
-          color: #cbd5e1;
+          border-radius: 4px;
+          background: rgba(30, 41, 59, 0.78);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          color: #e2e8f0;
           font-size: 11px;
           font-weight: 600;
           font-family: 'JetBrains Mono', monospace;
@@ -3728,24 +3630,25 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           gap: 6px;
           text-decoration: none;
-          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
         }
 
         .glass-btn:hover {
-          background: #1e2738;
-          border-color: #3b4b66;
+          background: rgba(51, 65, 85, 0.88);
+          border-color: rgba(0, 229, 255, 0.5);
           color: #f8fafc;
         }
 
         .glass-btn.primary {
-          background: rgba(56, 189, 248, 0.12);
-          border-color: rgba(56, 189, 248, 0.4);
-          color: #38bdf8;
+          background: rgba(0, 229, 255, 0.14);
+          border-color: rgba(0, 229, 255, 0.5);
+          color: #00e5ff;
         }
 
         .glass-btn.primary:hover {
-          background: rgba(56, 189, 248, 0.2);
-          border-color: #38bdf8;
+          background: rgba(0, 229, 255, 0.24);
+          border-color: #00e5ff;
           color: #7dd3fc;
         }
 
@@ -3755,19 +3658,19 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .sound-toggle-btn.active-audio {
-          color: #38bdf8;
-          border-color: rgba(56, 189, 248, 0.45);
-          background: rgba(56, 189, 248, 0.12);
+          color: #00e5ff;
+          border-color: rgba(0, 229, 255, 0.5);
+          background: rgba(0, 229, 255, 0.14);
         }
 
         .glass-btn.danger {
-          background: rgba(244, 63, 94, 0.1);
-          border-color: rgba(244, 63, 94, 0.3);
+          background: rgba(244, 63, 94, 0.12);
+          border-color: rgba(244, 63, 94, 0.35);
           color: #fb7185;
         }
 
         .glass-btn.danger:hover {
-          background: rgba(244, 63, 94, 0.18);
+          background: rgba(244, 63, 94, 0.22);
           border-color: #f43f5e;
         }
 
@@ -3779,8 +3682,8 @@ class HomeMinerFleetCard extends HTMLElement {
           right: 0;
           bottom: 0;
           background: rgba(5, 7, 11, 0.82);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -3789,16 +3692,18 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .modal-box {
-          background: #111620;
-          border: 1px solid #283347;
-          border-radius: 12px;
+          background: rgba(17, 24, 39, 0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(148, 163, 184, 0.28);
+          border-radius: 6px;
           width: 100%;
           max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
           padding: 20px 22px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+          box-shadow: 0 24px 54px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18);
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -3810,7 +3715,7 @@ class HomeMinerFleetCard extends HTMLElement {
           justify-content: space-between;
           align-items: center;
           padding-bottom: 12px;
-          border-bottom: 1px solid #1f2737;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.18);
         }
 
         .modal-title {
@@ -3848,9 +3753,9 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .modal-input {
-          background: #0b0e14;
-          border: 1px solid #283347;
-          border-radius: 6px;
+          background: rgba(11, 14, 20, 0.9);
+          border: 1px solid rgba(148, 163, 184, 0.26);
+          border-radius: 4px;
           padding: 8px 11px;
           color: #f8fafc;
           font-size: 12px;
@@ -3859,15 +3764,15 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .modal-input:focus {
-          border-color: #38bdf8;
+          border-color: #00e5ff;
         }
 
         /* High-Contrast Modal Dropdown Select & Option Styling */
         select.modal-input, select.modal-select, .modal-select {
           background-color: #0b0e14 !important;
           color: #f8fafc !important;
-          border: 1px solid #283347 !important;
-          border-radius: 6px !important;
+          border: 1px solid rgba(148, 163, 184, 0.28) !important;
+          border-radius: 4px !important;
           padding: 8px 11px !important;
           font-size: 12px !important;
           font-family: 'JetBrains Mono', monospace !important;
@@ -3876,7 +3781,7 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         select.modal-input:focus, select.modal-select:focus, .modal-select:focus {
-          border-color: #38bdf8 !important;
+          border-color: #00e5ff !important;
         }
 
         select.modal-input option, select.modal-select option, .modal-select option, option {
@@ -3895,7 +3800,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
         select.modal-input option:hover, select.modal-select option:hover, .modal-select option:hover {
           background-color: #1e293b !important;
-          color: #38bdf8 !important;
+          color: #00e5ff !important;
         }
 
         .modal-footer {
@@ -3903,11 +3808,11 @@ class HomeMinerFleetCard extends HTMLElement {
           justify-content: flex-end;
           gap: 10px;
           padding-top: 14px;
-          border-top: 1px solid #1f2737;
+          border-top: 1px solid rgba(148, 163, 184, 0.18);
           margin-top: 6px;
         }
 
-        /* --- COMPACT KPI TELEMETRY RIBBON (Replaces Oversized Donut Gauges) --- */
+        /* --- COMPACT KPI TELEMETRY RIBBON (Extruded Tactile Glass Cells) --- */
         .kpi-ribbon {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
@@ -3926,9 +3831,11 @@ class HomeMinerFleetCard extends HTMLElement {
         }
 
         .kpi-cell {
-          background: #111620;
-          border: 1px solid #1f2737;
-          border-radius: 8px;
+          background: rgba(17, 24, 39, 0.78);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
           padding: 10px 14px;
           display: flex;
           flex-direction: column;
@@ -3936,6 +3843,7 @@ class HomeMinerFleetCard extends HTMLElement {
           gap: 5px;
           position: relative;
           overflow: hidden;
+          box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.62), 0 2px 5px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
         .kpi-cell-top {
@@ -3949,7 +3857,7 @@ class HomeMinerFleetCard extends HTMLElement {
           font-size: 10px;
           font-weight: 700;
           font-family: 'JetBrains Mono', monospace;
-          color: #64748b;
+          color: #94a3b8;
           text-transform: uppercase;
           letter-spacing: 0.06em;
           display: inline-flex;
@@ -4003,7 +3911,7 @@ class HomeMinerFleetCard extends HTMLElement {
         .kpi-bar {
           height: 3px;
           width: 100%;
-          background: #1a2232;
+          background: rgba(30, 41, 59, 0.85);
           border-radius: 2px;
           overflow: hidden;
           margin-top: 4px;
@@ -4017,11 +3925,14 @@ class HomeMinerFleetCard extends HTMLElement {
 
         /* --- SLIM STRATUM STATUS BAR & EXPANDABLE PIPELINE --- */
         .pipeline-card {
-          background: #0e131c;
-          border: 1px solid #1f2737;
-          border-radius: 8px;
+          background: rgba(15, 23, 42, 0.78);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
           overflow: hidden;
           margin-bottom: 12px;
+          box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.58), 0 2px 5px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.14);
         }
 
         .pipeline-header {
@@ -4029,8 +3940,8 @@ class HomeMinerFleetCard extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           padding: 7px 12px;
-          background: #0e131c;
-          border-bottom: 1px solid #1f2737;
+          background: rgba(15, 23, 42, 0.65);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.18);
           cursor: pointer;
           user-select: none;
           transition: background 0.15s ease;
@@ -5836,22 +5747,878 @@ class HomeMinerFleetCard extends HTMLElement {
           color: #ffffff;
         }
 
+        /* --- EXTRUDED GEOMETRY & SPARKLINE / 24H CHART STYLES --- */
+        .tile-glass-box,
+        .tactile-bay,
+        .stratum-card-strip,
+        .workspace-tab-bar,
+        .pipeline-stage,
+        .lottery-mini-tile,
+        .jackpot-banner,
+        .share-progress-container {
+          border-radius: 5px;
+          background: rgba(15, 23, 42, 0.72);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          box-shadow: 0 6px 14px -3px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        }
+
+        .rig-sparkline-svg {
+          width: 100%;
+          height: 28px;
+          display: block;
+          margin-top: 6px;
+        }
+
+        .stability-chart-card {
+          margin-top: 16px;
+          padding: 16px 18px;
+        }
+
+        .stability-chart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .stability-legend {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #cbd5e1;
+        }
+
+        .stability-legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .stability-chart-svg {
+          width: 100%;
+          height: 175px;
+          display: block;
+          background: rgba(11, 15, 25, 0.65);
+          border: 1px solid rgba(148, 163, 184, 0.18);
+          border-radius: 4px;
+          padding: 6px;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- DISCOVERY, MARKET TICKER & YIELD MATRIX STYLES --- */
+        .discovery-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 8px;
+        }
+
+        .discovery-card {
+          background: rgba(15, 23, 42, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.24);
+          border-radius: 5px;
+          padding: 12px 14px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .discovery-card-info {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .discovery-card-name {
+          font-size: 13px;
+          font-weight: 700;
+          color: #f8fafc;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .discovery-card-meta {
+          font-size: 11px;
+          color: #94a3b8;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .discovery-type-badge {
+          font-size: 9px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          background: rgba(0, 229, 255, 0.14);
+          border: 1px solid rgba(0, 229, 255, 0.35);
+          color: #00e5ff;
+          text-transform: uppercase;
+          font-weight: 700;
+        }
+
+        .rig-market-ticker-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: rgba(15, 23, 42, 0.72);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 5px;
+          padding: 8px 12px;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+          gap: 8px;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .coin-badge-cluster {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .coin-symbol-circle {
+          width: 26px;
+          height: 26px;
+          border-radius: 4px;
+          background: rgba(245, 158, 11, 0.15);
+          border: 1px solid rgba(245, 158, 11, 0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #fbbf24;
+        }
+
+        .coin-name-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #f8fafc;
+        }
+
+        .coin-price-hero {
+          font-size: 14px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #00e5ff;
+        }
+
+        .coin-change-pill {
+          font-size: 10.5px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          padding: 2px 7px;
+          border-radius: 4px;
+        }
+
+        .coin-change-pill.pos {
+          background: rgba(16, 185, 129, 0.14);
+          border: 1px solid rgba(16, 185, 129, 0.35);
+          color: #34d399;
+        }
+
+        .coin-change-pill.neg {
+          background: rgba(244, 63, 94, 0.14);
+          border: 1px solid rgba(244, 63, 94, 0.35);
+          color: #fb7185;
+        }
+
+        .market-intelligence-console,
+        .yield-matrix-console {
+          margin-bottom: 16px;
+          padding: 16px 18px;
+        }
+
+        .market-console-header,
+        .yield-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .market-controls-cluster,
+        .timeframe-selector {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .tf-btn {
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(15, 23, 42, 0.8);
+          border: 1px solid rgba(148, 163, 184, 0.24);
+          color: #94a3b8;
+          cursor: pointer;
+        }
+
+        .tf-btn.active {
+          background: rgba(0, 229, 255, 0.16);
+          border-color: #00e5ff;
+          color: #00e5ff;
+        }
+
+        .market-stats-row {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .market-stat-pill {
+          background: rgba(15, 23, 42, 0.76);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
+          padding: 10px 12px;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .market-stat-label {
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          text-transform: uppercase;
+        }
+
+        .market-stat-val {
+          font-size: 16px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          color: #f8fafc;
+          margin-top: 3px;
+        }
+
+        .chart-canvas-wrap {
+          width: 100%;
+          height: 175px;
+          background: rgba(11, 15, 25, 0.72);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 4px;
+          padding: 8px;
+          overflow: hidden;
+        }
+
+        .yield-table-wrap {
+          width: 100%;
+          overflow-x: auto;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 5px;
+          background: rgba(15, 23, 42, 0.72);
+        }
+
+        .yield-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 12px;
+          text-align: left;
+        }
+
+        .yield-table th {
+          padding: 9px 12px;
+          font-size: 10px;
+          font-family: 'JetBrains Mono', monospace;
+          text-transform: uppercase;
+          color: #94a3b8;
+          background: rgba(11, 15, 25, 0.85);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .yield-table td {
+          padding: 10px 12px;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+          color: #e2e8f0;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .yield-switch-btn {
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 10.5px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(0, 229, 255, 0.14);
+          border: 1px solid rgba(0, 229, 255, 0.45);
+          color: #00e5ff;
+          cursor: pointer;
+        }
+
+        .yield-switch-btn.active-coin {
+          background: rgba(16, 185, 129, 0.15);
+          border-color: rgba(16, 185, 129, 0.45);
+          color: #34d399;
+        }
+
+        /* Additional Market & Yield Matrix Sub-Classes */
+        .market-title-cluster,
+        .yield-title-cluster {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .yield-icon-box {
+          width: 34px;
+          height: 34px;
+          border-radius: 5px;
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          color: #fbbf24;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .yield-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #f8fafc;
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .timeframe-pill-rack {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .timeframe-btn {
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(15, 23, 42, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          color: #94a3b8;
+          cursor: pointer;
+        }
+
+        .timeframe-btn.active {
+          background: rgba(0, 229, 255, 0.16);
+          border-color: #00e5ff;
+          color: #00e5ff;
+        }
+
+        .market-hero-stats-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .market-live-price {
+          font-size: 24px;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          color: #f8fafc;
+        }
+
+        .market-stat-chip {
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: rgba(15, 23, 42, 0.8);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .chart-stage {
+          position: relative;
+          width: 100%;
+          border-radius: 5px;
+          background: rgba(8, 11, 17, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          padding: 6px;
+          overflow: hidden;
+        }
+
+        .chart-stage svg {
+          width: 100%;
+          height: auto;
+          display: block;
+        }
+
+        .yield-coin-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .yield-coin-icon {
+          width: 24px;
+          height: 24px;
+          border-radius: 4px;
+          background: rgba(245, 158, 11, 0.14);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          color: #fbbf24;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          flex-shrink: 0;
+        }
+
+        .yield-coin-symbol {
+          font-weight: 700;
+          color: #f8fafc;
+          font-size: 12px;
+        }
+
+        .yield-coin-name {
+          font-size: 10px;
+          color: #64748b;
+        }
+
+        .yield-profit-badge {
+          display: inline-block;
+          padding: 2px 7px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .yield-profit-badge.profit-positive {
+          background: rgba(16, 185, 129, 0.14);
+          border: 1px solid rgba(16, 185, 129, 0.4);
+          color: #34d399;
+        }
+
+        .yield-profit-badge.profit-negative {
+          background: rgba(244, 63, 94, 0.14);
+          border: 1px solid rgba(244, 63, 94, 0.4);
+          color: #fb7185;
+        }
+
+        .stratum-btn-action {
+          padding: 5px 10px;
+          border-radius: 4px;
+          background: rgba(0, 229, 255, 0.14);
+          border: 1px solid rgba(0, 229, 255, 0.45);
+          color: #00e5ff;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10.5px;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          white-space: nowrap;
+        }
+
+        .stratum-active-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 9px;
+          border-radius: 4px;
+          background: rgba(16, 185, 129, 0.14);
+          border: 1px solid rgba(16, 185, 129, 0.4);
+          color: #34d399;
+          font-size: 10.5px;
+          font-weight: 700;
+        }
+
+        /* ==========================================================================
+           LUXURY SPORTS CAR INSTRUMENT CLUSTER (PORSCHE / ASTON MARTIN CHRONO)
+           Deep Carbon-Fiber Weave + Raised Metallic Bezels + Recessed Dials + Lens Glare
+           ========================================================================== */
+        #card-root[data-glass="automotive"] {
+          background:
+            radial-gradient(circle at 50% 25%, rgba(0, 229, 255, 0.08) 0%, rgba(0, 0, 0, 0.78) 85%),
+            repeating-linear-gradient(45deg, #090c11 0px, #090c11 2px, #0f141d 2px, #0f141d 4px) !important;
+          padding: 14px;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          box-shadow:
+            -1px -1px 2px rgba(255, 255, 255, 0.4),
+            4px 4px 10px rgba(0, 0, 0, 0.8),
+            inset 1px 1px 1px rgba(255, 255, 255, 0.2);
+        }
+
+        #card-root[data-glass="automotive"] .glass-card,
+        #card-root[data-glass="automotive"] .top-bar,
+        #card-root[data-glass="automotive"] .pipeline-card,
+        #card-root[data-glass="automotive"] .workspace-tab-bar {
+          background: linear-gradient(160deg, rgba(22, 29, 41, 0.94) 0%, rgba(11, 15, 22, 0.96) 100%) !important;
+          border: 1px solid rgba(255, 255, 255, 0.22) !important;
+          box-shadow:
+            -1px -1px 2px rgba(255, 255, 255, 0.4),
+            4px 4px 10px rgba(0, 0, 0, 0.8),
+            inset 1px 1px 1px rgba(255, 255, 255, 0.2) !important;
+        }
+
+        #card-root[data-glass="automotive"] .tile-glass-box,
+        #card-root[data-glass="automotive"] .tactile-bay,
+        #card-root[data-glass="automotive"] .stratum-card-strip {
+          background: #070a0f !important;
+          border: 1px solid rgba(255, 255, 255, 0.16) !important;
+          box-shadow:
+            inset 3px 3px 6px rgba(0, 0, 0, 0.9),
+            inset -1px -1px 2px rgba(255, 255, 255, 0.08),
+            0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .auto-binnacle-shell {
+          display: grid;
+          grid-template-columns: 220px 1fr 220px;
+          gap: 16px;
+          align-items: center;
+          padding: 16px 18px;
+          margin-bottom: 14px;
+          border-radius: 6px;
+          background:
+            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.65) 0%, rgba(5, 7, 11, 0.94) 100%),
+            repeating-linear-gradient(45deg, #080b10 0px, #080b10 2px, #0d121a 2px, #0d121a 4px);
+          border: 1px solid rgba(255, 255, 255, 0.26);
+          box-shadow:
+            -1px -1px 2px rgba(255, 255, 255, 0.4),
+            4px 4px 10px rgba(0, 0, 0, 0.8),
+            inset 1px 1px 1px rgba(255, 255, 255, 0.2);
+          position: relative;
+          overflow: hidden;
+        }
+
+        @media (max-width: 980px) {
+          .auto-binnacle-shell {
+            grid-template-columns: 1fr 1fr;
+          }
+          .auto-center-console {
+            grid-column: 1 / -1;
+            order: 3;
+          }
+        }
+
+        .auto-dial-pod {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        /* Physical Extruded Metallic Outer Bezel */
+        .auto-dial-bezel {
+          width: 204px;
+          height: 204px;
+          border-radius: 50%;
+          padding: 8px;
+          background: conic-gradient(from 135deg, #334155, #0f172a, #475569, #090d14, #334155);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          box-shadow:
+            -1px -1px 2px rgba(255, 255, 255, 0.4),
+            4px 4px 10px rgba(0, 0, 0, 0.8),
+            inset 1px 1px 1px rgba(255, 255, 255, 0.2);
+          position: relative;
+        }
+
+        /* Recessed Gauge Face with Deep Inset Shadow */
+        .auto-dial-recess {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: radial-gradient(circle at 50% 45%, #111827 0%, #05070b 85%);
+          border: 1px solid rgba(0, 229, 255, 0.2);
+          box-shadow:
+            inset 3px 3px 6px rgba(0, 0, 0, 0.9),
+            inset -2px -2px 5px rgba(255, 255, 255, 0.06);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Curved Sapphire Glass Lens Reflection Overlay */
+        .auto-lens-reflection {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%);
+          pointer-events: none;
+          z-index: 3;
+        }
+
+        .auto-dial-svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+          position: relative;
+          z-index: 2;
+        }
+
+        .auto-center-console {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .auto-side-pods-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        /* Rectangular Raised-Edge Metallic Side Pods */
+        .auto-lcd-pod {
+          background: linear-gradient(160deg, #161e2e 0%, #0b0f17 100%);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          border-radius: 5px;
+          padding: 9px 12px;
+          box-shadow:
+            -1px -1px 2px rgba(255, 255, 255, 0.4),
+            4px 4px 10px rgba(0, 0, 0, 0.8),
+            inset 1px 1px 1px rgba(255, 255, 255, 0.2);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .auto-lcd-pod::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 50%);
+          pointer-events: none;
+        }
+
+        .auto-pod-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 9.5px;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.08em;
+          color: #94a3b8;
+          margin-bottom: 5px;
+        }
+
+        /* Recessed Digital Segmented LCD Readout */
+        .auto-lcd-screen {
+          background: #04060a;
+          border: 1px solid rgba(0, 229, 255, 0.18);
+          border-radius: 4px;
+          padding: 5px 9px;
+          box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.9);
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 6px;
+        }
+
+        .auto-lcd-val {
+          font-family: 'JetBrains Mono', monospace;
+          font-variant-numeric: tabular-nums;
+          font-size: 18px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          text-shadow: 0 0 8px currentColor;
+        }
+
+        .auto-lcd-unit {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px;
+          font-weight: 700;
+          color: #64748b;
+          letter-spacing: 0.06em;
+        }
+
+        .auto-pod-sub {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px;
+          color: #64748b;
+          margin-top: 5px;
+        }
+
+        /* Luxury Dashboard Check-Engine & Diagnostic Tell-Tale Lamps */
+        .auto-telltale-bar {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+          background: #05070b;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 5px;
+          padding: 7px 10px;
+          box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        .auto-telltale-lamp {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 5px 6px;
+          border-radius: 4px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9.5px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(15, 23, 42, 0.35);
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        }
+
+        .auto-telltale-lamp.unlit {
+          color: #334155;
+          opacity: 0.45;
+        }
+
+        .auto-telltale-lamp.lit-emerald {
+          color: #10b981;
+          border-color: rgba(16, 185, 129, 0.45);
+          background: rgba(16, 185, 129, 0.1);
+          text-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+          box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.15);
+        }
+
+        .auto-telltale-lamp.lit-cyan {
+          color: #00e5ff;
+          border-color: rgba(0, 229, 255, 0.45);
+          background: rgba(0, 229, 255, 0.1);
+          text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+        }
+
+        .auto-telltale-lamp.lit-amber {
+          color: #f59e0b;
+          border-color: rgba(245, 158, 11, 0.55);
+          background: rgba(245, 158, 11, 0.14);
+          text-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+        }
+
+        .auto-telltale-lamp.lit-red {
+          color: #ff2a54;
+          border-color: rgba(255, 42, 84, 0.65);
+          background: rgba(255, 42, 84, 0.18);
+          text-shadow: 0 0 10px rgba(255, 42, 84, 0.9);
+          animation: dot-blink 0.9s infinite alternate;
+        }
+
+        /* ==========================================================================
+           BRIGHT REFINED FROSTED GLASS MODE (#card-root[data-glass="light"])
+           background: rgba(255, 255, 255, 0.75) + backdrop-filter: blur(16px)
+           ========================================================================== */
+        #card-root[data-glass="light"] {
+          background: linear-gradient(135deg, rgba(241, 245, 249, 0.94) 0%, rgba(226, 232, 240, 0.94) 100%) !important;
+          color: #0f172a !important;
+          padding: 14px;
+          border-radius: 5px;
+          border: 1px solid rgba(15, 23, 42, 0.15);
+          box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+        }
+
+        #card-root[data-glass="light"] .glass-base,
+        #card-root[data-glass="light"] .glass-card,
+        #card-root[data-glass="light"] .top-bar,
+        #card-root[data-glass="light"] .kpi-cell,
+        #card-root[data-glass="light"] .pipeline-card,
+        #card-root[data-glass="light"] .workspace-tab-bar,
+        #card-root[data-glass="light"] .tile-glass-box,
+        #card-root[data-glass="light"] .tactile-bay,
+        #card-root[data-glass="light"] .stratum-card-strip,
+        #card-root[data-glass="light"] .rig-market-ticker-strip,
+        #card-root[data-glass="light"] .market-stat-pill,
+        #card-root[data-glass="light"] .lottery-mini-tile,
+        #card-root[data-glass="light"] .jackpot-banner,
+        #card-root[data-glass="light"] .share-progress-container,
+        #card-root[data-glass="light"] .trophy-card.unlocked,
+        #card-root[data-glass="light"] .chronicle-card.unlocked {
+          background: rgba(255, 255, 255, 0.75) !important;
+          backdrop-filter: blur(16px) saturate(160%) !important;
+          -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+          border: 1px solid rgba(15, 23, 42, 0.14) !important;
+          border-radius: 5px !important;
+          box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.12), 0 3px 6px -1px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+          color: #0f172a !important;
+        }
+
+        #card-root[data-glass="light"] .brand-title,
+        #card-root[data-glass="light"] .pod-name,
+        #card-root[data-glass="light"] .kpi-value,
+        #card-root[data-glass="light"] .coin-name-label,
+        #card-root[data-glass="light"] .jackpot-amount,
+        #card-root[data-glass="light"] .trophy-name,
+        #card-root[data-glass="light"] .chronicle-card-title {
+          color: #0f172a !important;
+        }
+
+        #card-root[data-glass="light"] .kpi-label,
+        #card-root[data-glass="light"] .kpi-sub,
+        #card-root[data-glass="light"] .tile-label,
+        #card-root[data-glass="light"] .pod-meta-strip,
+        #card-root[data-glass="light"] .bay-title,
+        #card-root[data-glass="light"] .slider-meta-head {
+          color: #334155 !important;
+        }
+
+        #card-root[data-glass="light"] .glass-btn,
+        #card-root[data-glass="light"] .pill-btn,
+        #card-root[data-glass="light"] .badge-glass-pill,
+        #card-root[data-glass="light"] .share-tag {
+          background: rgba(255, 255, 255, 0.85) !important;
+          border: 1px solid rgba(15, 23, 42, 0.16) !important;
+          color: #0f172a !important;
+          box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff !important;
+        }
+
+        #card-root[data-glass="light"] .tab-pill {
+          color: #475569 !important;
+        }
+
+        #card-root[data-glass="light"] .tab-pill.active {
+          background: rgba(255, 255, 255, 0.95) !important;
+          border: 1px solid rgba(2, 132, 199, 0.45) !important;
+          color: #0284c7 !important;
+          box-shadow: 0 3px 8px rgba(15, 23, 42, 0.1) !important;
+        }
+
+        #card-root[data-glass="light"] .stability-chart-svg,
+        #card-root[data-glass="light"] .chart-canvas-wrap {
+          background: rgba(15, 23, 42, 0.88) !important;
+        }
+
         /* ==========================================================================
            COMPREHENSIVE MOBILE & SMALL-SCREEN RESPONSIVENESS OPTIMIZATION (<= 640px)
            ========================================================================== */
         @media (max-width: 640px) {
           :host {
-            padding: 10px 8px !important;
-            border-radius: 10px !important;
+            padding: 8px 6px !important;
+            border-radius: 6px !important;
+          }
+
+          #card-root[data-glass="light"],
+          #card-root[data-glass="automotive"] {
+            padding: 8px 6px !important;
           }
 
           .glass-card {
             padding: 12px 10px !important;
-            border-radius: 8px !important;
+            border-radius: 5px !important;
             margin-bottom: 10px !important;
           }
 
-          /* Top Command Bar */
+          /* Top Command Bar: Balanced 2-Column + Full-Width Primary CTA */
           .top-bar {
             padding: 10px !important;
             margin-bottom: 10px !important;
@@ -5862,10 +6629,11 @@ class HomeMinerFleetCard extends HTMLElement {
 
           .brand-cluster {
             justify-content: flex-start !important;
+            align-items: flex-start !important;
           }
 
           .brand-title {
-            font-size: 14px !important;
+            font-size: 14.5px !important;
           }
 
           .top-actions {
@@ -5875,45 +6643,102 @@ class HomeMinerFleetCard extends HTMLElement {
             width: 100% !important;
           }
 
+          .top-actions #add-miner-btn {
+            grid-column: 1 / -1 !important;
+          }
+
           .top-actions .glass-btn {
             justify-content: center !important;
             text-align: center !important;
-            padding: 6px !important;
-            font-size: 10px !important;
+            padding: 7px 6px !important;
+            font-size: 10.5px !important;
             width: 100% !important;
-            min-height: 34px !important;
+            min-height: 36px !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
           }
 
-          /* Compact KPI Ribbon */
+          /* Luxury Automotive Instrument Binnacle Mobile Scaling */
+          .auto-binnacle-shell {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            padding: 12px 10px !important;
+          }
+
+          .auto-dial-bezel {
+            width: 148px !important;
+            height: 148px !important;
+            padding: 6px !important;
+          }
+
+          .auto-center-console {
+            grid-column: 1 / -1 !important;
+            order: 3 !important;
+            gap: 8px !important;
+          }
+
+          .auto-side-pods-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+
+          .auto-lcd-pod {
+            padding: 8px 9px !important;
+          }
+
+          .auto-lcd-val {
+            font-size: 15px !important;
+          }
+
+          .auto-telltale-bar {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            padding: 6px 8px !important;
+          }
+
+          .auto-telltale-lamp {
+            font-size: 9px !important;
+            padding: 5px 4px !important;
+          }
+
+          /* Compact 5-Column KPI Ribbon: Hero Full-Width + 2x2 Symmetrical Grid */
           .kpi-ribbon {
             grid-template-columns: 1fr 1fr !important;
             gap: 8px !important;
             margin-bottom: 10px !important;
           }
 
-          .kpi-cell {
-            padding: 10px 12px !important;
+          .kpi-ribbon .kpi-cell:first-child {
+            grid-column: 1 / -1 !important;
           }
 
-          .kpi-value {
+          .kpi-cell {
+            padding: 10px 11px !important;
+          }
+
+          .kpi-cell .kpi-value,
+          .kpi-val {
             font-size: 18px !important;
+          }
+
+          .kpi-cell .kpi-sub {
+            font-size: 9.5px !important;
           }
 
           /* Slim Stratum Status Bar */
           .pipeline-card {
-            border-radius: 8px !important;
+            border-radius: 5px !important;
             margin-bottom: 10px !important;
           }
 
           .pipeline-header {
             padding: 8px 10px !important;
+            flex-wrap: wrap !important;
           }
 
           .pipeline-title {
-            font-size: 10.5px !important;
+            font-size: 10px !important;
           }
 
           .pipeline-summary-pill {
@@ -5921,20 +6746,24 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           .pipeline-coin-wrap {
-            padding: 1px 5px !important;
+            padding: 2px 5px !important;
+            max-width: 145px !important;
           }
 
           .pipeline-coin-select {
             font-size: 10px !important;
+            max-width: 115px !important;
           }
 
           .pipeline-header-actions {
             gap: 4px !important;
+            margin-left: auto !important;
           }
 
           .pipeline-header-actions .hud-action-btn {
-            padding: 4px 6px !important;
+            padding: 4px 7px !important;
             font-size: 9.5px !important;
+            min-height: 28px !important;
           }
 
           .pipeline-body {
@@ -5954,22 +6783,25 @@ class HomeMinerFleetCard extends HTMLElement {
             max-width: 100% !important;
           }
 
-          /* Segmented Tab Bar */
+          /* Segmented Tab Bar: Touch Momentum & Scroll Snap */
           .workspace-tab-bar {
             position: sticky !important;
             top: 4px !important;
             padding: 4px !important;
             margin-bottom: 10px !important;
-            border-radius: 8px !important;
+            border-radius: 5px !important;
             gap: 4px !important;
             -webkit-overflow-scrolling: touch !important;
+            scroll-snap-type: x proximity !important;
           }
 
           .tab-pill {
-            padding: 6px 8px !important;
+            flex: 0 0 auto !important;
+            scroll-snap-align: start !important;
+            padding: 7px 10px !important;
             font-size: 11px !important;
-            border-radius: 5px !important;
-            min-height: 34px !important;
+            border-radius: 4px !important;
+            min-height: 36px !important;
             -webkit-tap-highlight-color: transparent !important;
           }
 
@@ -5979,7 +6811,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
           /* Hardware Workstations */
           .workstations-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
             gap: 12px !important;
           }
 
@@ -5995,11 +6827,20 @@ class HomeMinerFleetCard extends HTMLElement {
             font-size: 15px !important;
           }
 
+          .pod-meta-strip {
+            flex-wrap: wrap !important;
+            font-size: 10px !important;
+          }
+
           .pod-header-row > div:last-child {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
             gap: 6px !important;
             width: 100% !important;
+          }
+
+          .pod-header-row > div:last-child > :last-child:nth-child(odd) {
+            grid-column: 1 / -1 !important;
           }
 
           .pod-header-row > div:last-child .glass-btn {
@@ -6011,6 +6852,11 @@ class HomeMinerFleetCard extends HTMLElement {
             min-height: 36px !important;
           }
 
+          .rig-market-ticker-strip {
+            padding: 8px 10px !important;
+            gap: 6px !important;
+          }
+
           .telemetry-tile-row {
             grid-template-columns: 1fr 1fr !important;
             gap: 8px !important;
@@ -6018,16 +6864,27 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           .tile-glass-box {
-            padding: 10px 10px !important;
+            padding: 9px 10px !important;
+          }
+
+          .tile-label {
+            font-size: 9px !important;
+            letter-spacing: 0.03em !important;
+            gap: 4px !important;
+            flex-wrap: wrap !important;
           }
 
           .tile-num {
             font-size: 17px !important;
           }
 
+          .rig-sparkline-svg {
+            height: 22px !important;
+          }
+
           .tactile-bay {
             padding: 12px 10px !important;
-            border-radius: 12px !important;
+            border-radius: 5px !important;
           }
 
           .profile-pill-rack {
@@ -6037,11 +6894,99 @@ class HomeMinerFleetCard extends HTMLElement {
           }
 
           .pill-btn {
+            justify-content: center !important;
             text-align: center !important;
             padding: 7px 4px !important;
-            font-size: 10px !important;
+            font-size: 10.5px !important;
             width: 100% !important;
-            min-height: 34px !important;
+            min-height: 36px !important;
+          }
+
+          input[type="range"] {
+            height: 6px !important;
+            margin: 10px 0 !important;
+            touch-action: pan-y !important;
+          }
+
+          input[type="range"]::-webkit-slider-thumb {
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 4px !important;
+          }
+
+          /* Pool & Stratum Footer Mobile Wrapping */
+          .active-pool-badge-strip {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 6px !important;
+            padding: 8px 10px !important;
+          }
+
+          .stratum-card-strip {
+            padding: 10px !important;
+          }
+
+          .stratum-host-pill {
+            flex-wrap: wrap !important;
+            font-size: 10px !important;
+            word-break: break-all !important;
+          }
+
+          .shares-metric-rack {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            width: 100% !important;
+          }
+
+          .share-tag {
+            justify-content: space-between !important;
+            padding: 5px 8px !important;
+            font-size: 10px !important;
+          }
+
+          /* 24-Hour Stability & Thermal Chart Mobile */
+          .stability-chart-card {
+            padding: 12px 10px !important;
+            margin-top: 12px !important;
+          }
+
+          .stability-chart-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .stability-legend {
+            width: 100% !important;
+            justify-content: space-between !important;
+            font-size: 10px !important;
+            flex-wrap: wrap !important;
+          }
+
+          .stability-chart-svg {
+            height: 145px !important;
+          }
+
+          /* Solo Block Radar Mobile */
+          .lottery-radar-console {
+            padding: 14px 10px !important;
+          }
+
+          .lottery-header-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+          }
+
+          .jackpot-amount {
+            font-size: 20px !important;
+          }
+
+          .share-milestone-row {
+            font-size: 8px !important;
+            overflow-x: auto !important;
+            gap: 6px !important;
           }
 
           /* Trophies & RPG Hero Banner */
@@ -6197,10 +7142,6 @@ class HomeMinerFleetCard extends HTMLElement {
             gap: 8px !important;
           }
 
-          .lottery-console {
-            padding: 14px 10px !important;
-          }
-
           /* Modals Mobile Touch & Scroll Safety */
           .modal-backdrop {
             padding: 10px !important;
@@ -6212,7 +7153,7 @@ class HomeMinerFleetCard extends HTMLElement {
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
             padding: 18px 14px !important;
-            border-radius: 16px !important;
+            border-radius: 6px !important;
             gap: 10px !important;
           }
 
@@ -6234,6 +7175,17 @@ class HomeMinerFleetCard extends HTMLElement {
             text-align: center !important;
             justify-content: center !important;
             padding: 9px 12px !important;
+          }
+        }
+
+        /* Ultra-Compact Phone Viewports (<= 390px) */
+        @media (max-width: 390px) {
+          .auto-dial-bezel {
+            width: 132px !important;
+            height: 132px !important;
+          }
+          .tile-num {
+            font-size: 15.5px !important;
           }
         }
       
@@ -7221,12 +8173,20 @@ class HomeMinerFleetCard extends HTMLElement {
     if (!cardRoot) return;
 
     cardRoot.setAttribute('data-theme', activeTheme.id);
+    cardRoot.setAttribute('data-glass', this._glassMode || 'automotive');
     cardRoot.style.setProperty('--theme-accent', activeTheme.accent);
     cardRoot.style.setProperty('--theme-accent-sec', activeTheme.accentSecondary);
     cardRoot.style.setProperty('--theme-glow', activeTheme.accentGlow);
     cardRoot.style.setProperty('--theme-pill-gradient', activeTheme.pillGradient);
     cardRoot.style.setProperty('--theme-card-border', activeTheme.cardBorder);
     cardRoot.style.setProperty('--theme-hero-bg', activeTheme.heroBg);
+
+    const activeYieldRow = yieldRows.find(r => r.isMining) || yieldRows[0];
+    const dailyEstYieldUsd = activeYieldRow ? activeYieldRow.grossDailyUsd : 0;
+    const isRigHealthWarning = avgTempNum > 68 || displayedMiners.length === 0;
+    const rigHealthBadgeText = displayedMiners.length === 0 ? 'STANDBY' : (avgTempNum > 68 ? 'THERMAL WARN' : 'NOMINAL');
+    const rigHealthColor = displayedMiners.length === 0 ? '#94a3b8' : (avgTempNum > 68 ? '#fb7185' : '#10b981');
+    const totalHwErrors = displayedMiners.reduce((acc, m) => acc + (parseInt(m.hwErrors) || 0), 0);
 
     // Stratum Pipeline Telemetry & Dynamic Coin Profile Resolution
     const activeFleetCoin = (activeCoinMined || 'BTC').toUpperCase();
@@ -7278,17 +8238,25 @@ class HomeMinerFleetCard extends HTMLElement {
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
         <div class="brand-cluster">
-          <div class="brand-icon-box" style="color: #38bdf8;">${isSingleRigView ? svgIcon('cpu', 18) : svgIcon('server', 18)}</div>
+          <div class="brand-icon-box" style="color: #00e5ff;">${isSingleRigView ? svgIcon('cpu', 18) : svgIcon('server', 18)}</div>
           <div>
-            <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
-            <div class="badge-glass-pill" style="margin-top: 2px;">
-              <span class="status-orb"></span>
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Blade' : 'Blades'} • <span id="cache-purge-btn" style="cursor: pointer; color: #38bdf8;" title="Click to force-purge browser cache and reload">v0.7.3</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
+              <span class="badge-glass-pill" style="border-color: ${rigHealthColor}; color: ${rigHealthColor}; background: rgba(16, 185, 129, 0.1);">
+                <span class="status-orb" style="background: ${rigHealthColor};"></span>
+                RIG HEALTH: ${rigHealthBadgeText}
+              </span>
+            </div>
+            <div class="badge-glass-pill" style="margin-top: 3px;">
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Unit' : 'Units'} • <span id="cache-purge-btn" style="cursor: pointer; color: #00e5ff;" title="Click to force-purge browser cache and reload">v0.7.4</span>
             </div>
           </div>
         </div>
 
         <div class="top-actions">
+          <button class="glass-btn" id="glass-mode-btn" title="Cycle Instrument Cluster Aesthetic: GT Chronometer Cluster -> Dark Extruded Glass -> Bright Frosted Glass">
+            ${svgIcon('layers', 13)} ${this._glassMode === 'automotive' ? 'Cluster: GT Chrono' : (this._glassMode === 'light' ? 'Light Glass' : 'Dark Glass')}
+          </button>
           <button class="glass-btn sound-toggle-btn ${this._soundMode !== 'off' ? 'active-audio' : ''}" id="sound-btn" title="Toggle Acoustic Share Feedback (Click to Cycle: Off / Geiger Clicks / Chimes)">
             ${this._soundMode === 'off' ? `${svgIcon('volume-off', 13)} Audio: OFF` : (this._soundMode === 'geiger' ? `${svgIcon('volume-on', 13)} Geiger: ON` : `${svgIcon('bell', 13)} Chimes: ON`)}
           </button>
@@ -7298,39 +8266,55 @@ class HomeMinerFleetCard extends HTMLElement {
         </div>
       </div>
 
-      <!-- COMPACT 5-COLUMN KPI TELEMETRY RIBBON -->
-      <div class="kpi-ribbon">
-        <!-- 1: Hashrate -->
-        <div class="kpi-cell" style="border-top: 2px solid #38bdf8;">
+      ${this._glassMode === 'automotive' ? this._generateAutomotiveBinnacleHtml({
+        totalHashThs,
+        avgTempNum,
+        avgTempStr,
+        totalWatts,
+        fleetDailyPowerCost,
+        fleetEfficiency,
+        maxFan,
+        dailyEstYieldUsd,
+        totalFleetAccepted,
+        fleetBestShareStr,
+        hasStratum,
+        totalHwErrors,
+        isBlockSolved
+      }) : ''}
+
+      <!-- HEADER / OVERVIEW BANNER: 5-COLUMN EXTRUDED GLASS KPI RIBBON -->
+      <div class="kpi-ribbon" style="${this._glassMode === 'automotive' ? 'display: none;' : ''}">
+        <!-- 1: Total Active Hashrate -->
+        <div class="kpi-cell" style="border-top: 2px solid #00e5ff;">
           <div class="kpi-cell-top">
-            <span class="kpi-label">${isSingleRigView ? 'Miner Hashrate' : 'Fleet Hashrate'}</span>
-            <span class="kpi-icon" style="color: #38bdf8;">${svgIcon('activity', 13)}</span>
+            <span class="kpi-label">${isSingleRigView ? 'Active Hashrate' : 'Total Active Hashrate'}</span>
+            <span class="kpi-icon" style="color: #00e5ff;">${svgIcon('activity', 13)}</span>
           </div>
           <div class="kpi-val-row">
-            <span class="kpi-value" style="color: #f8fafc;">${totalHashThs.toFixed(2)}</span>
+            <span class="kpi-value" style="color: #00e5ff;">${totalHashThs.toFixed(2)}</span>
             <span class="kpi-unit">TH/s</span>
           </div>
           <div class="kpi-sub">
             <span>Target: ${hashTarget.toFixed(1)} TH/s</span>
-            <span style="color: #38bdf8; font-weight: 700;">${hashPct}%</span>
+            <span style="color: #00e5ff; font-weight: 700;">${hashPct}%</span>
           </div>
           <div class="kpi-bar-track">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, hashPct)}%; background: #38bdf8;"></div>
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, hashPct)}%; background: #00e5ff;"></div>
           </div>
         </div>
 
-        <!-- 2: Electrical Load -->
+        <!-- 2: Aggregate Power Draw (Watts) -->
         <div class="kpi-cell" style="border-top: 2px solid #f59e0b;">
           <div class="kpi-cell-top">
-            <span class="kpi-label">${isSingleRigView ? 'Electrical Load' : 'Total Load'}</span>
+            <span class="kpi-label">Aggregate Power Draw</span>
             <span class="kpi-icon" style="color: #f59e0b;">${svgIcon('zap', 13)}</span>
           </div>
           <div class="kpi-val-row">
             <span class="kpi-value" style="color: #f8fafc;">${totalWatts.toFixed(1)}</span>
-            <span class="kpi-unit">W</span>
+            <span class="kpi-unit">Watts</span>
           </div>
           <div class="kpi-sub">
-            <span>Est. Cost</span>
+            <span>Power Cost</span>
             <span style="color: #fbbf24; font-weight: 700;">$${fleetDailyPowerCost.toFixed(2)}/d</span>
           </div>
           <div class="kpi-bar-track">
@@ -7338,22 +8322,22 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
 
-        <!-- 3: Fleet Efficiency -->
+        <!-- 3: Daily Estimated Yield & Efficiency -->
         <div class="kpi-cell" style="border-top: 2px solid #10b981;">
           <div class="kpi-cell-top">
-            <span class="kpi-label">Efficiency</span>
+            <span class="kpi-label">Daily Est. Yield</span>
             <span class="kpi-icon" style="color: #10b981;">${svgIcon('sliders', 13)}</span>
           </div>
           <div class="kpi-val-row">
-            <span class="kpi-value" style="color: #34d399;">${fleetEfficiency}</span>
-            <span class="kpi-unit">J/TH</span>
+            <span class="kpi-value" style="color: #10b981;">$${dailyEstYieldUsd.toFixed(2)}</span>
+            <span class="kpi-unit">/day</span>
           </div>
           <div class="kpi-sub">
-            <span>Rate: $${estElectricityRate.toFixed(2)}/kWh</span>
-            <span style="color: #10b981; font-weight: 700;">Optimal</span>
+            <span>Efficiency: ${fleetEfficiency} J/TH</span>
+            <span style="color: #10b981; font-weight: 700;">${activeYieldRow?.coin || 'BTC'}</span>
           </div>
           <div class="kpi-bar-track">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.max(15, 100 - (parseFloat(fleetEfficiency) || 20)))}%; background: #10b981;"></div>
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.max(20, 100 - (parseFloat(fleetEfficiency) || 20)))}%; background: #10b981;"></div>
           </div>
         </div>
 
@@ -7376,22 +8360,21 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
 
-        <!-- 5: Shares & Best Diff -->
-        <div class="kpi-cell" style="border-top: 2px solid #a855f7;">
+        <!-- 5: Overall Rig Health & Shares -->
+        <div class="kpi-cell" style="border-top: 2px solid ${rigHealthColor};">
           <div class="kpi-cell-top">
-            <span class="kpi-label">Verified Shares</span>
-            <span class="kpi-icon" style="color: #a855f7;">${svgIcon('target', 13)}</span>
+            <span class="kpi-label">Rig Health & Shares</span>
+            <span class="kpi-icon" style="color: ${rigHealthColor};">${svgIcon('shield', 13)}</span>
           </div>
           <div class="kpi-val-row">
-            <span class="kpi-value" style="color: #f8fafc;">${totalFleetAccepted.toLocaleString()}</span>
-            <span class="kpi-unit">valid</span>
+            <span class="kpi-value" style="color: ${rigHealthColor}; font-size: 18px;">● ${rigHealthBadgeText}</span>
           </div>
           <div class="kpi-sub">
-            <span>Best Diff</span>
-            <span style="color: #c084fc; font-weight: 700;">${fleetBestShareStr}</span>
+            <span>${totalFleetAccepted.toLocaleString()} Shares</span>
+            <span style="color: #00e5ff; font-weight: 700;">Best: ${fleetBestShareStr}</span>
           </div>
           <div class="kpi-bar-track">
-            <div class="kpi-bar-fill" style="width: ${logProgressPct}%; background: #a855f7;"></div>
+            <div class="kpi-bar-fill" style="width: ${logProgressPct}%; background: ${rigHealthColor};"></div>
           </div>
         </div>
       </div>
@@ -8336,21 +9319,25 @@ class HomeMinerFleetCard extends HTMLElement {
                 `;
               })()}
 
-              <!-- 4 Visual Telemetry Tiles -->
+              <!-- 4 Visual Telemetry Tiles (Extruded Glass with Mini Sparkline, Voltage & Efficiency) -->
               <div class="telemetry-tile-row">
                 <div class="tile-glass-box">
-                  <div class="tile-label">Hashrate</div>
+                  <div class="tile-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Hashrate</span>
+                    <span style="color:#00e5ff; font-weight:700;">${hashBar}%</span>
+                  </div>
                   <div class="tile-val-row">
-                    <span class="tile-num" style="color: #38bdf8;">${hashrateThs}</span>
+                    <span class="tile-num" style="color: #00e5ff;">${hashrateThs}</span>
                     <span class="tile-unit">TH/s</span>
                   </div>
-                  <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${hashBar}%; background: #38bdf8;"></div>
-                  </div>
+                  ${this._generateRigSparklineSvg(miner.ths, maxThs, miner.host || miner.name)}
                 </div>
 
                 <div class="tile-glass-box">
-                  <div class="tile-label">Power Load</div>
+                  <div class="tile-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Power Draw</span>
+                    <span style="color:#10b981; font-weight:700;">${efficiency} J/TH</span>
+                  </div>
                   <div class="tile-val-row">
                     <span class="tile-num" style="color: #fbbf24;">${powerW}</span>
                     <span class="tile-unit">Watts</span>
@@ -8361,26 +9348,32 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
 
                 <div class="tile-glass-box">
-                  <div class="tile-label">ASIC Temp</div>
+                  <div class="tile-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Core Temp & Volt</span>
+                    <span style="color:#fbbf24; font-weight:700;">${miner.volt ? miner.volt + ' mV' : (miner.inVolt ? miner.inVolt + 'V' : 'Nominal')}</span>
+                  </div>
                   <div class="tile-val-row">
-                    <span class="tile-num" style="color: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#34d399'};">
+                    <span class="tile-num" style="color: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#10b981'};">
                       ${chipTemp > 0 ? chipTemp.toFixed(1) : '--'}
                     </span>
                     <span class="tile-unit">°C</span>
                   </div>
                   <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${tempBar}%; background: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#34d399'};"></div>
+                    <div class="tile-prog-fill" style="width: ${tempBar}%; background: ${chipTemp > 68 ? '#fb7185' : chipTemp > 60 ? '#fbbf24' : '#10b981'};"></div>
                   </div>
                 </div>
 
                 <div class="tile-glass-box">
-                  <div class="tile-label">Fan Speed</div>
+                  <div class="tile-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Fan & Efficiency</span>
+                    <span style="color:#00e5ff; font-weight:700;">${efficiency} J/TH</span>
+                  </div>
                   <div class="tile-val-row">
-                    <span class="tile-num" style="color: #38bdf8;">${fanRpm > 0 ? fanRpm.toLocaleString() : '--'}</span>
+                    <span class="tile-num" style="color: #00e5ff;">${fanRpm > 0 ? fanRpm.toLocaleString() : '--'}</span>
                     <span class="tile-unit">RPM</span>
                   </div>
                   <div class="tile-prog-bar">
-                    <div class="tile-prog-fill" style="width: ${fanBar}%; background: #38bdf8;"></div>
+                    <div class="tile-prog-fill" style="width: ${fanBar}%; background: #00e5ff;"></div>
                   </div>
                 </div>
               </div>
@@ -8407,7 +9400,7 @@ class HomeMinerFleetCard extends HTMLElement {
                     <div class="slider-unit-box">
                       <div class="slider-meta-head">
                         <span>Core Frequency</span>
-                        <span class="mono" style="color: #38bdf8; font-weight: 700;" id="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.freq} MHz</span>
+                        <span class="mono" style="color: #00e5ff; font-weight: 700;" id="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.freq} MHz</span>
                       </div>
                       <input type="range" min="450" max="800" step="5" value="${miner.freq}" class="cyan-thumb"
                              data-action="freq-slider"
@@ -8430,21 +9423,21 @@ class HomeMinerFleetCard extends HTMLElement {
               ` : ''}
 
               <!-- Active Pool Integration Header -->
-              <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #0d121b; border: 1px solid #1f2737; border-radius: 6px; margin-top: 12px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+              <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 5px; margin-top: 12px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
-                  <span style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-family: 'JetBrains Mono', monospace;">Pool Provider:</span>
-                  <span style="font-size: 12px; font-weight: 700; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">
+                  <span style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">Pool Provider:</span>
+                  <span style="font-size: 12px; font-weight: 700; color: #00e5ff; font-family: 'JetBrains Mono', monospace;">
                     ${poolProviderMap[miner.poolProvider] || miner.poolProvider || 'Direct Stratum'}
                   </span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
                   <span style="color: #94a3b8;">Worker: <b style="color: #fbbf24;">${miner.poolUser || miner.poolWallet || 'Auto'}</b></span>
                   <span style="color: #263147;">|</span>
-                  <span style="color: #34d399; font-weight: 700;">● ${miner.poolStatus || 'Alive'}</span>
+                  <span style="color: #10b981; font-weight: 700;">● ${miner.poolStatus || 'Alive'}</span>
                   ${miner.ths > 0 ? `
                     <span style="color: #263147;">|</span>
-                    <span style="color: #38bdf8; font-weight: 700;">${miner.ths.toFixed(2)} TH/s</span>
+                    <span style="color: #00e5ff; font-weight: 700;">${miner.ths.toFixed(2)} TH/s</span>
                   ` : ''}
                 </div>
               </div>
@@ -8452,37 +9445,41 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="stratum-card-strip">
                   <div class="stratum-chips-row">
                     <div class="stratum-host-pill">
-                      <span style="color: #64748b;">Endpoint:</span>
-                      <span style="color: #38bdf8; font-weight: 600;">${miner.poolUrl}</span>
+                      <span style="color: #94a3b8;">Endpoint:</span>
+                      <span style="color: #00e5ff; font-weight: 600;">${miner.poolUrl}</span>
                       <span style="color: #263147;">|</span>
                       <span style="color: #fbbf24;">Worker: ${miner.poolUser}</span>
                     </div>
-                    <div class="badge-glass-pill" style="color: #34d399; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
+                    <div class="badge-glass-pill" style="color: #10b981; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
                       ● ${miner.poolStatus}
                     </div>
                   </div>
 
                   <div class="shares-metric-rack">
                     <div class="share-tag">
-                      <span style="color: #64748b;">Accepted:</span>
-                      <span style="color: #34d399; font-weight: 700;">${miner.accepted}</span>
+                      <span style="color: #94a3b8;">Accepted:</span>
+                      <span style="color: #10b981; font-weight: 700;">${miner.accepted}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #64748b;">Rejected:</span>
+                      <span style="color: #94a3b8;">Rejected:</span>
                       <span style="color: #fb7185; font-weight: 700;">${miner.rejected}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #64748b;">HW Errors:</span>
+                      <span style="color: #94a3b8;">HW Errors:</span>
                       <span style="color: #fbbf24; font-weight: 700;">${miner.hwErrors}</span>
                     </div>
                     <div class="share-tag">
-                      <span style="color: #64748b;">Best Share:</span>
-                      <span style="color: #38bdf8; font-weight: 700;">${miner.bestShareStr}</span>
+                      <span style="color: #94a3b8;">Best Share:</span>
+                      <span style="color: #00e5ff; font-weight: 700;">${miner.bestShareStr}</span>
+                    </div>
+                    <div class="share-tag">
+                      <span style="color: #94a3b8;">Stratum Diff:</span>
+                      <span style="color: #fbbf24; font-weight: 700;">${profile.diffStr}</span>
                     </div>
                     ${miner.blocksFound !== '--' ? `
                       <div class="share-tag">
-                        <span style="color: #64748b;">Found Blocks:</span>
-                        <span style="color: #34d399; font-weight: 700;">${miner.blocksFound}</span>
+                        <span style="color: #94a3b8;">Found Blocks:</span>
+                        <span style="color: #10b981; font-weight: 700;">${miner.blocksFound}</span>
                       </div>
                     ` : ''}
                   </div>
@@ -8490,6 +9487,30 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
           `;
         }).join('')}
+        </div>
+
+        <!-- PERFORMANCE & ANALYTICS SECTION: 24-HOUR MULTI-SERIES HASHRATE STABILITY & THERMAL TRACKING -->
+        <div class="glass-card cyan-glow stability-chart-card">
+          <div class="stability-chart-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="brand-icon-box" style="width: 30px; height: 30px; color: #00e5ff;">${svgIcon('activity', 16)}</div>
+              <div>
+                <div style="font-size: 13.5px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #f8fafc;">24-HOUR HASHRATE STABILITY & THERMAL TELEMETRY</div>
+                <div style="font-size: 11px; color: #94a3b8;">Multi-series ASIC performance envelope (Transparent fills & crisp neon traces)</div>
+              </div>
+            </div>
+            <div class="stability-legend">
+              <span class="stability-legend-item">
+                <span style="width: 10px; height: 3px; background: #00e5ff; display: inline-block; border-radius: 2px;"></span>
+                Hashrate (${totalHashThs.toFixed(2)} TH/s)
+              </span>
+              <span class="stability-legend-item">
+                <span style="width: 10px; height: 3px; background: #f59e0b; display: inline-block; border-radius: 2px;"></span>
+                ASIC Core Temp (${avgTempStr}°C)
+              </span>
+            </div>
+          </div>
+          ${this._generate24hStabilityChartSvg(totalHashThs, avgTempNum)}
         </div>
       </div>
       ` : ''}
@@ -8791,6 +9812,23 @@ class HomeMinerFleetCard extends HTMLElement {
           testAudioBtn.style.color = '#cbd5e1';
           testAudioBtn.style.borderColor = '#263042';
         }, 900);
+      });
+    }
+
+    // Instrument Cluster / Frosted Glass Mode Toggle Button (GT Chrono -> Dark Glass -> Light Glass)
+    const glassModeBtn = this.shadowRoot.querySelector('#glass-mode-btn');
+    if (glassModeBtn) {
+      glassModeBtn.addEventListener('click', () => {
+        if (this._glassMode === 'automotive') {
+          this._glassMode = 'dark';
+        } else if (this._glassMode === 'dark') {
+          this._glassMode = 'light';
+        } else {
+          this._glassMode = 'automotive';
+        }
+        safeStorage.set('miner_cluster_mode', this._glassMode);
+        this._lastRenderSig = null;
+        this.render();
       });
     }
 

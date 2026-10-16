@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Luxury Sports Car Instrument Cluster (GT Chronometer Binnacle) & Tactile Extruded Glassmorphism** ([#45](https://github.com/everyday3d/home-miner-studio/issues/45)):
+  - **Luxury Automotive GT Chronometer Mode (`data-glass="automotive"`)**: Added a skeuomorphic luxury sports car instrument cluster mode (Aston Martin / Porsche GT Chronometer Binnacle) with a deep carbon-fiber weave and brushed dark titanium background canvas, switchable in real time (`GT Chrono` -> `Dark Glass` -> `Light Glass`) via the `#glass-mode-btn` command bar control.
+  - **Extruded Metallic Bezels & Curved Glass Lens Reflections**: Implemented multi-layer 3D extruded metallic rims (`box-shadow: -1px -1px 2px rgba(255,255,255,0.4), 4px 4px 10px rgba(0,0,0,0.8), inset 1px 1px 1px rgba(255,255,255,0.2)`), recessed dial faces (`inset 3px 3px 6px rgba(0,0,0,0.9)`), and diagonal curved glass lens specular reflections (`linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 50%)`).
+  - **Dual Analog Chronometer Binnacle (`_generateAutomotiveBinnacleHtml`)**:
+    - **Left Chronometer (`0` to `10 TH/s`)**: Precision SVG analog dial with glowing tick marks, condensed automotive numbering (`Chakra Petch`), and an ice-blue laser-tipped indicator needle (`-135deg` to `+135deg`).
+    - **Right Chronometer (`20°C` to `100°C`)**: Core temperature analog gauge with a glowing redline danger zone past `75°C` and a laser-red indicator needle.
+    - **4 Recessed Digital LCD Side Pods**: Raised metallic rectangular pods housing recessed segmented LCD readouts for **Power Draw (Watts)**, **Efficiency (J/TH)**, **Cooling Turbine RPM**, and **Verified Shares / Peak Difficulty**.
+    - **4 Check-Engine Diagnostic Tell-Tale Warning Lamps**: Luxury dashboard check-engine style indicators (`STRATUM LINK`, `THERMAL ALERT`, `ASIC CHECK`, `SYSTEM NOMINAL`) that illuminate dynamically when triggered.
+  - **Tactile Extruded Glassmorphism (`Dark Glass` & `Light Glass` `rgba(255,255,255,0.75)` modes)**: Added `backdrop-filter: blur(16px)`, sharp `4px–6px` geometric corners, and raised 3D glass elevation across all cards, sparklines, and 24-hour multi-series Hashrate & Thermal Stability charts.
+  - **Theme & Lovelace View Templates**: Added standalone theme definitions (`themes/home_miner_gt_chronometer.yaml` and `themes/home_miner_extruded_glass.yaml`) and complete Lovelace views (`dashboards/home_miner_gt_chronometer_view.yaml` and `dashboards/home_miner_extruded_glass_view.yaml`).
+- **Comprehensive Mobile Viewport Optimization Pass (`<= 640px` & `<= 390px`)** ([#45](https://github.com/everyday3d/home-miner-studio/issues/45)):
+  - Optimized top command bar into a balanced 2-column touch-friendly grid (`min-height: 36px`), responsive single-column stacked binnacle dials (`220px–240px`), 2-column KPI telemetry ribbon with full-width 5th summary cell, compact 2x2 hardware telemetry grid, enlarged `22px` touch slider thumbs (`touch-action: pan-y`), scroll-snap workspace tabs, and bottom-sheet modals with `env(safe-area-inset-bottom)` padding.
+
 ### Changed
 - **Precision Hardware Workstation UI/UX Overhaul** ([#44](https://github.com/everyday3d/home-miner-studio/issues/44)):
   - **Matte Carbon/Slate Surface System**: Replaced blurry neon radial-gradient glassmorphic backgrounds, drop-shadow halos, and gradient text clips with a Braiins OS+ / AxeOS / Linear-inspired Precision Hardware Workstation palette (`#0b0e14` base, `#111620` card surface, `#161d2b` inset bay, `1px solid #1f2737` structural hairlines, and `font-variant-numeric: tabular-nums` monospace readouts).
