@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-10-22
+
 ### Added
 - **Found Blocks sensor for Bitaxe / AxeOS miners**, from AxeOS 2.x `blockFound` (created when the firmware reports it), matching the existing CGMiner sensor so automations can react to solved blocks on any rig.
 
