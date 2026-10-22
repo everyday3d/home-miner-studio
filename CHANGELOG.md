@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-10-22
+
 ### Added
 - **Pool API Key field** in the rig card's Edit popup (left blank keeps the saved key), and labels for the integration's Configure dialog.
 
