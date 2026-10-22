@@ -77,6 +77,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Cached pool metrics (updated every 60s to avoid rate limits)
         self._last_pool_fetch = 0.0
+        self._pool_auth_warned = False
         self._cached_pool_data: dict[str, Any] = {
             "pool_unpaid_balance": 0.0,
             "pool_24h_revenue": 0.0,
@@ -505,6 +506,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not self.pool_provider or self.pool_provider == "none":
             return self._cached_pool_data
 
+        self._last_pool_fetch = now
         try:
             if self.pool_provider == POOL_2MINERS and self.pool_wallet:
                 coin_sub = self.coin.lower()
@@ -535,35 +537,8 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                                 "pool_active_workers": 1,
                                 "pool_reported_hashrate": 0.0,
                             }
-            elif self.pool_provider == POOL_MINING_DUTCH and (self.pool_token or self.pool_wallet):
-                token = self.pool_token or self.pool_wallet
-                coin_slug = {
-                    "BTC": "bitcoin",
-                    "BCH": "bitcoincash",
-                    "LTC": "litecoin",
-                    "DOGE": "dogecoin",
-                    "BELLS": "bells",
-                    "WOJAK": "wojakcoin",
-                    "WJK": "wojakcoin",
-                }.get(self.coin.upper(), self.coin.lower())
-                url = f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&action=getdashboarddata&api_key={token}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            root = data.get("getdashboarddata", {}).get("data", {})
-                            if not root:
-                                root = data.get("getuserstatus", {}).get("data", {})
-                            raw_hr = float(root.get("hashrate", root.get("total_hashrate", 0.0)))
-                            hr_ghs = raw_hr if raw_hr < 1e6 else raw_hr / 1e6
-                            bal = float(root.get("balance", root.get("confirmed", 0.0)))
-                            workers_cnt = int(root.get("workers", root.get("active_workers", 1)))
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": bal,
-                                "pool_24h_revenue": float(root.get("24h_estimate", 0.0)),
-                                "pool_active_workers": max(1, workers_cnt),
-                                "pool_reported_hashrate": round(hr_ghs, 2),
-                            }
+            elif self.pool_provider == POOL_MINING_DUTCH and self._mining_dutch_key():
+                self._cached_pool_data = await self._fetch_mining_dutch()
             elif self.pool_provider == POOL_PUBLIC_POOL and self.pool_wallet:
                 url = f"https://public-pool.io:40557/api/client/{self.pool_wallet}"
                 async with aiohttp.ClientSession() as session:
@@ -662,6 +637,71 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._cached_pool_data["pool_provider_name"] = POOL_NAMES.get(self.pool_provider, self.pool_provider.title())
 
         return self._cached_pool_data
+
+    def _mining_dutch_key(self) -> str | None:
+        """Return the Mining-Dutch account API key (64 hex chars, from Edit Account on the pool site).
+
+        The pool token field holds it; an older setup may have pasted it into the wallet field instead.
+        A worker name such as "user.worker1" is not a key and would only get 401 responses.
+        """
+        for candidate in (self.pool_token, self.pool_wallet):
+            if candidate and re.fullmatch(r"[0-9a-fA-F]{64}", candidate.strip()):
+                return candidate.strip()
+        return None
+
+    async def _fetch_mining_dutch(self) -> dict[str, Any]:
+        """Fetch balance and this worker's hashrate from the Mining-Dutch (MPOS) API.
+
+        The balance is account-wide (in the pool's coin), so every miner on the same account reports
+        the same figure; the dashboard card counts each account once. Hashrate and the active flag
+        come from this miner's own worker. Mining-Dutch reports worker hashrates in H/s.
+        """
+        coin_slug = {
+            "BTC": "bitcoin",
+            "BCH": "bitcoincashnode",
+            "LTC": "litecoin",
+            "DOGE": "dogecoin",
+            "BELLS": "bells",
+            "WOJAK": "wojakcoin",
+            "WJK": "wojakcoin",
+        }.get(self.coin.upper(), self.coin.lower())
+        base =f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&api_key={self._mining_dutch_key()}"
+
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+
+            async def call(action: str) -> Any:
+                async with session.get(f"{base}&action={action}") as resp:
+                    if resp.status in (401, 403):
+                        raise PermissionError("Mining-Dutch rejected the API key")
+                    resp.raise_for_status()
+                    data = await resp.json(content_type=None)
+                    return (data.get(action) or {}).get("data")
+
+            try:
+                balance = await call("getuserbalance") or {}
+            except PermissionError as err:
+                if not self._pool_auth_warned:
+                    _LOGGER.warning("%s for %s; check the Pool API Token in the miner's settings", err, self.host)
+                    self._pool_auth_warned = True
+                return self._cached_pool_data
+            workers = await call("getuserworkers") or {}
+
+        unpaid = sum(float(balance.get(k) or 0.0) for k in ("confirmed", "unconfirmed"))
+        # getuserworkers returns {"count": {...}, "miners": [{"username": "worker1", "hashrate": <H/s>, "alive": 1}]},
+        # with the worker name alone (no "account." prefix).
+        if isinstance(workers, dict):
+            workers = workers.get("miners") or []
+        worker_names = {
+            n.lower().split(".")[-1] for n in (self.pool_wallet, (self.data or {}).get("pool_user")) if n
+        }
+        mine = [w for w in workers if isinstance(w, dict) and str(w.get("username", "")).lower().split(".")[-1] in worker_names]
+        hr_ghs = sum(float(w.get("hashrate") or 0.0) for w in mine if w.get("alive", 1)) / 1e9
+        return {
+            "pool_unpaid_balance": round(unpaid, 8),
+            "pool_24h_revenue": self._cached_pool_data.get("pool_24h_revenue", 0.0),
+            "pool_active_workers": 1 if hr_ghs > 0 else 0,
+            "pool_reported_hashrate": round(hr_ghs, 2),
+        }
 
     def _infer_bitaxe_profile(self, freq: int, volt: int) -> None:
         """Infer current profile from frequency and core voltage."""

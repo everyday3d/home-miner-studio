@@ -34,5 +34,24 @@
     "abort": {
       "already_configured": "Device is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Miner Settings",
+        "data": {
+          "name": "Miner Friendly Name",
+          "host": "IP Address or Hostname",
+          "port": "Port",
+          "password": "Password (if required)",
+          "coin": "Coin Ticker (e.g. BTC, WJK, LTC)",
+          "pool_provider": "Mining Pool Provider",
+          "pool_wallet": "Pool Wallet Address or Worker",
+          "pool_token": "Pool API Key (Mining-Dutch: Edit Account page)",
+          "electricity_rate_sensor": "Electricity Rate Sensor",
+          "scan_interval": "Update Interval (seconds)"
+        }
+      }
+    }
   }
 }

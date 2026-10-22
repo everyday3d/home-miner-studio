@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Pool API Key field** in the rig card's Edit popup (left blank keeps the saved key), and labels for the integration's Configure dialog.
+
+### Fixed
+- **Mining-Dutch balances and hashrate** now load: the account API key is used (worker names were being sent as keys), `getuserbalance` confirmed + unconfirmed is shown as unpaid, and each miner reports its own worker's hashrate from `getuserworkers` (H/s). Bitcoin Cash uses the pool's `bitcoincashnode` endpoint.
+- **Unpaid Balance** shows each coin the fleet mines (e.g. WJK and BCH) instead of a fixed BTC label, and counts a pool account shared by several miners once.
+- Pool APIs are polled at most once a minute as intended (the throttle timestamp was never set).
+
 ## [0.7.5] - 2026-10-22
 
 ### Added

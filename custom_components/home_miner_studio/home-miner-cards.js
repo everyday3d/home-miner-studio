@@ -2636,6 +2636,11 @@ class HomeMinerFleetCard extends HTMLElement {
                 <label class="modal-label">Pool Wallet / Worker</label>
                 <input type="text" id="modal-wallet" class="modal-input" placeholder="e.g. bc1q...worker1" autocomplete="off" />
               </div>
+              <div class="modal-field full">
+                <label class="modal-label">Pool API Key (optional)</label>
+                <input type="password" id="modal-token" class="modal-input" placeholder="Leave blank to keep the current key" autocomplete="new-password" />
+                <span style="font-size: 11px; color: #64748b; line-height: 1.4;">Needed for pool balances. Mining-Dutch: log in, open Edit Account and copy the API key.</span>
+              </div>
             </div>
             <div class="modal-footer">
               <button class="glass-btn" id="modal-cancel-btn">Cancel</button>
@@ -2946,6 +2951,9 @@ class HomeMinerFleetCard extends HTMLElement {
         const coin = this.shadowRoot.querySelector('#modal-coin').value.trim() || 'BTC';
         const poolProvider = this.shadowRoot.querySelector('#modal-pool').value;
         const poolWallet = this.shadowRoot.querySelector('#modal-wallet').value.trim();
+        // Only sent when typed, so saving other fields never clears a stored key.
+        const poolToken = this.shadowRoot.querySelector('#modal-token').value.trim();
+        const tokenField = poolToken ? { pool_token: poolToken } : {};
 
         if (!host) {
           alert('Host / IP address is required.');
@@ -2974,7 +2982,8 @@ class HomeMinerFleetCard extends HTMLElement {
               port,
               coin,
               pool_provider: poolProvider,
-              pool_wallet: poolWallet
+              pool_wallet: poolWallet,
+              ...tokenField
             });
           } else {
             const targetHost = this._activeHost || host;
@@ -2999,7 +3008,8 @@ class HomeMinerFleetCard extends HTMLElement {
               name: name || undefined,
               coin: coin.toUpperCase(),
               pool_provider: poolProvider,
-              pool_wallet: poolWallet
+              pool_wallet: poolWallet,
+              ...tokenField
             });
           }
           this._closeModals();
@@ -3636,6 +3646,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-type').value = presetType || 'bitaxe';
     this.shadowRoot.querySelector('#modal-pool').value = 'helios';
     this.shadowRoot.querySelector('#modal-wallet').value = '';
+    this.shadowRoot.querySelector('#modal-token').value = '';
     if (minerModal) minerModal.style.display = 'flex';
   }
 
@@ -3656,6 +3667,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-pool').value = activePool;
     this.shadowRoot.querySelector('#modal-wallet').value = activeWallet;
     this.shadowRoot.querySelector('#modal-coin').value = activeCoin;
+    this.shadowRoot.querySelector('#modal-token').value = '';
     if (minerModal) minerModal.style.display = 'flex';
   }
 
@@ -8148,6 +8160,7 @@ class HomeMinerFleetCard extends HTMLElement {
     // Aggregate Mining Pool Telemetry across Fleet
     let totalPoolWorkers = 0;
     let totalUnpaidBtc = 0;
+    const unpaidByCoin = {};
     let total24hRevBtc = 0;
     let poolHashGhs = 0;
     let maxBestDiff = 0;
@@ -8178,6 +8191,16 @@ class HomeMinerFleetCard extends HTMLElement {
       if (eid.startsWith('sensor.') && eid.endsWith('_pool_unpaid_balance')) {
         const v = parseFloat(states[eid]?.state || 0);
         if (!isNaN(v) && v > 0) totalUnpaidBtc += v;
+        // The balance is in the coin the miner mines; its coin price sensor (same prefix) says which.
+        const prefix = eid.slice('sensor.'.length, -'_pool_unpaid_balance'.length);
+        const coin = (states[`sensor.${prefix}_coin_price`]?.attributes?.coin ||
+                      states[`sensor.${prefix}_bitcoin_price`]?.attributes?.coin || 'BTC').toUpperCase();
+        // Pools like Mining-Dutch report the account-wide balance on every worker, so count each
+        // pool account (provider + name before the ".worker" suffix) once per coin.
+        const poolAttrs = states[`sensor.${prefix}_pool_connection_status`]?.attributes || {};
+        const account = `${poolAttrs.pool_provider || ''}|${String(poolAttrs.pool_wallet || prefix).split('.')[0].toLowerCase()}`;
+        unpaidByCoin[coin] = unpaidByCoin[coin] || {};
+        unpaidByCoin[coin][account] = Math.max(unpaidByCoin[coin][account] || 0, !isNaN(v) && v > 0 ? v : 0);
       }
       if (eid.startsWith('sensor.') && eid.endsWith('_pool_24h_revenue')) {
         const v = parseFloat(states[eid]?.state || 0);
@@ -9295,10 +9318,13 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
           <div class="tile-glass-box">
             <span class="tile-label">Unpaid Balance</span>
+            ${(Object.keys(unpaidByCoin).length
+                ? Object.entries(unpaidByCoin).map(([coin, accounts]) => [coin, Object.values(accounts).reduce((a, b) => a + b, 0)])
+                : [['BTC', totalUnpaidBtc]]).map(([coin, bal]) => `
             <div class="tile-val-row">
-              <span class="tile-num" style="color: #fbbf24; font-size: 15px;">${totalUnpaidBtc.toFixed(8)}</span>
-              <span class="tile-unit">BTC</span>
-            </div>
+              <span class="tile-num" style="color: #fbbf24; font-size: 15px;">${bal.toFixed(8)}</span>
+              <span class="tile-unit">${coin}</span>
+            </div>`).join('')}
           </div>
           <div class="tile-glass-box">
             <span class="tile-label">Peak Share Diff</span>
