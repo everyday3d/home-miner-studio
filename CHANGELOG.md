@@ -7,16 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-10-22
+
 ### Added
 - **Native Canaan Avalon (Nano 3S) telemetry & controls** — no separate Avalon integration needed:
   - CGMiner RPC miners now report **Best Difficulty** (from `Best Share`), **Found Blocks**, **Pool user**, **Fan Duty (%)** and a diagnostic **Firmware Version** sensor (with CGMiner version and hardware model attributes; `version` is queried once and cached).
   - Avalon miners get an **LED** light entity (on/off, brightness, RGB color, scaled like the firmware), a **Work Mode** select (Low / Mid / High), a **Fan Speed** number (15–100 %) and a **Fan Auto** button.
   - **Per-work-mode fan speeds**: configuration numbers **Fan for Low / Mid / High Mode** (0–100 %, 0 = leave the fan alone). Whenever the work mode changes — from Home Assistant, the Avalon app or the miner itself — the fan is set to that mode's level, since higher modes need more airflow. Settings are stored in the config entry and survive restarts and the Configure dialog.
   - Dashboard cards read best share, blocks found, pool URL/user and CGMiner version from Home Miner Studio entities, keeping the `avalon_nano_3s_*` entities only as a fallback.
-
-### Fixed
-- **Reboot Miner** on Avalon miners now reboots the hardware (`ascset 0,reboot,0`); plain CGMiner miners still use `restart`.
-- **Restart Mining Process** on CGMiner RPC miners sent a harmless `stats` query and did nothing; it now sends `restart`.
 - **Luxury Sports Car Instrument Cluster (GT Chronometer Binnacle) & Tactile Extruded Glassmorphism** ([#45](https://github.com/everyday3d/home-miner-studio/issues/45)):
   - **Luxury Automotive GT Chronometer Mode (`data-glass="automotive"`)**: Added a skeuomorphic luxury sports car instrument cluster mode (Aston Martin / Porsche GT Chronometer Binnacle) with a deep carbon-fiber weave and brushed dark titanium background canvas, switchable in real time (`GT Chrono` -> `Dark Glass` -> `Light Glass`) via the `#glass-mode-btn` command bar control.
   - **Extruded Metallic Bezels & Curved Glass Lens Reflections**: Implemented multi-layer 3D extruded metallic rims (`box-shadow: -1px -1px 2px rgba(255,255,255,0.4), 4px 4px 10px rgba(0,0,0,0.8), inset 1px 1px 1px rgba(255,255,255,0.2)`), recessed dial faces (`inset 3px 3px 6px rgba(0,0,0,0.9)`), and diagonal curved glass lens specular reflections (`linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 50%)`).
@@ -37,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Slim Collapsed-by-Default Stratum Status Bar**: Defaulted the Stratum Pipeline card (`#pipeline-card`) to a single-line status strip showing active coin, pool host, job ID, and block height, expandable on demand via the `Inspect` button.
   - **Monochrome Inline SVG Icon System (`svgIcon`)**: Replaced Unicode OS emojis across command bar buttons, segmented workspace tabs, modals, tuning presets, and status pills with crisp, scalable monochrome inline SVG vector icons.
   - **Mining Engineering Milestones & Workstation Surface Themes**: Reframed RPG titles, trophy badges, and prestige themes into authentic mining engineering tiers (`Home Lab Operator`, `ASIC Bench Technician`, `Stratum Pool Operator`, `Principal Protocol Architect (MAX)`), verified hardware benchmarks, and matte industrial workstation surface themes.
+
+### Fixed
+- **Reboot Miner** on Avalon miners now reboots the hardware (`ascset 0,reboot,0`); plain CGMiner miners still use `restart`.
+- **Restart Mining Process** on CGMiner RPC miners sent a harmless `stats` query and did nothing; it now sends `restart`.
+- Avalon LED, Work Mode and Fan Speed changes now show immediately instead of after the next (debounced) refresh.
 
 ## [0.7.3] - 2026-10-15
 
