@@ -1727,6 +1727,7 @@ class HomeMinerFleetCard extends HTMLElement {
           lower.includes('power_cost') ||
           lower.includes('energy_cost') ||
           lower.includes('power_profile') ||
+          lower.includes('work_mode') ||
           lower.includes('power_draw') ||
           lower.includes('chip_temperature') ||
           lower.includes('pool_') ||
@@ -1867,6 +1868,7 @@ class HomeMinerFleetCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._controlsHost) this._refreshControlsModal();
     if (this._isUserInputActive()) {
       return; // Freeze rendering so typing focus, open dropdowns, and dialogs are NEVER disturbed
     }
@@ -2781,6 +2783,23 @@ class HomeMinerFleetCard extends HTMLElement {
         </div>
 
         <!-- CHRONICLE READING MODAL -->
+        <!-- MINER CONTROLS MODAL (tuning, work mode, fan, LED) -->
+        <div id="controls-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 560px; width: 95%;">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="color: #38bdf8; display: flex;">${svgIcon('sliders', 20)}</span>
+                <div>
+                  <span class="modal-title" id="controls-modal-title" style="color: #f8fafc;">Miner Controls</span>
+                  <div class="mono" style="font-size: 11px; color: #94a3b8;" id="controls-modal-sub"></div>
+                </div>
+              </div>
+              <button class="glass-btn" id="controls-modal-close" style="padding: 4px 8px;">✕</button>
+            </div>
+            <div id="controls-modal-body"></div>
+          </div>
+        </div>
+
         <div id="chronicle-modal" class="modal-backdrop" style="display: none;">
           <div class="modal-box" style="max-width: 640px; width: 95%; border-color: #26334d;">
             <div class="modal-header" style="border-bottom: 1px solid #1f2737; padding-bottom: 14px;">
@@ -3014,6 +3033,18 @@ class HomeMinerFleetCard extends HTMLElement {
       });
     }
 
+    // --- MINER CONTROLS MODAL EVENT LISTENERS ---
+    const controlsModal = this.shadowRoot.querySelector('#controls-modal');
+    if (controlsModal) {
+      ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+        controlsModal.addEventListener(eventType, stopPropagation);
+      });
+      this._bindModalBackdrop(controlsModal);
+      const controlsCloseBtn = this.shadowRoot.querySelector('#controls-modal-close');
+      if (controlsCloseBtn) controlsCloseBtn.addEventListener('click', () => this._closeModals());
+      this._bindControlsModal(this.shadowRoot.querySelector('#controls-modal-body'));
+    }
+
     // --- STRATUM MODAL EVENT LISTENERS ---
     const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
     if (stratumModal) {
@@ -3121,11 +3152,182 @@ class HomeMinerFleetCard extends HTMLElement {
     const discModal = this.shadowRoot.querySelector('#discovery-modal');
     const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
     const cModal = this.shadowRoot.querySelector('#chronicle-modal');
+    const controlsModal = this.shadowRoot.querySelector('#controls-modal');
+    if (controlsModal) controlsModal.style.display = 'none';
+    this._controlsHost = null;
     if (cModal) cModal.style.display = 'none';
     if (minerModal) minerModal.style.display = 'none';
     if (deleteModal) deleteModal.style.display = 'none';
     if (discModal) discModal.style.display = 'none';
     if (stratumModal) stratumModal.style.display = 'none';
+  }
+
+  _openControlsModal(host) {
+    this._ensureDom();
+    const miner = (this._controlMiners || {})[host];
+    const modal = this.shadowRoot.querySelector('#controls-modal');
+    if (!miner || !modal) return;
+    this._modalOpen = true;
+    this._controlsHost = host;
+    this._controlsSig = null;
+    this.shadowRoot.querySelector('#controls-modal-title').textContent = `${miner.name} Controls`;
+    this.shadowRoot.querySelector('#controls-modal-sub').textContent = `${miner.host} • ${miner.os}`;
+    this._refreshControlsModal();
+    modal.style.display = 'flex';
+  }
+
+  // Re-render the controls from live entity states, unless a slider is being dragged or a field is being typed in.
+  _refreshControlsModal() {
+    const body = this.shadowRoot?.querySelector('#controls-modal-body');
+    const miner = (this._controlMiners || {})[this._controlsHost];
+    if (!body || !miner || !this._hass || this._ctlDragging) return;
+    const active = this.shadowRoot.activeElement;
+    if (active && active.tagName === 'INPUT' && active.type === 'number' && body.contains(active)) return;
+    const html = this._renderControlsBody(miner);
+    if (html === this._controlsSig) return;
+    this._controlsSig = html;
+    body.innerHTML = html;
+  }
+
+  _renderControlsBody(miner) {
+    const states = this._hass.states;
+    const num = (eid, fallback) => {
+      const v = parseFloat(states[eid]?.state);
+      return isNaN(v) ? fallback : v;
+    };
+    const attr = (eid, key, fallback) => states[eid]?.attributes?.[key] ?? fallback;
+    const slider = (label, eid, unit, color, fallbackMin, fallbackMax, fallbackStep, fallbackVal) => {
+      const val = num(eid, fallbackVal);
+      return `
+        <div class="slider-unit-box">
+          <div class="slider-meta-head">
+            <span>${label}</span>
+            <span class="mono ctl-disp" style="color: ${color}; font-weight: 700;">${val} ${unit}</span>
+          </div>
+          <input type="range" class="ctl-range ${color === '#00e5ff' ? 'cyan-thumb' : ''}" data-entity="${eid}" data-unit="${unit}"
+                 min="${attr(eid, 'min', fallbackMin)}" max="${attr(eid, 'max', fallbackMax)}" step="${attr(eid, 'step', fallbackStep)}" value="${val}">
+        </div>`;
+    };
+    const sections = [];
+
+    if (miner.type === 'bitaxe' || miner.type === 'nerdqaxe') {
+      const profile = states[miner.profileEntity]?.state || miner.profile;
+      const options = attr(miner.profileEntity, 'options', ['Eco', 'Standard', 'Turbo', 'Custom']);
+      const icons = { Eco: 'leaf', Standard: 'zap', Turbo: 'flame', Custom: 'sliders' };
+      sections.push(`
+        <div class="tactile-bay ctl-bay">
+          <div class="bay-header-row">
+            <span class="bay-title">${svgIcon('sliders', 13)} ${miner.type === 'nerdqaxe' ? 'NERDQAXE' : 'AXEOS'} CLOCK & VOLTAGE TUNING</span>
+            <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt ? miner.inVolt + 'V Input' : ''}${miner.inAmps ? ' | ' + miner.inAmps + 'A Draw' : ''}</span>
+          </div>
+          ${states[miner.profileEntity] ? `
+            <div class="profile-pill-rack">
+              ${options.map(o => `<button class="pill-btn ${profile === o ? 'active' : ''}" data-ctl-select="${miner.profileEntity}" data-option="${o}">${svgIcon(icons[o] || 'sliders', 11)} ${o}</button>`).join('')}
+            </div>` : ''}
+          <div class="slider-dual-grid">
+            ${states[miner.freqEntity] ? slider('Core Frequency', miner.freqEntity, 'MHz', '#00e5ff', 200, 750, 25, miner.freq) : ''}
+            ${states[miner.voltEntity] ? slider('Core Voltage', miner.voltEntity, 'mV', '#fbbf24', 900, 1350, 25, miner.volt) : ''}
+          </div>
+        </div>`);
+    }
+
+    const av = miner.avalonControls;
+    if (av) {
+      const mode = states[av.workModeEntity]?.state;
+      const modeIcons = { Low: 'leaf', Mid: 'zap', High: 'flame' };
+      const ledOn = states[av.ledEntity]?.state === 'on';
+      sections.push(`
+        <div class="tactile-bay ctl-bay">
+          <div class="bay-header-row">
+            <span class="bay-title">${svgIcon('zap', 13)} WORK MODE</span>
+            <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.ths.toFixed(2)} TH/s • ${miner.watts.toFixed(0)} W</span>
+          </div>
+          <div class="profile-pill-rack" style="margin-bottom: 0;">
+            ${attr(av.workModeEntity, 'options', ['Low', 'Mid', 'High']).map(o => `<button class="pill-btn ${mode === o ? 'active' : ''}" data-ctl-select="${av.workModeEntity}" data-option="${o}">${svgIcon(modeIcons[o] || 'zap', 11)} ${o}</button>`).join('')}
+          </div>
+        </div>`);
+      if (av.fanEntity) {
+        sections.push(`
+          <div class="tactile-bay ctl-bay">
+            <div class="bay-header-row">
+              <span class="bay-title">${svgIcon('fan', 13)} FAN</span>
+              <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.fan ? miner.fan.toLocaleString() + ' RPM' : ''}</span>
+            </div>
+            <div class="slider-dual-grid" style="align-items: end;">
+              ${slider('Fan Speed', av.fanEntity, '%', '#00e5ff', 15, 100, 1, 50)}
+              ${av.fanAutoEntity ? `<div><button class="pill-btn" data-ctl-press="${av.fanAutoEntity}">${svgIcon('refresh', 11)} Return fan to Auto</button></div>` : ''}
+            </div>
+            ${av.modeFanEntities.length ? `
+              <div class="slider-meta-head" style="margin-top: 14px;"><span>Fan speed for each work mode</span></div>
+              <div class="ctl-mode-fans">
+                ${av.modeFanEntities.map(f => `
+                  <label class="ctl-mode-fan">
+                    <span>${f.mode}</span>
+                    <span class="ctl-num-wrap"><input type="number" class="modal-input" min="0" max="100" step="1" data-ctl-number="${f.entity}" value="${num(f.entity, 0)}"><span>%</span></span>
+                  </label>`).join('')}
+              </div>
+              <div class="ctl-hint">Set automatically whenever the miner switches to that mode. 0 leaves the fan alone; 1-14 become 15 (the firmware minimum).</div>
+            ` : ''}
+          </div>`);
+      }
+      if (av.ledEntity) {
+        sections.push(`
+          <div class="tactile-bay ctl-bay">
+            <div class="bay-header-row" style="margin-bottom: 0;">
+              <span class="bay-title">${svgIcon('target', 13)} LED LIGHT</span>
+              <button class="pill-btn ${ledOn ? 'active' : ''}" data-ctl-toggle="${av.ledEntity}">${ledOn ? 'On' : 'Off'}</button>
+            </div>
+          </div>`);
+      }
+    }
+
+    return sections.join('') || `<div class="ctl-hint">This miner has no adjustable settings.</div>`;
+  }
+
+  _bindControlsModal(body) {
+    if (!body) return;
+    const call = async (domain, service, data) => {
+      if (!this._hass) return;
+      try {
+        await this._hass.callService(domain, service, data);
+      } catch (err) {
+        console.error(`Miner control ${domain}.${service} failed:`, err);
+      }
+    };
+    body.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      if (btn.dataset.ctlSelect) {
+        btn.parentElement.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        call('select', 'select_option', { entity_id: btn.dataset.ctlSelect, option: btn.dataset.option });
+      } else if (btn.dataset.ctlPress) {
+        call('button', 'press', { entity_id: btn.dataset.ctlPress });
+      } else if (btn.dataset.ctlToggle) {
+        const on = !btn.classList.contains('active');
+        btn.classList.toggle('active', on);
+        btn.textContent = on ? 'On' : 'Off';
+        call('light', on ? 'turn_on' : 'turn_off', { entity_id: btn.dataset.ctlToggle });
+      }
+    });
+    body.addEventListener('input', (e) => {
+      const el = e.target;
+      if (!el.classList.contains('ctl-range')) return;
+      this._ctlDragging = true;
+      const disp = el.parentElement.querySelector('.ctl-disp');
+      if (disp) disp.textContent = `${el.value} ${el.dataset.unit}`;
+    });
+    body.addEventListener('change', (e) => {
+      const el = e.target;
+      if (el.classList.contains('ctl-range')) {
+        this._ctlDragging = false;
+        call('number', 'set_value', { entity_id: el.dataset.entity, value: parseFloat(el.value) });
+      } else if (el.dataset.ctlNumber) {
+        const v = Math.max(0, Math.min(100, Math.round(parseFloat(el.value) || 0)));
+        el.value = v;
+        call('number', 'set_value', { entity_id: el.dataset.ctlNumber, value: v });
+      }
+    });
   }
 
   _openChronicleModal(chapter) {
@@ -4559,6 +4761,31 @@ class HomeMinerFleetCard extends HTMLElement {
 
         input[type="range"].cyan-thumb::-webkit-slider-thumb {
           border-color: #38bdf8;
+        }
+
+        /* Miner Controls popup */
+        .ctl-bay + .ctl-bay { margin-top: 10px; }
+        .ctl-mode-fans {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin-top: 6px;
+        }
+        .ctl-mode-fan {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', monospace;
+          color: #94a3b8;
+        }
+        .ctl-num-wrap { display: flex; align-items: center; gap: 6px; }
+        .ctl-num-wrap .modal-input { width: 100%; min-width: 0; }
+        .ctl-hint {
+          margin-top: 8px;
+          font-size: 11px;
+          line-height: 1.5;
+          color: #64748b;
         }
 
         /* Stratum Strip */
@@ -7362,6 +7589,22 @@ class HomeMinerFleetCard extends HTMLElement {
 
       const avalonName = this._getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', ['sensor.192_168_1_154_hashrate_th_s', 'sensor.avalon_nano_3s_hashrate_current', 'sensor.avalon_nano_3s_hashrate_avg']);
 
+      // Home Miner Studio's Avalon controls share one entity prefix (the device name, e.g. "nano_3s");
+      // find it from the Work Mode select, which only CGMiner/Avalon miners get.
+      const workModeEntity = Object.keys(states).find(e => e.startsWith('select.') && e.endsWith('_work_mode') &&
+        (states[e].attributes?.options || []).includes('Mid'));
+      const avPrefix = workModeEntity ? workModeEntity.slice('select.'.length, -'_work_mode'.length) : null;
+      const avEntity = (eid) => (states[eid] ? eid : null);
+      const avalonControls = avPrefix ? {
+        workModeEntity,
+        fanEntity: avEntity(`number.${avPrefix}_fan_speed`),
+        fanAutoEntity: avEntity(`button.${avPrefix}_fan_auto`),
+        ledEntity: avEntity(`light.${avPrefix}_led`),
+        modeFanEntities: ['Low', 'Mid', 'High']
+          .map(mode => ({ mode, entity: avEntity(`number.${avPrefix}_fan_for_${mode.toLowerCase()}_mode`) }))
+          .filter(f => f.entity),
+      } : null;
+
       miners.push({
         id: 'avalon',
         name: avalonName,
@@ -7388,7 +7631,8 @@ class HomeMinerFleetCard extends HTMLElement {
         poolStatus,
         poolProvider: avalonPoolProvider,
         poolWallet: avalonPoolWallet,
-        rebootEntity: 'button.192_168_1_154_reboot_miner'
+        rebootEntity: 'button.192_168_1_154_reboot_miner',
+        avalonControls
       });
     }
 
@@ -7519,6 +7763,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const isSingleRigView = !!(filterType || filterHost);
 
     let displayedMiners = miners;
+    this._controlMiners = {};
     if (filterType) {
       displayedMiners = displayedMiners.filter(m => (m.type || '').toLowerCase().includes(filterType) || (m.name || '').toLowerCase().includes(filterType));
     }
@@ -9187,6 +9432,9 @@ class HomeMinerFleetCard extends HTMLElement {
         ` : displayedMiners.map(miner => {
           const isNerdqaxe = miner.type === 'nerdqaxe';
           const isBitaxe = miner.type === 'bitaxe' || isNerdqaxe;
+          // Tuning, work mode, fan and LED live in the Controls popup to keep the rig card compact.
+          const hasControls = (isBitaxe && (states[miner.freqEntity] || states[miner.profileEntity])) || !!miner.avalonControls;
+          if (hasControls) this._controlMiners[miner.host] = miner;
           const chipTemp = miner.temp;
           const fanRpm = miner.fan;
           const hashrateThs = miner.ths.toFixed(2);
@@ -9256,6 +9504,7 @@ class HomeMinerFleetCard extends HTMLElement {
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                   <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}" data-coin="${miner.coin || 'BTC'}">${svgIcon('settings', 12)} Edit</button>
                   <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">${svgIcon('trash', 12)} Delete</button>
+                  ${hasControls ? `<button class="glass-btn primary open-controls-btn" data-host="${miner.host}">${svgIcon('sliders', 12)} Controls</button>` : ''}
                   ${isBitaxe ? `
                     <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart</button>
                     <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot</button>
@@ -9382,49 +9631,6 @@ class HomeMinerFleetCard extends HTMLElement {
                 </div>
               </div>
 
-              <!-- Controls / Strips -->
-              ${isBitaxe ? `
-                <div class="tactile-bay">
-                  <div class="bay-header-row">
-                    <span class="bay-title">${svgIcon('sliders', 13)} ${isNerdqaxe ? 'NERDQAXE' : 'AXEOS'} CLOCK & VOLTAGE TUNING</span>
-                    <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.inVolt ? miner.inVolt + 'V Input | ' : ''}${miner.inAmps ? miner.inAmps + 'A Draw' : (isNerdqaxe ? 'Quad-ASIC Matrix' : 'Single ASIC')}</span>
-                  </div>
-
-                  <div class="profile-pill-rack">
-                    ${['Eco', 'Standard', 'Turbo', 'Custom'].map(prof => `
-                      <button class="pill-btn ${miner.profile === prof ? 'active' : ''}" 
-                              data-profile="${prof}"
-                              data-entity="${miner.profileEntity}">
-                        ${prof === 'Eco' ? `${svgIcon('leaf', 11)} Eco` : prof === 'Standard' ? `${svgIcon('zap', 11)} Standard` : prof === 'Turbo' ? `${svgIcon('flame', 11)} Turbo` : `${svgIcon('sliders', 11)} Custom`}
-                      </button>
-                    `).join('')}
-                  </div>
-
-                  <div class="slider-dual-grid">
-                    <div class="slider-unit-box">
-                      <div class="slider-meta-head">
-                        <span>Core Frequency</span>
-                        <span class="mono" style="color: #00e5ff; font-weight: 700;" id="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.freq} MHz</span>
-                      </div>
-                      <input type="range" min="450" max="800" step="5" value="${miner.freq}" class="cyan-thumb"
-                             data-action="freq-slider"
-                             data-entity="${miner.freqEntity}"
-                             data-disp="freq-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">
-                    </div>
-
-                    <div class="slider-unit-box">
-                      <div class="slider-meta-head">
-                        <span>Core Voltage</span>
-                        <span class="mono" style="color: #fbbf24; font-weight: 700;" id="volt-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">${miner.volt} mV</span>
-                      </div>
-                      <input type="range" min="1000" max="1300" step="10" value="${miner.volt}"
-                             data-action="volt-slider"
-                             data-entity="${miner.voltEntity}"
-                             data-disp="volt-disp-${miner.host ? miner.host.replace(/[^a-zA-Z0-9]/g, '_') : (isNerdqaxe ? 'nerdqaxe' : 'bitaxe')}">
-                    </div>
-                  </div>
-                </div>
-              ` : ''}
 
               <!-- Active Pool Integration Header -->
               <div class="active-pool-badge-strip" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 5px; margin-top: 12px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -9896,56 +10102,11 @@ class HomeMinerFleetCard extends HTMLElement {
       purgeBtn.addEventListener('click', triggerHardCachePurge);
     }
 
-    // Power Profile Buttons
-    const profileBtns = this.shadowRoot.querySelectorAll('.pill-btn[data-profile]');
-    profileBtns.forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const profile = btn.getAttribute('data-profile');
-        const entityId = btn.getAttribute('data-entity');
-        if (entityId && this._hass) {
-          profileBtns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          try {
-            await this._hass.callService('select', 'select_option', {
-              entity_id: entityId,
-              option: profile
-            });
-          } catch (err) {
-            console.error('Failed to change power profile:', err);
-          }
-        }
-      });
+    // Miner Controls popup (tuning, work mode, fan, LED)
+    this.shadowRoot.querySelectorAll('.open-controls-btn').forEach(btn => {
+      btn.addEventListener('click', () => this._openControlsModal(btn.getAttribute('data-host')));
     });
 
-    // Sliders
-    const sliders = this.shadowRoot.querySelectorAll('input[type="range"]');
-    sliders.forEach(slider => {
-      const dispId = slider.getAttribute('data-disp');
-      const dispEl = this.shadowRoot.getElementById(dispId);
-      const action = slider.getAttribute('data-action');
-      const entityId = slider.getAttribute('data-entity');
-
-      slider.addEventListener('input', () => {
-        if (dispEl) {
-          dispEl.textContent = `${slider.value} ${action === 'freq-slider' ? 'MHz' : 'mV'}`;
-        }
-      });
-
-      slider.addEventListener('change', async () => {
-        if (entityId && this._hass) {
-          try {
-            await this._hass.callService('number', 'set_value', {
-              entity_id: entityId,
-              value: parseFloat(slider.value)
-            });
-          } catch (err) {
-            console.error(`Failed to set slider ${action}:`, err);
-          }
-        }
-      });
-    });
-
-    
     // Timeframe selector buttons (Day, Week, Month, Year)
     const tfBtns = this.shadowRoot.querySelectorAll('.timeframe-btn[data-tf]');
     tfBtns.forEach(btn => {

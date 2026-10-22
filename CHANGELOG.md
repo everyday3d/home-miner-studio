@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Miner Controls popup** — each rig card has a **Controls** button that opens a popup instead of showing controls inline:
+  - **Bitaxe / NerdQaxe:** power profile, core frequency and core voltage (slider ranges now come from the number entities).
+  - **Canaan Avalon:** Low / Mid / High work mode, fan speed slider with *Return fan to Auto*, the per-mode fan settings, and the LED on/off.
+  - The popup follows live state while open, without interrupting a slider drag or a value being typed.
+
+### Changed
+- The inline AxeOS clock & voltage tuning bay was removed from the rig card to keep it compact; it now lives in the Controls popup.
+
 ## [0.7.4] - 2026-10-22
 
 ### Added
