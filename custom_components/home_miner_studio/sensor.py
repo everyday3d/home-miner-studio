@@ -12,6 +12,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfFrequency,
@@ -24,8 +26,31 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, POOL_NAMES, POOL_NONE
+from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, POOL_NAMES, POOL_NONE, TYPE_CGMINER_RPC
 from .coordinator import MinerDataUpdateCoordinator
+
+# Extra telemetry read from the CGMiner API (summary / stats / version); created for CGMiner RPC miners only.
+CGMINER_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="found_blocks",
+        name="Found Blocks",
+        icon="mdi:cube-scan",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    SensorEntityDescription(
+        key="fan_percent",
+        name="Fan Duty",
+        icon="mdi:fan",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="firmware_version",
+        name="Firmware Version",
+        icon="mdi:chip",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
 
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -241,9 +266,12 @@ async def async_setup_entry(
     """Set up Home Miner Studio sensor platform."""
     coordinator: MinerDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    descriptions = SENSOR_TYPES
+    if coordinator.miner_type == TYPE_CGMINER_RPC:
+        descriptions = SENSOR_TYPES + CGMINER_SENSOR_TYPES
     entities: list[SensorEntity] = [
         HomeMinerSensor(coordinator, entry, description)
-        for description in SENSOR_TYPES
+        for description in descriptions
     ]
 
     async_add_entities(entities)
@@ -309,5 +337,11 @@ class HomeMinerSensor(CoordinatorEntity[MinerDataUpdateCoordinator], SensorEntit
                 "history_30d": cdata.get("history_30d", []),
                 "history_1y": cdata.get("history_1y", []),
                 "market_stats": cdata.get("market_stats", {}),
+            }
+        if self.entity_description.key == "firmware_version":
+            cdata = self.coordinator.data or {}
+            return {
+                "cgminer_version": cdata.get("cgminer_version"),
+                "hardware_model": cdata.get("hardware_model"),
             }
         return None

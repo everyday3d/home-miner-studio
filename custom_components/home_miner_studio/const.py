@@ -1,7 +1,7 @@
 """Constants for the Home Miner Studio integration."""
 
 DOMAIN = "home_miner_studio"
-PLATFORMS = ["sensor", "binary_sensor", "switch", "button", "number", "select"]
+PLATFORMS = ["sensor", "binary_sensor", "switch", "button", "number", "select", "light"]
 
 # Configuration keys
 CONF_MINER_TYPE = "miner_type"
@@ -92,6 +92,12 @@ BITAXE_PROFILE_CONFIGS = {
     PROFILE_STANDARD: {"frequency": 500, "core_voltage": 1150},
     PROFILE_TURBO: {"frequency": 550, "core_voltage": 1250},
 }
+
+# Canaan Avalon (Nano 3S and similar) work modes, set via `ascset 0,workmode,set,<level>`
+AVALON_WORK_MODES = {"Low": 0, "Mid": 1, "High": 2}
+# Per-work-mode fan duty (%) applied whenever the work mode changes; 0 = leave the fan alone.
+# Stored in entry.data (the options flow merges into data but resets entry.options).
+AVALON_MODE_FAN_KEYS = {0: "avalon_fan_low", 1: "avalon_fan_mid", 2: "avalon_fan_high"}
 
 # Default Ports
 DEFAULT_PORT_BITAXE = 80

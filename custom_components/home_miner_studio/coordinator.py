@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .market import async_get_coin_market_data
 from .const import (
+    AVALON_MODE_FAN_KEYS,
     BITAXE_PROFILE_CONFIGS,
     CONF_COIN,
     CONF_ELECTRICITY_RATE_SENSOR,
@@ -91,6 +92,12 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._total_energy_kwh = 0.0
         self._last_energy_calc = time.time()
 
+        # CGMiner `version` reply (firmware doesn't change while running, so fetched once)
+        self._cgminer_version: dict[str, Any] | None = None
+
+        # Last Avalon work mode seen, to apply the per-mode fan setting when it changes
+        self._last_work_mode: int | None = None
+
         scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         super().__init__(
             hass,
@@ -107,6 +114,12 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 miner_data = await self._fetch_bitaxe_data()
             elif self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):
                 miner_data = await self._fetch_cgminer_data()
+                # Work mode changed outside Home Assistant (Avalon app, button on the miner): apply its fan setting.
+                work_mode = miner_data.get("work_mode")
+                if work_mode is not None:
+                    if self._last_work_mode is not None and work_mode != self._last_work_mode:
+                        await self.async_apply_mode_fan(work_mode, refresh=False)
+                    self._last_work_mode = work_mode
             elif self.miner_type == TYPE_NERDMINER:
                 miner_data = await self._fetch_nerdminer_data()
             elif self.miner_type == TYPE_HIVEOS:
@@ -275,6 +288,10 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         chain_acn: dict[str, int] = {}
         power_w: float = 0.0
         frequency_mhz: float | None = None
+        # Canaan Avalon extras (only present in the Avalon "MM ID" stats string)
+        led_state: dict[str, int] | None = None
+        work_mode: int | None = None
+        fan_percent: int | None = None
 
         stats_list = stats_raw.get("STATS", [])
         for block in stats_list:
@@ -324,6 +341,25 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                             power_w = float(mm_dict["MPO"])
                         except ValueError:
                             pass
+                    if "LEDUser" in mm_dict:
+                        # Effect-Brightness-ColorTemp-R-G-B, e.g. "1-30-50-77-0-0"
+                        parts = [p for p in mm_dict["LEDUser"].split("-") if p.strip()]
+                        if len(parts) >= 6:
+                            try:
+                                effect, bright, temp, r, g, b = (int(p) for p in parts[:6])
+                                led_state = {"effect": effect, "brightness": bright, "color_temp": temp, "r": r, "g": g, "b": b}
+                            except ValueError:
+                                pass
+                    if "WORKMODE" in mm_dict:
+                        try:
+                            work_mode = int(mm_dict["WORKMODE"])
+                        except ValueError:
+                            pass
+                    if "FanR" in mm_dict:
+                        try:
+                            fan_percent = int(mm_dict["FanR"].rstrip("%"))
+                        except ValueError:
+                            pass
 
         hashrate_ths = ghs_5s / 1000.0
 
@@ -341,6 +377,17 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         active_pool = pools[0] if pools else {}
         pool_status = active_pool.get("Status", "Unknown")
         pool_url = active_pool.get("URL", "")
+        pool_user = active_pool.get("User", "")
+
+        best_share = summary.get("Best Share")
+        found_blocks = summary.get("Found Blocks")
+
+        if self._cgminer_version is None:
+            version_raw = await self._query_cgminer_socket("version")
+            version_list = version_raw.get("VERSION", [])
+            if version_list:
+                self._cgminer_version = version_list[0]
+        version = self._cgminer_version or {}
 
         return {
             "online": True,
@@ -365,6 +412,15 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "chain_acn": chain_acn,
             "pool_status": pool_status,
             "pool_url": pool_url,
+            "pool_user": pool_user,
+            "best_difficulty": int(best_share) if isinstance(best_share, (int, float)) else None,
+            "found_blocks": int(found_blocks) if isinstance(found_blocks, (int, float)) else None,
+            "firmware_version": version.get("LVERSION") or version.get("CGVERSION") or version.get("CGMiner"),
+            "cgminer_version": version.get("CGMiner"),
+            "hardware_model": version.get("PROD") or version.get("MODEL"),
+            "led_state": led_state,
+            "work_mode": work_mode,
+            "fan_percent": fan_percent,
             "raw": {"summary": summary_raw, "stats": stats_raw, "pools": pools_raw},
         }
 
@@ -683,6 +739,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except Exception as err:
                 _LOGGER.error("Bitaxe/NerdQaxe reboot failed: %s", err)
                 return False
+        elif self.is_avalon:
+            # cgminer `restart` only restarts the mining process; Avalon firmware reboots via ascset.
+            return await self.async_cgminer_ascset("0,reboot,0", refresh=False)
         else:
             res = await self._query_cgminer_socket("restart")
             return bool(res)
@@ -698,7 +757,57 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except Exception as err:
                 _LOGGER.error("Bitaxe/NerdQaxe process restart failed: %s", err)
                 return False
+        if self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):
+            return bool(await self._query_cgminer_socket("restart"))
         return False
+
+    @property
+    def is_avalon(self) -> bool:
+        """True for Canaan Avalon miners (their stats expose work mode / LED controls)."""
+        data = self.data or {}
+        return self.miner_type == TYPE_CGMINER_RPC and (data.get("work_mode") is not None or data.get("led_state") is not None)
+
+    async def async_cgminer_ascset(self, parameter: str, refresh: bool = True) -> bool:
+        """Send a CGMiner `ascset` command (Avalon settings) and report whether it was accepted."""
+        res = await self._query_cgminer_socket("ascset", parameter)
+        status = (res.get("STATUS") or [{}])[0]
+        ok = status.get("STATUS") in ("S", "I")
+        if not ok:
+            _LOGGER.warning("ascset %s on %s not accepted: %s", parameter, self.host, status.get("Msg", res))
+        if refresh:
+            await self.async_request_refresh()
+        return ok
+
+    async def async_set_avalon_led(self, effect: int, brightness: int, red: int, green: int, blue: int, color_temp: int = 50) -> bool:
+        """Set the Avalon LED (effect 0 = off, 1 = on); firmware accepts brightness 5-100 %."""
+        brightness = max(5, min(100, int(brightness)))
+        return await self.async_cgminer_ascset(f"0,ledset,{effect}-{brightness}-{color_temp}-{red}-{green}-{blue}")
+
+    async def async_set_avalon_work_mode(self, level: int) -> bool:
+        """Set the Avalon work mode (0 Low, 1 Mid, 2 High) and apply that mode's fan setting."""
+        ok = await self.async_cgminer_ascset(f"0,workmode,set,{int(level)}", refresh=False)
+        if ok:
+            self._last_work_mode = int(level)
+            await self.async_apply_mode_fan(int(level), refresh=False)
+        await self.async_request_refresh()
+        return ok
+
+    async def async_set_avalon_fan(self, percent: int, refresh: bool = True) -> bool:
+        """Set the Avalon fan duty in percent (15-100), or -1 for automatic."""
+        percent = -1 if percent == -1 else max(15, min(100, int(percent)))
+        return await self.async_cgminer_ascset(f"0,fan-spd,{percent}", refresh=refresh)
+
+    def mode_fan_setting(self, level: int) -> int:
+        """Configured fan duty for an Avalon work mode (0 = leave the fan alone)."""
+        key = AVALON_MODE_FAN_KEYS.get(int(level))
+        return int(self.entry.data.get(key, 0) or 0) if key else 0
+
+    async def async_apply_mode_fan(self, level: int, refresh: bool = True) -> None:
+        """Set the fan to the configured duty for this work mode, if one is configured."""
+        percent = self.mode_fan_setting(level)
+        if percent > 0:
+            _LOGGER.debug("Work mode %s on %s: setting fan to %s%%", level, self.host, percent)
+            await self.async_set_avalon_fan(percent, refresh=refresh)
 
     async def async_switch_stratum(
         self,

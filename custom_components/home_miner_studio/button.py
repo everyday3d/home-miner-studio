@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
-import aiohttp
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -13,16 +10,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    CONF_HOST,
-    CONF_MINER_TYPE,
-    CONF_NAME,
-    CONF_PORT,
-    DOMAIN,
-    TYPE_BITAXE,
-    TYPE_CGMINER_RPC,
-    TYPE_NERDQAXE,
-)
+from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN
 from .coordinator import MinerDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,6 +28,13 @@ BUTTON_TYPES: tuple[ButtonEntityDescription, ...] = (
     ),
 )
 
+# Canaan Avalon only: hand fan control back to the firmware after a fixed Fan Speed was set.
+AVALON_FAN_AUTO = ButtonEntityDescription(
+    key="fan_auto",
+    name="Fan Auto",
+    icon="mdi:fan-auto",
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -49,11 +44,13 @@ async def async_setup_entry(
     """Set up Home Miner Studio buttons."""
     coordinator: MinerDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    entities = [
+    descriptions = list(BUTTON_TYPES)
+    if (coordinator.data or {}).get("fan_percent") is not None:
+        descriptions.append(AVALON_FAN_AUTO)
+    async_add_entities(
         HomeMinerButton(coordinator, entry, description)
-        for description in BUTTON_TYPES
-    ]
-    async_add_entities(entities)
+        for description in descriptions
+    )
 
 
 class HomeMinerButton(CoordinatorEntity[MinerDataUpdateCoordinator], ButtonEntity):
@@ -84,28 +81,15 @@ class HomeMinerButton(CoordinatorEntity[MinerDataUpdateCoordinator], ButtonEntit
         )
 
     async def async_press(self) -> None:
-        """Handle button press to restart miner or process."""
-        miner_type = self._entry.data.get(CONF_MINER_TYPE)
-        host = self._entry.data.get(CONF_HOST)
-        port = self._entry.data.get(CONF_PORT, 80)
-
-        if miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
-            url = f"http://{host}:{port}/api/system/restart"
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url) as resp:
-                        _LOGGER.info("Bitaxe/NerdQaxe reboot command sent to %s (status %s)", host, resp.status)
-            except Exception as err:
-                _LOGGER.error("Failed to reboot Bitaxe/NerdQaxe at %s: %s", host, err)
-
-        elif miner_type == TYPE_CGMINER_RPC:
-            cmd = "restart" if self.entity_description.key == "reboot" else "stats"
-            try:
-                reader, writer = await asyncio.open_connection(host, port)
-                writer.write(json.dumps({"command": cmd}).encode("utf-8"))
-                await writer.drain()
-                writer.close()
-                await writer.wait_closed()
-                _LOGGER.info("CGMiner %s sent to %s:%s", cmd, host, port)
-            except Exception as err:
-                _LOGGER.error("Failed to send %s to CGMiner at %s:%s: %s", cmd, host, port, err)
+        """Handle button press: reboot, restart the mining process, or (Avalon) return the fan to auto."""
+        key = self.entity_description.key
+        if key == "reboot":
+            ok = await self.coordinator.async_reboot_miner()
+        elif key == "restart_mining":
+            ok = await self.coordinator.async_restart_mining()
+        elif key == "fan_auto":
+            ok = await self.coordinator.async_set_avalon_fan(-1)
+        else:
+            return
+        if not ok:
+            _LOGGER.error("%s failed on %s", self.entity_description.name, self._entry.data.get(CONF_HOST))

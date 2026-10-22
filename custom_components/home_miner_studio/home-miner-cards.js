@@ -7339,12 +7339,16 @@ class HomeMinerFleetCard extends HTMLElement {
                        parseInt(states['sensor.avalon_nano_3s_shares_rejected']?.state || 0);
       const hwErrors = parseInt(states['sensor.192_168_1_154_hardware_errors']?.state || 0) ||
                        parseInt(states['sensor.avalon_nano_3s_device_hw']?.state || 0);
-      const bestShare = states['sensor.avalon_nano_3s_best_share']?.state;
+      // Home Miner Studio now reads these straight from the miner; the avalon_nano_3s_* entities
+      // (separate Avalon integration) are only a fallback.
+      const validNum = (s) => s && !['unknown', 'unavailable'].includes(s.state) ? s.state : undefined;
+      const bestShare = validNum(states['sensor.192_168_1_154_best_difficulty']) ?? validNum(states['sensor.avalon_nano_3s_best_share']);
       const bestShareStr = bestShare ? (parseFloat(bestShare) / 1000000000).toFixed(2) + ' G' : '--';
-      const blocksFound = states['sensor.avalon_nano_3s_found_blocks']?.state || '--';
-      const poolUrl = states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
+      const blocksFound = validNum(states['sensor.192_168_1_154_found_blocks']) ?? states['sensor.avalon_nano_3s_found_blocks']?.state ?? '--';
+      const poolAttrs = states['sensor.192_168_1_154_pool_connection_status']?.attributes || {};
+      const poolUrl = poolAttrs.pool_url || states['sensor.avalon_nano_3s_p1_url']?.state || 'americas.mining-dutch.nl:9995';
       const cleanPoolUrl = poolUrl.replace('stratum+tcp://', '');
-      const poolUser = states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
+      const poolUser = poolAttrs.pool_user || states['sensor.avalon_nano_3s_p1_user']?.state || 'Boxerdawg.worker2';
       const avalonSavedPool = this._minerPools['192.168.1.154'] || safeStorage.get('miner_pool_192.168.1.154');
       const avalonSavedWallet = this._minerWallets['192.168.1.154'] || safeStorage.get('miner_wallet_192.168.1.154');
       const avalonSavedCoin = this._minerCoins['192.168.1.154'] || safeStorage.get('miner_coin_192.168.1.154');
@@ -7354,7 +7358,7 @@ class HomeMinerFleetCard extends HTMLElement {
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
       const avalonPoolProvider = avalonSavedPool || avalonPoolStatusObj?.attributes?.pool_provider || (cleanPoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
       const avalonPoolWallet = avalonSavedWallet || avalonPoolStatusObj?.attributes?.pool_wallet || poolUser;
-      const cgminerVer = states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
+      const cgminerVer = states['sensor.192_168_1_154_firmware_version']?.attributes?.cgminer_version || states['sensor.avalon_nano_3s_cgminer']?.state || '4.11.1';
 
       const avalonName = this._getMinerName('192.168.1.154', 'Canaan Avalon Nano 3S', ['sensor.192_168_1_154_hashrate_th_s', 'sensor.avalon_nano_3s_hashrate_current', 'sensor.avalon_nano_3s_hashrate_avg']);
 
