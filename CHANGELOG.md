@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-10-22
+
 ### Added
 - **Miner Controls popup** — each rig card has a **Controls** button that opens a popup instead of showing controls inline:
   - **Bitaxe / NerdQaxe:** power profile, core frequency and core voltage (slider ranges now come from the number entities).
