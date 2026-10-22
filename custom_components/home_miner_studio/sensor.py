@@ -29,7 +29,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import CONF_HOST, CONF_MINER_TYPE, CONF_NAME, DOMAIN, POOL_NAMES, POOL_NONE, TYPE_CGMINER_RPC
 from .coordinator import MinerDataUpdateCoordinator
 
-# Extra telemetry read from the CGMiner API (summary / stats / version); created for CGMiner RPC miners only.
+# Extra telemetry read from the CGMiner API (summary / stats / version); created for CGMiner RPC miners.
+# Found Blocks (the first entry) is also created for AxeOS miners that report blockFound.
 CGMINER_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="found_blocks",
@@ -269,6 +270,9 @@ async def async_setup_entry(
     descriptions = SENSOR_TYPES
     if coordinator.miner_type == TYPE_CGMINER_RPC:
         descriptions = SENSOR_TYPES + CGMINER_SENSOR_TYPES
+    elif (coordinator.data or {}).get("found_blocks") is not None:
+        # AxeOS miners that report blockFound get the same Found Blocks sensor.
+        descriptions = SENSOR_TYPES + CGMINER_SENSOR_TYPES[:1]
     entities: list[SensorEntity] = [
         HomeMinerSensor(coordinator, entry, description)
         for description in descriptions

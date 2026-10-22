@@ -219,6 +219,8 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         uptime = int(raw.get("uptimeSeconds", 0))
         best_diff = raw.get("bestDiff", 0)
         best_session_diff = raw.get("bestSessionDiff", 0)
+        # AxeOS 2.x counts solved blocks in "blockFound"; older firmware lacks it.
+        found_blocks = raw.get("blockFound")
 
         efficiency_j_th = (power_w / hashrate_ths) if hashrate_ths > 0 else 0.0
         daily_kwh = (power_w / 1000.0) * 24.0
@@ -252,6 +254,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "shares_rejected": shares_rejected,
             "best_difficulty": best_diff,
             "best_session_diff": best_session_diff,
+            "found_blocks": int(found_blocks) if isinstance(found_blocks, (int, float)) else None,
             "uptime_seconds": uptime,
             "profile": self.current_profile,
             "daily_kwh": round(daily_kwh, 3),

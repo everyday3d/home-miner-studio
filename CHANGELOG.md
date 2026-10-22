@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Found Blocks sensor for Bitaxe / AxeOS miners**, from AxeOS 2.x `blockFound` (created when the firmware reports it), matching the existing CGMiner sensor so automations can react to solved blocks on any rig.
+
+### Fixed
+- **Rig coin no longer reverts after saving Edit.** The rig card and Edit popup now take each miner's coin from the integration first; a coin saved earlier in the browser is only a fallback, so saving Edit can't push a stale coin back to the miner.
+
 ## [0.7.6] - 2026-10-22
 
 ### Added

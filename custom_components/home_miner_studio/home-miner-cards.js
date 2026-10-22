@@ -3663,7 +3663,9 @@ class HomeMinerFleetCard extends HTMLElement {
     this.shadowRoot.querySelector('#modal-type').value = type || 'bitaxe';
     const activePool = this._minerPools[host] || safeStorage.get('miner_pool_' + host) || pool || 'none';
     const activeWallet = this._minerWallets[host] || safeStorage.get('miner_wallet_' + host) || wallet || '';
-    const activeCoin = this._minerCoins[host] || safeStorage.get('miner_coin_' + host) || coin || 'BTC';
+    // The rig's coin comes from the integration; a coin saved in this browser is only a fallback, so saving
+    // Edit never pushes a stale coin back to the miner.
+    const activeCoin = coin || this._minerCoins[host] || safeStorage.get('miner_coin_' + host) || 'BTC';
     this.shadowRoot.querySelector('#modal-pool').value = activePool;
     this.shadowRoot.querySelector('#modal-wallet').value = activeWallet;
     this.shadowRoot.querySelector('#modal-coin').value = activeCoin;
@@ -7512,7 +7514,8 @@ class HomeMinerFleetCard extends HTMLElement {
       const bitaxePoolUser = bitaxePoolStatusObj?.attributes?.pool_user || 'Boxerdawg.worker1';
       const bitaxePoolProvider = bitaxeSavedPool || bitaxePoolStatusObj?.attributes?.pool_provider || (bitaxePoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
       const bitaxePoolWallet = bitaxeSavedWallet || bitaxePoolStatusObj?.attributes?.pool_wallet || bitaxePoolUser;
-      const bitaxeCoin = bitaxeSavedCoin || bitaxePoolStatusObj?.attributes?.coin || states['sensor.my_bitaxe_coin_price_usd']?.attributes?.coin || 'WOJAK';
+      // The integration's configured coin (on the coin price sensor) wins over a coin this browser saved earlier.
+      const bitaxeCoin = states['sensor.my_bitaxe_coin_price']?.attributes?.coin || bitaxeSavedCoin || bitaxePoolStatusObj?.attributes?.coin || states['sensor.my_bitaxe_coin_price_usd']?.attributes?.coin || 'WOJAK';
 
       miners.push({
         id: 'bitaxe',
@@ -7592,7 +7595,7 @@ class HomeMinerFleetCard extends HTMLElement {
       const avalonSavedWallet = this._minerWallets['192.168.1.154'] || safeStorage.get('miner_wallet_192.168.1.154');
       const avalonSavedCoin = this._minerCoins['192.168.1.154'] || safeStorage.get('miner_coin_192.168.1.154');
       const avalonPoolStatusObj = states['sensor.192_168_1_154_pool_connection_status'];
-      const avalonCoin = avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
+      const avalonCoin = states['sensor.192_168_1_154_bitcoin_price']?.attributes?.coin || avalonSavedCoin || avalonPoolStatusObj?.attributes?.coin || 'BTC';
       const poolStatus = avalonPoolStatusObj?.state ||
                          states['sensor.avalon_nano_3s_p1_status']?.state || 'Alive';
       const avalonPoolProvider = avalonSavedPool || avalonPoolStatusObj?.attributes?.pool_provider || (cleanPoolUrl.includes('mining-dutch') ? 'mining_dutch' : 'mining_dutch');
@@ -7693,7 +7696,7 @@ class HomeMinerFleetCard extends HTMLElement {
       const poolUser = poolStatusObj?.attributes?.pool_user || '';
       const poolProvider = poolStatusObj?.attributes?.pool_provider || 'none';
       const poolWallet = poolStatusObj?.attributes?.pool_wallet || poolUser;
-      const minerCoin = poolStatusObj?.attributes?.coin || 'BTC';
+      const minerCoin = states[`sensor.${prefix}_coin_price`]?.attributes?.coin || states[`sensor.${prefix}_bitcoin_price`]?.attributes?.coin || poolStatusObj?.attributes?.coin || 'BTC';
 
       const lowerPrefix = prefix.toLowerCase();
       const fn = (stateObj?.attributes?.friendly_name || '').toLowerCase();
