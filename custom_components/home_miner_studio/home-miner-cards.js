@@ -3576,7 +3576,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <span>${label}</span>
             <span class="mono ctl-disp" style="color: ${color}; font-weight: 700;">${val} ${unit}</span>
           </div>
-          <input type="range" class="ctl-range ${color === '#00e5ff' ? 'cyan-thumb' : ''}" data-entity="${eid}" data-unit="${unit}"
+          <input type="range" class="ctl-range ${color === '#00e5ff' ? 'cyan-thumb' : ''}" data-entity="${escapeHtml(eid)}" data-unit="${escapeHtml(unit)}"
                  min="${attr(eid, 'min', fallbackMin)}" max="${attr(eid, 'max', fallbackMax)}" step="${attr(eid, 'step', fallbackStep)}" value="${val}">
         </div>`;
     };
@@ -3594,7 +3594,7 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
           ${states[miner.profileEntity] ? `
             <div class="profile-pill-rack">
-              ${options.map(o => `<button class="pill-btn ${profile === o ? 'active' : ''}" data-ctl-select="${miner.profileEntity}" data-option="${o}">${svgIcon(icons[o] || 'sliders', 11)} ${o}</button>`).join('')}
+              ${options.map(o => `<button class="pill-btn ${profile === o ? 'active' : ''}" data-ctl-select="${escapeHtml(miner.profileEntity)}" data-option="${escapeHtml(o)}">${svgIcon(icons[o] || 'sliders', 11)} ${escapeHtml(o)}</button>`).join('')}
             </div>` : ''}
           <div class="slider-dual-grid">
             ${states[miner.freqEntity] ? slider('Core Frequency', miner.freqEntity, 'MHz', '#00e5ff', 200, 750, 25, miner.freq) : ''}
@@ -3615,7 +3615,7 @@ class HomeMinerFleetCard extends HTMLElement {
             <span class="mono" style="font-size: 11px; color: #94a3b8;">${miner.ths.toFixed(2)} TH/s • ${miner.watts.toFixed(0)} W</span>
           </div>
           <div class="profile-pill-rack" style="margin-bottom: 0;">
-            ${attr(av.workModeEntity, 'options', ['Low', 'Mid', 'High']).map(o => `<button class="pill-btn ${mode === o ? 'active' : ''}" data-ctl-select="${av.workModeEntity}" data-option="${o}">${svgIcon(modeIcons[o] || 'zap', 11)} ${o}</button>`).join('')}
+            ${attr(av.workModeEntity, 'options', ['Low', 'Mid', 'High']).map(o => `<button class="pill-btn ${mode === o ? 'active' : ''}" data-ctl-select="${escapeHtml(av.workModeEntity)}" data-option="${escapeHtml(o)}">${svgIcon(modeIcons[o] || 'zap', 11)} ${escapeHtml(o)}</button>`).join('')}
           </div>
         </div>`);
       if (av.fanEntity) {
@@ -3627,15 +3627,15 @@ class HomeMinerFleetCard extends HTMLElement {
             </div>
             <div class="slider-dual-grid" style="align-items: end;">
               ${slider('Fan Speed', av.fanEntity, '%', '#00e5ff', 15, 100, 1, 50)}
-              ${av.fanAutoEntity ? `<div><button class="pill-btn" data-ctl-press="${av.fanAutoEntity}">${svgIcon('refresh', 11)} Return fan to Auto</button></div>` : ''}
+              ${av.fanAutoEntity ? `<div><button class="pill-btn" data-ctl-press="${escapeHtml(av.fanAutoEntity)}">${svgIcon('refresh', 11)} Return fan to Auto</button></div>` : ''}
             </div>
             ${av.modeFanEntities.length ? `
               <div class="slider-meta-head" style="margin-top: 14px;"><span>Fan speed for each work mode</span></div>
               <div class="ctl-mode-fans">
                 ${av.modeFanEntities.map(f => `
                   <label class="ctl-mode-fan">
-                    <span>${f.mode}</span>
-                    <span class="ctl-num-wrap"><input type="number" class="modal-input" min="0" max="100" step="1" data-ctl-number="${f.entity}" value="${num(f.entity, 0)}"><span>%</span></span>
+                    <span>${escapeHtml(f.mode)}</span>
+                    <span class="ctl-num-wrap"><input type="number" class="modal-input" min="0" max="100" step="1" data-ctl-number="${escapeHtml(f.entity)}" value="${num(f.entity, 0)}"><span>%</span></span>
                   </label>`).join('')}
               </div>
               <div class="ctl-hint">Set automatically whenever the miner switches to that mode. 0 leaves the fan alone; 1-14 become 15 (the firmware minimum).</div>
@@ -3647,7 +3647,7 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="tactile-bay ctl-bay">
             <div class="bay-header-row" style="margin-bottom: 0;">
               <span class="bay-title">${svgIcon('target', 13)} LED LIGHT</span>
-              <button class="pill-btn ${ledOn ? 'active' : ''}" data-ctl-toggle="${av.ledEntity}">${ledOn ? 'On' : 'Off'}</button>
+              <button class="pill-btn ${ledOn ? 'active' : ''}" data-ctl-toggle="${escapeHtml(av.ledEntity)}">${ledOn ? 'On' : 'Off'}</button>
             </div>
           </div>`);
       }
@@ -3857,7 +3857,7 @@ class HomeMinerFleetCard extends HTMLElement {
       if (discBody) {
         discBody.innerHTML = `
           <div style="text-align: center; padding: 30px; color: #fb7185;">
-            Network discovery error: ${err.message}
+            Network discovery error: ${escapeHtml(err.message)}
           </div>
         `;
       }
@@ -3999,7 +3999,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._modalMode = 'add';
     this._activeHost = '';
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    this.shadowRoot.querySelector('#modal-title').innerHTML = presetName ? `${svgIcon('plus', 16)} Add ${presetName}` : `${svgIcon('plus', 16)} Add Cryptocurrency Miner`;
+    this.shadowRoot.querySelector('#modal-title').innerHTML = presetName ? `${svgIcon('plus', 16)} Add ${escapeHtml(presetName)}` : `${svgIcon('plus', 16)} Add Cryptocurrency Miner`;
     this.shadowRoot.querySelector('#modal-name').value = presetName || '';
     this.shadowRoot.querySelector('#modal-host').value = '';
     this.shadowRoot.querySelector('#modal-host').disabled = false;
@@ -4018,7 +4018,7 @@ class HomeMinerFleetCard extends HTMLElement {
     this._modalMode = 'edit';
     this._activeHost = host;
     const minerModal = this.shadowRoot.querySelector('#miner-modal');
-    this.shadowRoot.querySelector('#modal-title').innerHTML = `${svgIcon('settings', 16)} Edit Miner (${host})`;
+    this.shadowRoot.querySelector('#modal-title').innerHTML = `${svgIcon('settings', 16)} Edit Miner (${escapeHtml(host)})`;
     this.shadowRoot.querySelector('#modal-name').value = name || '';
     this.shadowRoot.querySelector('#modal-host').value = host;
     this.shadowRoot.querySelector('#modal-host').disabled = true;
@@ -8946,7 +8946,7 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="brand-icon-box" style="color: #00e5ff;">${isSingleRigView ? svgIcon('cpu', 18) : svgIcon('server', 18)}</div>
           <div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <div class="brand-title">${this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio')}</div>
+              <div class="brand-title">${escapeHtml(this._config?.title || (isSingleRigView ? (displayedMiners[0]?.name || 'Miner Studio') : 'Home Miner Studio'))}</div>
               <span class="badge-glass-pill" style="border-color: ${rigHealthColor}; color: ${rigHealthColor}; background: rgba(16, 185, 129, 0.1);">
                 <span class="status-orb" style="background: ${rigHealthColor};"></span>
                 RIG HEALTH: ${rigHealthBadgeText}
@@ -9042,7 +9042,7 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
           <div class="kpi-sub">
             <span>Efficiency: ${fleetEfficiency} J/TH</span>
-            <span style="color: #10b981; font-weight: 700;">${activeYieldRow?.coin || 'BTC'}</span>
+            <span style="color: #10b981; font-weight: 700;">${escapeHtml(activeYieldRow?.coin || 'BTC')}</span>
           </div>
           <div class="kpi-bar-track">
             <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.max(20, 100 - (parseFloat(fleetEfficiency) || 20)))}%; background: #10b981;"></div>
@@ -9079,7 +9079,7 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
           <div class="kpi-sub">
             <span>${totalFleetAccepted.toLocaleString()} Shares</span>
-            <span style="color: #00e5ff; font-weight: 700;">Best: ${fleetBestShareStr}</span>
+            <span style="color: #00e5ff; font-weight: 700;">Best: ${escapeHtml(fleetBestShareStr)}</span>
           </div>
           <div class="kpi-bar-track">
             <div class="kpi-bar-fill" style="width: ${logProgressPct}%; background: ${rigHealthColor};"></div>
@@ -9115,7 +9115,7 @@ class HomeMinerFleetCard extends HTMLElement {
               </select>
             </div>
             <div class="pipeline-summary-pill">
-              ${activePoolProviderName} • ${activeStratumHost}:${activeStratumPort} • Job #${jobIdHex.slice(0, 6)} • Block #${currentBlockHeight.toLocaleString()}
+              ${escapeHtml(activePoolProviderName)} • ${escapeHtml(activeStratumHost)}:${escapeHtml(activeStratumPort)} • Job #${escapeHtml(jobIdHex.slice(0, 6))} • Block #${currentBlockHeight.toLocaleString()}
             </div>
           </div>
           <div class="pipeline-header-actions">
@@ -9731,7 +9731,7 @@ class HomeMinerFleetCard extends HTMLElement {
                     ? 'color: #38bdf8; border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.12); font-weight: 700;'
                     : 'color: #64748b; border-color: #1f2737;'
                 }">
-                  ${isActive ? '<span class="status-orb" style="width: 6px; height: 6px;"></span> ' : ''}${pname}${isActive ? ` (${activeCount})` : ''}
+                  ${isActive ? '<span class="status-orb" style="width: 6px; height: 6px;"></span> ' : ''}${escapeHtml(pname)}${isActive ? ` (${activeCount})` : ''}
                 </span>
               `;
             }).join('')}
@@ -9749,7 +9749,7 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="tile-glass-box">
             <span class="tile-label">Reported Hashrate</span>
             <div class="tile-val-row">
-              <span class="tile-num" style="color: #34d399;">${poolReportedHrStr}</span>
+              <span class="tile-num" style="color: #34d399;">${escapeHtml(poolReportedHrStr)}</span>
             </div>
           </div>
           <div class="tile-glass-box">
@@ -9759,13 +9759,13 @@ class HomeMinerFleetCard extends HTMLElement {
                 : [['BTC', totalUnpaidBtc]]).map(([coin, bal]) => `
             <div class="tile-val-row">
               <span class="tile-num" style="color: #fbbf24; font-size: 15px;">${bal.toFixed(8)}</span>
-              <span class="tile-unit">${coin}</span>
+              <span class="tile-unit">${escapeHtml(coin)}</span>
             </div>`).join('')}
           </div>
           <div class="tile-glass-box">
             <span class="tile-label">Peak Share Diff</span>
             <div class="tile-val-row">
-              <span class="tile-num" style="color: #a78bfa;">${bestShareDisplay}</span>
+              <span class="tile-num" style="color: #a78bfa;">${escapeHtml(bestShareDisplay)}</span>
               <span class="tile-unit">diff</span>
             </div>
           </div>
@@ -9889,7 +9889,7 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="glass-card" style="text-align: center; padding: 40px; color: #94a3b8;">
             <div style="color: #64748b; margin-bottom: 12px; display: flex; justify-content: center;">${svgIcon('search', 28)}</div>
             <div style="font-size: 15px; font-weight: 600; color: #f8fafc;">No matching miner found for this view</div>
-            <div style="font-size: 12px; margin-top: 6px;">Filter: ${filterType || filterHost}</div>
+            <div style="font-size: 12px; margin-top: 6px;">Filter: ${escapeHtml(filterType || filterHost)}</div>
           </div>
         ` : displayedMiners.map(miner => {
           const isNerdqaxe = miner.type === 'nerdqaxe';
@@ -10142,7 +10142,7 @@ class HomeMinerFleetCard extends HTMLElement {
                     </div>
                     <div class="share-tag">
                       <span style="color: #94a3b8;">Best Share:</span>
-                      <span style="color: #00e5ff; font-weight: 700;">${miner.bestShareStr}</span>
+                      <span style="color: #00e5ff; font-weight: 700;">${escapeHtml(miner.bestShareStr)}</span>
                     </div>
                     <div class="share-tag">
                       <span style="color: #94a3b8;">Stratum Diff:</span>
@@ -10309,7 +10309,7 @@ class HomeMinerFleetCard extends HTMLElement {
     const btn = this.shadowRoot?.querySelector('#test-celebration-btn');
     if (btn) {
       const origHtml = btn.innerHTML;
-      btn.innerHTML = `${svgIcon('trophy', 12)} SOLO BLOCK: +${reward.toLocaleString()} ${coin}!`;
+      btn.innerHTML = `${svgIcon('trophy', 12)} SOLO BLOCK: +${reward.toLocaleString()} ${escapeHtml(coin)}!`;
       btn.style.background = 'rgba(16, 185, 129, 0.25)';
       btn.style.borderColor = '#10b981';
       btn.style.color = '#10b981';

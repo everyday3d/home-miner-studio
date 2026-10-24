@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interactive restore dialog supporting drag-and-drop file upload, JSON schema validation, and selectable merge vs. overwrite modes.
   - Setup completion encouragement: prominently displays "Last Backup" status timestamp and suggests backup upon initial rig configuration.
 
+### Fixed
+- **Lovelace Card Static Path & Resource URL Alignment** ([#49](https://github.com/everyday3d/home-miner-studio/issues/49)):
+  - Fixed `_async_sync_lovelace_card_resource` in `__init__.py` to register `CARD_URL` (`/home_miner_studio/home-miner-cards.js`) instead of `/local/home-miner-cards.js`, ensuring clean HACS installs load the card without manual `/config/www/` file copies.
+  - Added `"frontend"` to `dependencies` in `manifest.json`.
+- **Shared Home Assistant `aiohttp` ClientSession** ([#49](https://github.com/everyday3d/home-miner-studio/issues/49)):
+  - Replaced per-request `aiohttp.ClientSession()` instantiation across `coordinator.py` and `market.py` with Home Assistant's managed `async_get_clientsession(hass)` and added socket timeouts on CGMiner TCP queries.
+
+### Security
+- **Strict Integration Isolation & Credential Protection** ([#49](https://github.com/everyday3d/home-miner-studio/issues/49)):
+  - Replaced foreign integration `config_entries` / device registry scraping in `discovery.py` with a standalone local LAN subnet probe (`Port 80` AxeOS & `Port 4028` CGMiner RPC), eliminating access to other integrations' entries and credentials.
+  - Removed fallback foreign device/entity mutation in `handle_edit_miner_service`.
+  - Enforced `user.is_admin` on `GET /api/home_miner_studio/miners` and replaced raw `pool_token` output with boolean `has_pool_token`.
+  - Escaped all remaining dynamic template expressions (`#modal-title`, `.brand-title`, controls modal attributes, discovery error messages, pool/filter labels) via `escapeHtml()` in `home-miner-cards.js`.
+
 ## [0.7.9] - 2026-10-24
 
 ### Added

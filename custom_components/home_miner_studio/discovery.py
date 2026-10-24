@@ -1,14 +1,17 @@
-"""Discovery and auto-import utilities for existing miner integrations in Home Assistant."""
+"""Local LAN hardware discovery utilities for Home Miner Studio."""
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import re
+import socket
 from typing import Any
-from urllib.parse import urlparse
 
+import aiohttp
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     CONF_COIN,
@@ -21,184 +24,174 @@ from .const import (
     DOMAIN,
     TYPE_BITAXE,
     TYPE_CGMINER_RPC,
-    TYPE_HIVEOS,
     TYPE_NERDMINER,
     TYPE_NERDQAXE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-# Known Home Assistant miner integration domains
-KNOWN_MINER_DOMAINS = {
-    "bitaxe": TYPE_BITAXE,
-    "ha_bitaxe": TYPE_BITAXE,
-    "axeos": TYPE_BITAXE,
-    "nerdqaxe": TYPE_NERDQAXE,
-    "avalon_nano3s": TYPE_CGMINER_RPC,
-    "avalon_nano_3s": TYPE_CGMINER_RPC,
-    "antminer": TYPE_CGMINER_RPC,
-    "whatsminer": TYPE_CGMINER_RPC,
-    "braiins": TYPE_CGMINER_RPC,
-    "braiinsos": TYPE_CGMINER_RPC,
-    "hiveos": TYPE_HIVEOS,
-    "nerdminer": TYPE_NERDMINER,
-}
+IP_PATTERN = re.compile(r"^(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3})$")
 
-# Regex to validate IPv4 addresses
-IP_PATTERN = re.compile(r"^(?:https?://)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::(\d+))?")
+
+def _detect_local_subnet_prefixes(configured_hosts: set[str]) -> list[str]:
+    """Determine local /24 subnet prefixes to scan."""
+    prefixes: list[str] = []
+    for h in configured_hosts:
+        m = IP_PATTERN.match(h)
+        if m and m.group(1) not in prefixes:
+            prefixes.append(m.group(1))
+
+    if not prefixes:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.connect(("192.168.1.1", 80))
+                local_ip = s.getsockname()[0]
+                m = IP_PATTERN.match(local_ip)
+                if m:
+                    prefixes.append(m.group(1))
+        except Exception:
+            pass
+
+    if not prefixes:
+        prefixes.append("192.168.1")
+
+    return prefixes[:2]
+
+
+async def _probe_host(
+    session: aiohttp.ClientSession,
+    ip: str,
+    sem: asyncio.Semaphore,
+) -> dict[str, Any] | None:
+    """Probe a single LAN IP for AxeOS HTTP (port 80) or CGMiner RPC (port 4028)."""
+    async with sem:
+        # 1. Check port 80 (AxeOS / Bitaxe / NerdQaxe / NerdMiner)
+        try:
+            conn = asyncio.open_connection(ip, DEFAULT_PORT_BITAXE)
+            reader, writer = await asyncio.wait_for(conn, timeout=0.45)
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+
+            timeout = aiohttp.ClientTimeout(total=1.2)
+            async with session.get(f"http://{ip}/api/system/info", timeout=timeout) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if isinstance(data, dict) and ("hashRate" in data or "ASICModel" in data or "hostname" in data):
+                        hostname = str(data.get("hostname") or data.get("deviceModel") or "").strip()
+                        asic = str(data.get("ASICModel") or "").lower()
+                        board = str(data.get("boardVersion") or data.get("deviceModel") or "").lower()
+                        if "qaxe" in hostname.lower() or "qaxe" in board or "nerdqaxe" in board:
+                            mtype = TYPE_NERDQAXE
+                        elif "nerdminer" in hostname.lower() or "nerdminer" in asic:
+                            mtype = TYPE_NERDMINER
+                        else:
+                            mtype = TYPE_BITAXE
+                        return {
+                            CONF_NAME: hostname or f"{mtype.title()} ({ip})",
+                            CONF_MINER_TYPE: mtype,
+                            CONF_HOST: ip,
+                            CONF_PORT: DEFAULT_PORT_BITAXE,
+                            CONF_COIN: "BTC",
+                            "source_integration": "lan_axeos",
+                        }
+        except Exception:
+            pass
+
+        # 2. Check port 4028 (CGMiner / Avalon / Antminer / Whatsminer RPC)
+        try:
+            conn = asyncio.open_connection(ip, DEFAULT_PORT_CGMINER)
+            reader, writer = await asyncio.wait_for(conn, timeout=0.45)
+            writer.write(b'{"command":"version"}')
+            await writer.drain()
+            raw = await asyncio.wait_for(reader.read(2048), timeout=0.8)
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+
+            if raw:
+                text = raw.decode("utf-8", errors="ignore").rstrip("\x00").strip()
+                parsed = json.loads(text)
+                if isinstance(parsed, dict) and ("VERSION" in parsed or "STATUS" in parsed):
+                    ver_list = parsed.get("VERSION", [{}])
+                    ver_info = ver_list[0] if ver_list else {}
+                    prod = str(ver_info.get("PROD") or ver_info.get("Type") or ver_info.get("Miner") or "CGMiner Rig").strip()
+                    return {
+                        CONF_NAME: f"{prod} ({ip})",
+                        CONF_MINER_TYPE: TYPE_CGMINER_RPC,
+                        CONF_HOST: ip,
+                        CONF_PORT: DEFAULT_PORT_CGMINER,
+                        CONF_COIN: "BTC",
+                        "source_integration": "lan_cgminer",
+                    }
+        except Exception:
+            pass
+
+    return None
 
 
 async def async_discover_existing_miners(hass: HomeAssistant, include_all: bool = False) -> list[dict[str, Any]]:
-    """Scan existing Home Assistant integrations and device registry for unimported miners."""
+    """Scan local LAN subnet for active mining hardware without accessing foreign integrations."""
     discovered: list[dict[str, Any]] = []
     configured_hosts: set[str] = set()
     seen_hosts: set[str] = set()
 
-    # Collect hosts already in home_miner_studio
+    # Collect hosts already configured in home_miner_studio
     for entry in hass.config_entries.async_entries(DOMAIN):
         host = entry.data.get(CONF_HOST)
-        if host:
-            configured_hosts.add(str(host).strip().lower())
-
-    # 1. Scan known miner config entries
-    for domain, inferred_type in KNOWN_MINER_DOMAINS.items():
-        entries = hass.config_entries.async_entries(domain)
-        for entry in entries:
-            data = entry.data
-            host = data.get("host") or data.get("ip") or data.get("ip_address")
-            if not host:
-                continue
-
-            host_clean = str(host).strip()
-            is_configured = host_clean.lower() in configured_hosts
-            if is_configured and not include_all:
-                continue
-            if host_clean.lower() in seen_hosts:
-                continue
-            seen_hosts.add(host_clean.lower())
-
-            port = data.get("port")
-            if not port:
-                port = DEFAULT_PORT_BITAXE if inferred_type == TYPE_BITAXE else DEFAULT_PORT_CGMINER
-
-            name = data.get("name") or data.get("device_name") or entry.title or f"{inferred_type.title()} ({host_clean})"
-
-            discovered.append({
-                CONF_NAME: name,
-                CONF_MINER_TYPE: inferred_type,
-                CONF_HOST: host_clean,
-                CONF_PORT: int(port),
-                CONF_COIN: data.get("coin", "BTC"),
-                "password": data.get("password") or data.get("web_password"),
-                "source_integration": domain,
-                "already_configured": is_configured,
-            })
-
-    # 2. Scan Device Registry for Bitaxe / ASIC devices with configuration_url
-    device_registry = dr.async_get(hass)
-    devices_list = getattr(device_registry, "devices", [])
-    for device in (devices_list.values() if hasattr(devices_list, "values") else devices_list):
-        name = device.name or device.name_by_user or ""
-        model = device.model or ""
-        manufacturer = device.manufacturer or ""
-        combined_text = f"{name} {model} {manufacturer}".lower()
-
-        is_nerdqaxe = "nerdqaxe" in combined_text or "qaxe" in combined_text
-        is_bitaxe = ("bitaxe" in combined_text or "axeos" in combined_text) and not is_nerdqaxe
-        is_nerdminer = "nerdminer" in combined_text
-        is_asic = any(k in combined_text for k in ("antminer", "whatsminer", "avalon", "braiins"))
-
-        if not (is_bitaxe or is_nerdqaxe or is_nerdminer or is_asic):
-            continue
-
-        host: str | None = None
-        port: int = DEFAULT_PORT_BITAXE
-
-        # Extract from configuration_url (e.g. http://192.168.1.120:80)
-        if device.configuration_url and not str(device.configuration_url).startswith("homeassistant:"):
-            parsed = urlparse(device.configuration_url)
-            if parsed.hostname and parsed.hostname != "hacs":
-                host = parsed.hostname
-                port = parsed.port or (DEFAULT_PORT_BITAXE if is_bitaxe or is_nerdqaxe or is_nerdminer else DEFAULT_PORT_CGMINER)
-
-        # Fallback: check device connections (e.g. IP tuples)
         if not host:
-            for conn_type, conn_val in device.connections:
-                ip_match = IP_PATTERN.match(str(conn_val))
-                if ip_match:
-                    host = ip_match.group(1)
-                    if ip_match.group(2):
-                        port = int(ip_match.group(2))
-                    break
-
-        if host:
-            host_clean = str(host).strip()
-            is_configured = host_clean.lower() in configured_hosts
-            if is_configured and not include_all:
-                continue
-            if host_clean.lower() in seen_hosts:
-                continue
+            continue
+        host_clean = str(host).strip()
+        configured_hosts.add(host_clean.lower())
+        if include_all and host_clean.lower() not in seen_hosts:
             seen_hosts.add(host_clean.lower())
-
-            inferred_type = TYPE_NERDQAXE if is_nerdqaxe else (TYPE_BITAXE if is_bitaxe else (TYPE_NERDMINER if is_nerdminer else TYPE_CGMINER_RPC))
             discovered.append({
-                CONF_NAME: name or f"{inferred_type.title()} ({host_clean})",
-                CONF_MINER_TYPE: inferred_type,
+                CONF_NAME: entry.title or entry.data.get(CONF_NAME, f"Miner ({host_clean})"),
+                CONF_MINER_TYPE: entry.data.get(CONF_MINER_TYPE, TYPE_BITAXE),
                 CONF_HOST: host_clean,
-                CONF_PORT: port,
-                CONF_COIN: "BTC",
-                "source_integration": "device_registry",
-                "already_configured": is_configured,
+                CONF_PORT: int(entry.data.get(CONF_PORT, DEFAULT_PORT_BITAXE)),
+                CONF_COIN: entry.data.get(CONF_COIN, "BTC"),
+                "source_integration": DOMAIN,
+                "already_configured": True,
             })
 
-    # 3. Scan Entity Registry for entities matching miner patterns
-    entity_registry = er.async_get(hass)
-    entities_list = getattr(entity_registry, "entities", [])
-    for entity in (entities_list.values() if hasattr(entities_list, "values") else entities_list):
-        eid = entity.entity_id
-        if not eid.startswith("sensor."):
-            continue
+    prefixes = await hass.async_add_executor_job(_detect_local_subnet_prefixes, configured_hosts)
+    session = async_get_clientsession(hass)
+    sem = asyncio.Semaphore(48)
 
-        # Look for hashrate sensors
-        if "hashrate" in eid or "hash_rate" in eid:
-            state = hass.states.get(eid)
-            if not state:
+    tasks = []
+    for prefix in prefixes:
+        for last_octet in range(1, 255):
+            ip = f"{prefix}.{last_octet}"
+            if ip.lower() in configured_hosts:
                 continue
+            tasks.append(_probe_host(session, ip, sem))
 
-            # Look up parent device
-            if entity.device_id:
-                dev = device_registry.async_get(entity.device_id)
-                if dev and dev.configuration_url:
-                    parsed = urlparse(dev.configuration_url)
-                    if parsed.hostname:
-                        host_clean = str(parsed.hostname).strip()
-                        is_configured = host_clean.lower() in configured_hosts
-                        if is_configured and not include_all:
-                            continue
-                        if host_clean.lower() in seen_hosts:
-                            continue
-                        seen_hosts.add(host_clean.lower())
-
-                        dev_name = dev.name or entity.name or "Imported Miner"
-                        discovered.append({
-                            CONF_NAME: dev_name,
-                            CONF_MINER_TYPE: TYPE_BITAXE if "bitaxe" in dev_name.lower() else TYPE_CGMINER_RPC,
-                            CONF_HOST: host_clean,
-                            CONF_PORT: parsed.port or DEFAULT_PORT_BITAXE,
-                            CONF_COIN: "BTC",
-                            "source_integration": "entity_registry",
-                            "already_configured": is_configured,
-                        })
+    if tasks:
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for res in results:
+            if isinstance(res, dict) and res.get(CONF_HOST):
+                h_lower = str(res[CONF_HOST]).lower()
+                if h_lower not in seen_hosts:
+                    seen_hosts.add(h_lower)
+                    res["already_configured"] = h_lower in configured_hosts
+                    discovered.append(res)
 
     return discovered
 
 
 async def async_auto_import_miners(hass: HomeAssistant) -> list[str]:
-    """Automatically import all discovered miners into Home Miner Studio."""
-    discovered = await async_discover_existing_miners(hass)
+    """Import LAN-discovered miners into Home Miner Studio when explicitly requested by admin."""
+    discovered = await async_discover_existing_miners(hass, include_all=False)
     imported_names: list[str] = []
 
     for item in discovered:
+        if item.get("already_configured"):
+            continue
         try:
             entry_data = {
                 CONF_NAME: item[CONF_NAME],
@@ -214,8 +207,8 @@ async def async_auto_import_miners(hass: HomeAssistant) -> list[str]:
             )
             if res and res.get("type") in ("create_entry", "abort"):
                 imported_names.append(item[CONF_NAME])
-                _LOGGER.info("Successfully imported miner '%s' from %s", item[CONF_NAME], item.get("source_integration"))
+                _LOGGER.info("Imported LAN miner '%s' (%s)", item[CONF_NAME], item[CONF_HOST])
         except Exception as err:
-            _LOGGER.error("Failed to auto-import miner '%s': %s", item.get(CONF_NAME), err)
+            _LOGGER.error("Failed to import miner '%s': %s", item.get(CONF_NAME), err)
 
     return imported_names

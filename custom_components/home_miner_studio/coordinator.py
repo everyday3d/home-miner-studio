@@ -14,6 +14,7 @@ import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .market import async_get_coin_market_data
@@ -228,11 +229,11 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch complete telemetry from Bitaxe / AxeOS REST API."""
         url = f"http://{self.host}:{self.port}/api/system/info"
         timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    raise UpdateFailed(f"Bitaxe HTTP error status: {resp.status}")
-                raw = await resp.json(content_type=None)
+        session = async_get_clientsession(self.hass)
+        async with session.get(url, timeout=timeout) as resp:
+            if resp.status != 200:
+                raise UpdateFailed(f"Bitaxe HTTP error status: {resp.status}")
+            raw = await resp.json(content_type=None)
 
         hashrate_ghs = float(raw.get("hashRate", 0.0))
         hashrate_ths = hashrate_ghs / 1000.0
@@ -466,13 +467,15 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _query_cgminer_socket(self, command: str, parameter: str | None = None) -> dict[str, Any]:
         """Send command to CGMiner socket and return parsed JSON."""
         try:
-            reader, writer = await asyncio.open_connection(self.host, self.port)
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(self.host, self.port), timeout=8.0
+            )
             cmd_dict: dict[str, Any] = {"command": command}
             if parameter is not None:
                 cmd_dict["parameter"] = parameter
             writer.write(json.dumps(cmd_dict).encode("utf-8"))
             await writer.drain()
-            raw_bytes = await reader.read(8192)
+            raw_bytes = await asyncio.wait_for(reader.read(8192), timeout=8.0)
             writer.close()
             await writer.wait_closed()
 
@@ -486,11 +489,11 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch telemetry from NerdMiner HTTP endpoint."""
         url = f"http://{self.host}:{self.port}/api/stats"
         timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    raise UpdateFailed(f"NerdMiner HTTP error status: {resp.status}")
-                raw = await resp.json(content_type=None)
+        session = async_get_clientsession(self.hass)
+        async with session.get(url, timeout=timeout) as resp:
+            if resp.status != 200:
+                raise UpdateFailed(f"NerdMiner HTTP error status: {resp.status}")
+            raw = await resp.json(content_type=None)
 
         hashrate_khs = float(raw.get("hashrate", 0.0))
         hashrate_ghs = hashrate_khs / 1_000_000.0
@@ -519,21 +522,21 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         url = f"https://api2.hiveos.farm/api/v2/farms/{self.host}/workers"
         headers = {"Authorization": f"Bearer {self.pool_token}"}
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-            async with session.get(url, headers=headers) as resp:
-                if resp.status != 200:
-                    return {"online": False}
-                data = await resp.json(content_type=None)
-                workers = data.get("data", [])
-                total_hash = sum(float(w.get("hashrate", 0.0)) for w in workers)
-                total_pwr = sum(float(w.get("power", 0.0)) for w in workers)
-                return {
-                    "online": True,
-                    "hashrate_ghs": round(total_hash / 1000.0, 2),
-                    "hashrate_ths": round(total_hash / 1_000_000.0, 4),
-                    "power_w": round(total_pwr, 1),
-                    "workers_count": len(workers),
-                }
+        session = async_get_clientsession(self.hass)
+        async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            if resp.status != 200:
+                return {"online": False}
+            data = await resp.json(content_type=None)
+            workers = data.get("data", [])
+            total_hash = sum(float(w.get("hashrate", 0.0)) for w in workers)
+            total_pwr = sum(float(w.get("power", 0.0)) for w in workers)
+            return {
+                "online": True,
+                "hashrate_ghs": round(total_hash / 1000.0, 2),
+                "hashrate_ths": round(total_hash / 1_000_000.0, 4),
+                "power_w": round(total_pwr, 1),
+                "workers_count": len(workers),
+            }
 
     async def _fetch_pool_data(self) -> dict[str, Any]:
         """Fetch remote mining pool metrics with 60s throttling."""
@@ -545,104 +548,101 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return self._cached_pool_data
 
         self._last_pool_fetch = now
+        session = async_get_clientsession(self.hass)
+        timeout = aiohttp.ClientTimeout(total=10)
         try:
             if self.pool_provider == POOL_2MINERS and self.pool_wallet:
                 coin_sub = self.coin.lower()
                 url = f"https://{coin_sub}.2miners.com/api/accounts/{self.pool_wallet}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            stats = data.get("stats", {})
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": float(stats.get("balance", 0.0)) / 1e8,
-                                "pool_24h_revenue": float(data.get("24hreward", 0.0)) / 1e8,
-                                "pool_active_workers": int(data.get("workersTotal", 0)),
-                                "pool_reported_hashrate": float(data.get("currentHashrate", 0.0)),
-                            }
+                async with session.get(url, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        stats = data.get("stats", {})
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": float(stats.get("balance", 0.0)) / 1e8,
+                            "pool_24h_revenue": float(data.get("24hreward", 0.0)) / 1e8,
+                            "pool_active_workers": int(data.get("workersTotal", 0)),
+                            "pool_reported_hashrate": float(data.get("currentHashrate", 0.0)),
+                        }
             elif self.pool_provider == POOL_BRAIINS and (self.pool_token or self.pool_wallet):
                 token = self.pool_token or self.pool_wallet
                 url = "https://pool.braiins.com/accounts/profile/json/btc/"
                 headers = {"SlushPool-Auth-Token": token}
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            btc = data.get("btc", {})
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": float(btc.get("unconfirmed_reward", 0.0)),
-                                "pool_24h_revenue": float(btc.get("estimated_reward", 0.0)),
-                                "pool_active_workers": 1,
-                                "pool_reported_hashrate": 0.0,
-                            }
+                async with session.get(url, headers=headers, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        btc = data.get("btc", {})
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": float(btc.get("unconfirmed_reward", 0.0)),
+                            "pool_24h_revenue": float(btc.get("estimated_reward", 0.0)),
+                            "pool_active_workers": 1,
+                            "pool_reported_hashrate": 0.0,
+                        }
             elif self.pool_provider == POOL_MINING_DUTCH and self._mining_dutch_key():
                 self._cached_pool_data = await self._fetch_mining_dutch()
             elif self.pool_provider == POOL_PUBLIC_POOL and self.pool_wallet:
                 url = f"https://public-pool.io:40557/api/client/{self.pool_wallet}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            workers = data.get("workers", [])
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": 0.0,
-                                "pool_24h_revenue": 0.0,
-                                "pool_active_workers": len(workers),
-                                "pool_reported_hashrate": float(data.get("hashRate", 0.0)),
-                            }
+                async with session.get(url, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        workers = data.get("workers", [])
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": 0.0,
+                            "pool_24h_revenue": 0.0,
+                            "pool_active_workers": len(workers),
+                            "pool_reported_hashrate": float(data.get("hashRate", 0.0)),
+                        }
             elif self.pool_provider == POOL_HELIOS and self.pool_wallet:
                 url = f"https://stats-btc.heliospool.com/users/{self.pool_wallet}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            raw_hr = str(data.get("hashrate1m", data.get("hashrate5m", "0"))).strip()
-                            hr_ghs = 0.0
-                            if raw_hr.endswith("P"):
-                                hr_ghs = float(raw_hr[:-1]) * 1_000_000.0
-                            elif raw_hr.endswith("T"):
-                                hr_ghs = float(raw_hr[:-1]) * 1000.0
-                            elif raw_hr.endswith("G"):
-                                hr_ghs = float(raw_hr[:-1])
-                            elif raw_hr.endswith("M"):
-                                hr_ghs = float(raw_hr[:-1]) / 1000.0
-                            else:
-                                try:
-                                    hr_ghs = float(raw_hr)
-                                except ValueError:
-                                    hr_ghs = 0.0
+                async with session.get(url, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        raw_hr = str(data.get("hashrate1m", data.get("hashrate5m", "0"))).strip()
+                        hr_ghs = 0.0
+                        if raw_hr.endswith("P"):
+                            hr_ghs = float(raw_hr[:-1]) * 1_000_000.0
+                        elif raw_hr.endswith("T"):
+                            hr_ghs = float(raw_hr[:-1]) * 1000.0
+                        elif raw_hr.endswith("G"):
+                            hr_ghs = float(raw_hr[:-1])
+                        elif raw_hr.endswith("M"):
+                            hr_ghs = float(raw_hr[:-1]) / 1000.0
+                        else:
+                            try:
+                                hr_ghs = float(raw_hr)
+                            except ValueError:
+                                hr_ghs = 0.0
 
-                            workers = data.get("worker", [])
-                            worker_count = int(data.get("workers", len(workers)))
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": 0.0,
-                                "pool_24h_revenue": 0.0,
-                                "pool_active_workers": worker_count,
-                                "pool_reported_hashrate": round(hr_ghs, 2),
-                                "pool_best_share": float(data.get("bestshare", 0.0)),
-                            }
+                        workers = data.get("worker", [])
+                        worker_count = int(data.get("workers", len(workers)))
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": 0.0,
+                            "pool_24h_revenue": 0.0,
+                            "pool_active_workers": worker_count,
+                            "pool_reported_hashrate": round(hr_ghs, 2),
+                            "pool_best_share": float(data.get("bestshare", 0.0)),
+                        }
             elif self.pool_provider == POOL_VIABTC and (self.pool_token or self.pool_wallet):
                 coin_sub = self.coin.lower() if self.coin else "btc"
                 token_to_use = self.pool_token or self.pool_wallet
                 url = f"https://www.viabtc.com/res/observer/hashrate?observer_token={token_to_use}&coin={coin_sub}"
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            res_data = data.get("data", {}) if isinstance(data, dict) else {}
-                            raw_hr = res_data.get("hashrate", 0.0)
-                            try:
-                                hr_ghs = float(raw_hr) / 1e9 if float(raw_hr) > 1e6 else float(raw_hr)
-                            except (ValueError, TypeError):
-                                hr_ghs = 0.0
-                            active_workers = int(res_data.get("active_workers", res_data.get("workers", 0)))
-                            profit_24h = float(res_data.get("profit_24h", res_data.get("total_profit", 0.0)))
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": float(res_data.get("unpaid_profit", 0.0)),
-                                "pool_24h_revenue": profit_24h,
-                                "pool_active_workers": active_workers,
-                                "pool_reported_hashrate": round(hr_ghs, 2),
-                            }
+                async with session.get(url, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        res_data = data.get("data", {}) if isinstance(data, dict) else {}
+                        raw_hr = res_data.get("hashrate", 0.0)
+                        try:
+                            hr_ghs = float(raw_hr) / 1e9 if float(raw_hr) > 1e6 else float(raw_hr)
+                        except (ValueError, TypeError):
+                            hr_ghs = 0.0
+                        active_workers = int(res_data.get("active_workers", res_data.get("workers", 0)))
+                        profit_24h = float(res_data.get("profit_24h", res_data.get("total_profit", 0.0)))
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": float(res_data.get("unpaid_profit", 0.0)),
+                            "pool_24h_revenue": profit_24h,
+                            "pool_active_workers": active_workers,
+                            "pool_reported_hashrate": round(hr_ghs, 2),
+                        }
             elif self.pool_provider == POOL_F2POOL and (self.pool_wallet or self.pool_token):
                 coin_sub = "bitcoin" if (not self.coin or self.coin.upper() == "BTC") else self.coin.lower()
                 account = self.pool_wallet or self.pool_token
@@ -650,20 +650,19 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 headers = {}
                 if self.pool_token:
                     headers["F2P-API-SECRET"] = self.pool_token
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status == 200:
-                            data = await resp.json(content_type=None)
-                            raw_hr = float(data.get("hashrate", 0.0))
-                            hr_ghs = raw_hr / 1e9 if raw_hr > 0 else 0.0
-                            workers = data.get("workers", [])
-                            worker_count = int(data.get("worker_length", len(workers)))
-                            self._cached_pool_data = {
-                                "pool_unpaid_balance": float(data.get("balance", 0.0)),
-                                "pool_24h_revenue": float(data.get("value_today", data.get("value_yesterday", 0.0))),
-                                "pool_active_workers": worker_count,
-                                "pool_reported_hashrate": round(hr_ghs, 2),
-                            }
+                async with session.get(url, headers=headers, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        raw_hr = float(data.get("hashrate", 0.0))
+                        hr_ghs = raw_hr / 1e9 if raw_hr > 0 else 0.0
+                        workers = data.get("workers", [])
+                        worker_count = int(data.get("worker_length", len(workers)))
+                        self._cached_pool_data = {
+                            "pool_unpaid_balance": float(data.get("balance", 0.0)),
+                            "pool_24h_revenue": float(data.get("value_today", data.get("value_yesterday", 0.0))),
+                            "pool_active_workers": worker_count,
+                            "pool_reported_hashrate": round(hr_ghs, 2),
+                        }
         except Exception as err:
             _LOGGER.debug("Pool data update error: %s", err)
 
@@ -703,26 +702,26 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "WOJAK": "wojakcoin",
             "WJK": "wojakcoin",
         }.get(self.coin.upper(), self.coin.lower())
-        base =f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&api_key={self._mining_dutch_key()}"
+        base = f"https://www.mining-dutch.nl/pools/{coin_slug}.php?page=api&api_key={self._mining_dutch_key()}"
+        session = async_get_clientsession(self.hass)
+        timeout = aiohttp.ClientTimeout(total=10)
 
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+        async def call(action: str) -> Any:
+            async with session.get(f"{base}&action={action}", timeout=timeout) as resp:
+                if resp.status in (401, 403):
+                    raise PermissionError("Mining-Dutch rejected the API key")
+                resp.raise_for_status()
+                data = await resp.json(content_type=None)
+                return (data.get(action) or {}).get("data")
 
-            async def call(action: str) -> Any:
-                async with session.get(f"{base}&action={action}") as resp:
-                    if resp.status in (401, 403):
-                        raise PermissionError("Mining-Dutch rejected the API key")
-                    resp.raise_for_status()
-                    data = await resp.json(content_type=None)
-                    return (data.get(action) or {}).get("data")
-
-            try:
-                balance = await call("getuserbalance") or {}
-            except PermissionError as err:
-                if not self._pool_auth_warned:
-                    _LOGGER.warning("%s for %s; check the Pool API Token in the miner's settings", err, self.host)
-                    self._pool_auth_warned = True
-                return self._cached_pool_data
-            workers = await call("getuserworkers") or {}
+        try:
+            balance = await call("getuserbalance") or {}
+        except PermissionError as err:
+            if not self._pool_auth_warned:
+                _LOGGER.warning("%s for %s; check the Pool API Token in the miner's settings", err, self.host)
+                self._pool_auth_warned = True
+            return self._cached_pool_data
+        workers = await call("getuserworkers") or {}
 
         unpaid = sum(float(balance.get(k) or 0.0) for k in ("confirmed", "unconfirmed"))
         # getuserworkers returns {"count": {...}, "miners": [{"username": "worker1", "hashrate": <H/s>, "alive": 1}]},
@@ -762,13 +761,13 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         url = f"http://{self.host}:{self.port}/api/system"
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.patch(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    if resp.status in (200, 204):
-                        _LOGGER.info("Bitaxe tuning updated on %s: %s", self.host, payload)
-                        await self.async_request_refresh()
-                        return True
-                    _LOGGER.warning("Bitaxe tuning returned status %s", resp.status)
+            session = async_get_clientsession(self.hass)
+            async with session.patch(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                if resp.status in (200, 204):
+                    _LOGGER.info("Bitaxe tuning updated on %s: %s", self.host, payload)
+                    await self.async_request_refresh()
+                    return True
+                _LOGGER.warning("Bitaxe tuning returned status %s", resp.status)
         except Exception as err:
             _LOGGER.error("Failed to update Bitaxe tuning: %s", err)
         return False
@@ -811,9 +810,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{self.host}:{self.port}/api/system/restart"
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                        return resp.status in (200, 204)
+                session = async_get_clientsession(self.hass)
+                async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    return resp.status in (200, 204)
             except Exception as err:
                 _LOGGER.error("Bitaxe/NerdQaxe reboot failed: %s", err)
                 return False
@@ -829,9 +828,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
             url = f"http://{self.host}:{self.port}/api/system/restart"
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                        return resp.status in (200, 204)
+                session = async_get_clientsession(self.hass)
+                async with session.post(url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    return resp.status in (200, 204)
             except Exception as err:
                 _LOGGER.error("Bitaxe/NerdQaxe process restart failed: %s", err)
                 return False
@@ -909,13 +908,13 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 payload["stratumPassword"] = stratum_password
 
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.patch(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                        if resp.status in (200, 204):
-                            _LOGGER.info("Switched Bitaxe stratum on %s to %s:%s", self.host, stratum_url, stratum_port)
-                            success = True
-                        else:
-                            _LOGGER.warning("Bitaxe stratum switch returned status %s", resp.status)
+                session = async_get_clientsession(self.hass)
+                async with session.patch(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    if resp.status in (200, 204):
+                        _LOGGER.info("Switched Bitaxe stratum on %s to %s:%s", self.host, stratum_url, stratum_port)
+                        success = True
+                    else:
+                        _LOGGER.warning("Bitaxe stratum switch returned status %s", resp.status)
             except Exception as err:
                 _LOGGER.error("Failed to switch Bitaxe stratum on %s: %s", self.host, err)
         elif self.miner_type in (TYPE_CGMINER_RPC, TYPE_WHATSMINER, TYPE_ANTMINER):

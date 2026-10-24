@@ -8,6 +8,7 @@ from typing import Any
 
 import aiohttp
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -133,17 +134,17 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
     raw_yearly_prices: list[list[float]] = []
 
     timeout = aiohttp.ClientTimeout(total=8)
+    session = async_get_clientsession(hass)
 
     # 1. Fetch live price and 24h change from CoinGecko
     try:
         url_simple = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd&include_24hr_change=true"
-        async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
-            async with session.get(url_simple) as resp:
-                if resp.status == 200:
-                    data = await resp.json(content_type=None)
-                    cdata = data.get(coin_id, {})
-                    price = float(cdata.get("usd", 0.0))
-                    change_24h = float(cdata.get("usd_24h_change", 0.0))
+        async with session.get(url_simple, headers=headers, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = await resp.json(content_type=None)
+                cdata = data.get(coin_id, {})
+                price = float(cdata.get("usd", 0.0))
+                change_24h = float(cdata.get("usd_24h_change", 0.0))
     except Exception as err:
         _LOGGER.debug("CoinGecko simple price fetch for %s failed: %s", coin_clean, err)
 
@@ -151,16 +152,15 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
     if price <= 0 and coin_clean in ("BTC", "XBT"):
         try:
             url_kraken = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(url_kraken) as resp:
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        result = data.get("result", {})
-                        xbt = result.get("XXBTZUSD", result.get("XBTUSD", {}))
-                        price = float(xbt.get("c", [0.0])[0])
-                        open_p = float(xbt.get("o", [price])[0])
-                        if open_p > 0:
-                            change_24h = ((price - open_p) / open_p) * 100.0
+            async with session.get(url_kraken, timeout=timeout) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    result = data.get("result", {})
+                    xbt = result.get("XXBTZUSD", result.get("XBTUSD", {}))
+                    price = float(xbt.get("c", [0.0])[0])
+                    open_p = float(xbt.get("o", [price])[0])
+                    if open_p > 0:
+                        change_24h = ((price - open_p) / open_p) * 100.0
         except Exception as k_err:
             _LOGGER.debug("Kraken ticker fallback failed: %s", k_err)
 
@@ -175,22 +175,20 @@ async def async_get_coin_market_data(hass: HomeAssistant, coin: str = "BTC") -> 
     # 2. Fetch 24H intraday price curve
     try:
         url_24h = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=1"
-        async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
-            async with session.get(url_24h) as resp:
-                if resp.status == 200:
-                    data = await resp.json(content_type=None)
-                    raw_24h_prices = data.get("prices", [])
+        async with session.get(url_24h, headers=headers, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = await resp.json(content_type=None)
+                raw_24h_prices = data.get("prices", [])
     except Exception as err_24:
         _LOGGER.debug("CoinGecko 24h market chart for %s failed: %s", coin_clean, err_24)
 
     # 3. Fetch 365-day daily price curve (serves 7D, 30D, and 1Y views)
     try:
         url_year = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=365&interval=daily"
-        async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
-            async with session.get(url_year) as resp:
-                if resp.status == 200:
-                    data = await resp.json(content_type=None)
-                    raw_yearly_prices = data.get("prices", [])
+        async with session.get(url_year, headers=headers, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = await resp.json(content_type=None)
+                raw_yearly_prices = data.get("prices", [])
     except Exception as err_y:
         _LOGGER.debug("CoinGecko 365d market chart for %s failed: %s", coin_clean, err_y)
 

@@ -247,31 +247,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             except Exception as d_err:
                 _LOGGER.warning("Could not update device/entity registry name: %s", d_err)
             await hass.config_entries.async_reload(target.entry_id)
-        else:
-            try:
-                from homeassistant.helpers import device_registry as dr, entity_registry as er
-                dev_reg = dr.async_get(hass)
-                ent_reg = er.async_get(hass)
-                found_dev = None
-                if host:
-                    devices_list = getattr(dev_reg, "devices", [])
-                    for dev in (devices_list.values() if hasattr(devices_list, "values") else devices_list):
-                        if dev.configuration_url and host in str(dev.configuration_url):
-                            found_dev = dev
-                            break
-                        for _, conn_val in dev.connections:
-                            if host in str(conn_val):
-                                found_dev = dev
-                                break
-                if found_dev and new_title:
-                    dev_reg.async_update_device(found_dev.id, name_by_user=new_title)
-                    for ent in ent_reg.entities.values():
-                        if ent.device_id == found_dev.id:
-                            base_sensor = ent.original_name or ent.entity_id.split(".")[-1]
-                            ent_reg.async_update_entity(ent.entity_id, name=f"{new_title} {base_sensor}")
-                    _LOGGER.info("Updated device and entities for external miner %s to '%s'", host, new_title)
-            except Exception as dev_err:
-                _LOGGER.warning("Could not update external miner device: %s", dev_err)
 
     async def handle_delete_miner_service(call: ServiceCall) -> None:
         """Handle deleting a miner programmatically."""
@@ -357,7 +332,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 _LOGGER.debug("Could not read integration version from loader: %s", v_err)
 
             mtime = await hass.async_add_executor_job(_get_card_mtime, card_path)
-            cache_url = f"/local/home-miner-cards.js?v={version_str}.{mtime}"
+            cache_url = f"{CARD_URL}?v={version_str}.{mtime}"
 
             lovelace = hass.data.get("lovelace")
             if not lovelace:
@@ -492,6 +467,9 @@ class HomeMinerManagerView(HomeAssistantView):
 
     async def get(self, request: web.Request) -> web.Response:
         """Return list of all configured miners."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         entries = hass.config_entries.async_entries(DOMAIN)
         miners = []
@@ -505,7 +483,7 @@ class HomeMinerManagerView(HomeAssistantView):
                 "coin": e.data.get(CONF_COIN, "BTC"),
                 "pool_provider": e.data.get(CONF_POOL_PROVIDER, "none"),
                 "pool_wallet": e.data.get(CONF_POOL_WALLET, ""),
-                "pool_token": e.data.get(CONF_POOL_TOKEN, ""),
+                "has_pool_token": bool(e.data.get(CONF_POOL_TOKEN)),
                 "electricity_rate_sensor": e.data.get(CONF_ELECTRICITY_RATE_SENSOR, ""),
                 "scan_interval": e.data.get(CONF_SCAN_INTERVAL, 30),
             })

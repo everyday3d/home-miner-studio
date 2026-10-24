@@ -99,8 +99,8 @@ Home Miner Studio is architected from the ground up to support the full spectrum
 
 ## 🌟 Key Features
 
-* 🔍 **Zero-Config Auto-Import & Network Discovery**:
-  * Scans existing Home Assistant integrations (`bitaxe`, `ha_bitaxe`, `axeos`, `antminer`, `whatsminer`, `braiins`, `hiveos`, `nicehash`, `nerdminer`).
+* 🔍 **Zero-Config Local LAN Network Discovery**:
+  * High-speed concurrent LAN subnet scanner detecting AxeOS HTTP (`Port 80`) and CGMiner TCP RPC (`Port 4028`) hardware directly on your local network.
   * Auto-discovers local network ASIC nodes and AxeOS blades with 1-click import into Home Assistant.
 * 🎮 **Fleet RPG Progression & Prestige Themes (Level 1 to 500)**:
   * **XP Progression Engine**: Rebalanced rewards granting 1 XP per verified accepted share plus logarithmic difficulty milestone bonuses.
