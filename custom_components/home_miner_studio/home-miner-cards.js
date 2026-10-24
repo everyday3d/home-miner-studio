@@ -8535,7 +8535,7 @@ class HomeMinerFleetCard extends HTMLElement {
               </span>
             </div>
             <div class="badge-glass-pill" style="margin-top: 3px;">
-              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Unit' : 'Units'} • <span id="cache-purge-btn" style="cursor: pointer; color: #00e5ff;" title="Click to force-purge browser cache and reload">v0.7.7</span>
+              ${displayedMiners.length} Active ASIC ${displayedMiners.length === 1 ? 'Unit' : 'Units'} • <span id="cache-purge-btn" style="cursor: pointer; color: #00e5ff;" title="Click to force-purge browser cache and reload">v0.7.8</span>
             </div>
           </div>
         </div>

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-10-24
+
 ### Added
 - **Boxerdawg3D maker logo** in the top command bar, embedded as a transparent PNG (no extra file to install), with a faint light outline so it stays readable on dark glass.
 
