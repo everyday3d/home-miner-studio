@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Home Assistant Repairs integration for miner connectivity and authentication failures** ([#47](https://github.com/everyday3d/home-miner-studio/issues/47)): raises an issue when a miner returns 401/403 or is unreachable on the LAN, and clears it automatically upon reconnection.
+
+### Security
+- **Enforced Admin RBAC on Custom REST Endpoints** ([#47](https://github.com/everyday3d/home-miner-studio/issues/47)): `request["hass_user"].is_admin` is now strictly validated across write endpoints (`POST`, `PATCH`, `DELETE` on `/api/home_miner_studio/miners`, `POST` on `/api/home_miner_studio/import`, and `GET` on `/api/home_miner_studio/discover`).
+- **HTML Entity Sanitization in Frontend Cards** ([#47](https://github.com/everyday3d/home-miner-studio/issues/47)): added `escapeHtml()` sanitization utility across `home-miner-cards.js` to escape dynamic device strings (miner names, hosts, pool endpoints, worker names, coin tickers) before template interpolation.
+
 ## [0.7.8] - 2026-10-24
 
 ### Added

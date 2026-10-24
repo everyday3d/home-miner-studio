@@ -8,6 +8,7 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import config_validation as cv
 from homeassistant.loader import async_get_integration
 
@@ -412,6 +413,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
+        from homeassistant.helpers import issue_registry as ir
+        ir.async_delete_issue(hass, DOMAIN, f"auth_failed_{entry.entry_id}")
+        ir.async_delete_issue(hass, DOMAIN, f"unreachable_{entry.entry_id}")
 
     return unload_ok
 
@@ -449,6 +453,9 @@ class HomeMinerDiscoverView(HomeAssistantView):
 
     async def get(self, request: web.Request) -> web.Response:
         """Return discovered miners JSON."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         include_all = request.query.get("include_all", "0").lower() in ("1", "true", "yes")
         miners = await async_discover_existing_miners(hass, include_all=include_all)
@@ -464,6 +471,9 @@ class HomeMinerImportView(HomeAssistantView):
 
     async def post(self, request: web.Request) -> web.Response:
         """Execute auto-import and return results."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         imported = await async_auto_import_miners(hass)
         return self.json({"imported": imported, "count": len(imported)})
@@ -499,6 +509,9 @@ class HomeMinerManagerView(HomeAssistantView):
 
     async def post(self, request: web.Request) -> web.Response:
         """Add a new miner configuration entry."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         try:
             payload = await request.json()
@@ -543,6 +556,9 @@ class HomeMinerManagerView(HomeAssistantView):
 
     async def patch(self, request: web.Request) -> web.Response:
         """Edit / update an existing miner configuration entry."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         try:
             payload = await request.json()
@@ -589,6 +605,9 @@ class HomeMinerManagerView(HomeAssistantView):
 
     async def delete(self, request: web.Request) -> web.Response:
         """Delete / remove a miner configuration entry."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
         hass: HomeAssistant = request.app["hass"]
         entry_id = request.query.get("entry_id")
         host = request.query.get("host")

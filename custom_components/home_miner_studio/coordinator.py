@@ -13,6 +13,7 @@ from typing import Any
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .market import async_get_coin_market_data
@@ -128,6 +129,10 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             else:
                 miner_data = await self._fetch_bitaxe_data()
 
+            # Clear any active repair issue once communication succeeds
+            ir.async_delete_issue(self.hass, DOMAIN, f"auth_failed_{self.entry.entry_id}")
+            ir.async_delete_issue(self.hass, DOMAIN, f"unreachable_{self.entry.entry_id}")
+
             # Merge pool metrics if configured
             pool_data = await self._fetch_pool_data()
             if self.pool_provider and self.pool_provider != POOL_NONE:
@@ -182,6 +187,36 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             return miner_data
         except Exception as err:
+            err_str = str(err).lower()
+            name = self.name or self.host
+            if "401" in err_str or "403" in err_str or "unauthorized" in err_str or "auth" in err_str:
+                ir.async_create_issue(
+                    self.hass,
+                    domain=DOMAIN,
+                    issue_id=f"auth_failed_{self.entry.entry_id}",
+                    is_fixable=False,
+                    severity=ir.IssueSeverity.ERROR,
+                    translation_key="miner_auth_failed",
+                    translation_placeholders={
+                        "name": name,
+                        "host": self.host,
+                        "port": str(self.port),
+                    },
+                )
+            else:
+                ir.async_create_issue(
+                    self.hass,
+                    domain=DOMAIN,
+                    issue_id=f"unreachable_{self.entry.entry_id}",
+                    is_fixable=False,
+                    severity=ir.IssueSeverity.WARNING,
+                    translation_key="miner_unreachable",
+                    translation_placeholders={
+                        "name": name,
+                        "host": self.host,
+                        "port": str(self.port),
+                    },
+                )
             raise UpdateFailed(f"Error communicating with miner at {self.host}: {err}") from err
 
     async def _fetch_btc_price(self) -> float:

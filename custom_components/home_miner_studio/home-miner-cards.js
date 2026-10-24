@@ -1607,6 +1607,16 @@ const PIPELINE_COIN_PROFILES = {
   }
 };
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 class HomeMinerFleetCard extends HTMLElement {
   constructor() {
     super();
@@ -3387,7 +3397,7 @@ class HomeMinerFleetCard extends HTMLElement {
       targetSelect.innerHTML = `<option value="" style="background-color: #0f172a; color: #f8fafc;">Entire Fleet (All Compatible Miners)</option>` +
         miners.map(m => {
           const isSel = m.host === targetHost;
-          return `<option value="${m.host}" ${isSel ? 'selected' : ''} style="background-color: #0f172a; color: #f8fafc;">${m.name} (${m.host}) - ${(m.type || 'miner').toUpperCase()}</option>`;
+          return `<option value="${escapeHtml(m.host)}" ${isSel ? 'selected' : ''} style="background-color: #0f172a; color: #f8fafc;">${escapeHtml(m.name)} (${escapeHtml(m.host)}) - ${escapeHtml((m.type || 'miner').toUpperCase())}</option>`;
         }).join('');
     }
 
@@ -3530,14 +3540,14 @@ class HomeMinerFleetCard extends HTMLElement {
           const graphicSvg = this._getMinerGraphicSvg(m.miner_type);
 
           return `
-            <div class="discovery-card ${isSelected ? 'selected' : ''} ${isConfigured ? 'configured' : ''}" data-host="${m.host}">
+            <div class="discovery-card ${isSelected ? 'selected' : ''} ${isConfigured ? 'configured' : ''}" data-host="${escapeHtml(m.host)}">
               <div class="discovery-card-top">
                 <div style="display: flex; flex-direction: column; gap: 3px;">
-                  <span class="discovery-rig-name">${m.name}</span>
-                  <span class="discovery-type-pill ${m.miner_type}">${(m.miner_type || 'ASIC').toUpperCase()}</span>
+                  <span class="discovery-rig-name">${escapeHtml(m.name)}</span>
+                  <span class="discovery-type-pill ${escapeHtml(m.miner_type)}">${escapeHtml((m.miner_type || 'ASIC').toUpperCase())}</span>
                 </div>
                 <label class="discovery-check-wrap">
-                  <input type="checkbox" class="discovery-checkbox" data-host="${m.host}"
+                  <input type="checkbox" class="discovery-checkbox" data-host="${escapeHtml(m.host)}"
                          ${isSelected ? 'checked' : ''} ${isConfigured ? 'disabled' : ''} />
                 </label>
               </div>
@@ -3547,13 +3557,13 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
 
               <div class="discovery-meta-row">
-                <span>${m.host}:${m.port || 80}</span>
+                <span>${escapeHtml(m.host)}:${m.port || 80}</span>
                 <span>•</span>
-                <span style="color: #fbbf24; font-weight: 700;">${m.coin || 'BTC'}</span>
+                <span style="color: #fbbf24; font-weight: 700;">${escapeHtml(m.coin || 'BTC')}</span>
               </div>
 
               <div style="font-size: 10px; color: #64748b; display: flex; justify-content: space-between;">
-                <span>Source: ${m.source_integration}</span>
+                <span>Source: ${escapeHtml(m.source_integration)}</span>
                 ${isConfigured ? '<span style="color: #38bdf8;">● Already Managed</span>' : '<span style="color: #34d399;">● Ready to Import</span>'}
               </div>
             </div>
@@ -9510,9 +9520,9 @@ class HomeMinerFleetCard extends HTMLElement {
                   </div>
                   <div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                      <span class="pod-name">${miner.name}</span>
+                      <span class="pod-name">${escapeHtml(miner.name)}</span>
                       <span class="badge-glass-pill" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); color: #fbbf24; font-weight: 700; font-size: 10px;">
-                        ${minerRank.badge} Lvl ${minerLvl} • ${minerRank.title}
+                        ${minerRank.badge} Lvl ${minerLvl} • ${escapeHtml(minerRank.title)}
                       </span>
                       ${isNerdqaxe ? `
                         <span class="badge-glass-pill" style="background: #141c2b; border-color: #26334d; color: #94a3b8; font-weight: 600; font-size: 10px;" title="Hardware implementation follows AxeOS specification; physical hardware testing is pending.">
@@ -9522,37 +9532,37 @@ class HomeMinerFleetCard extends HTMLElement {
                       ${isMega ? `
                         <span class="mega-share-pill mono">
                           ${svgIcon('award', 11)}
-                          <span>1G+ SHARE ${miner.bestShareStr}</span>
+                          <span>1G+ SHARE ${escapeHtml(miner.bestShareStr)}</span>
                         </span>
                       ` : isSuper ? `
                         <span class="super-share-pill mono">
                           ${svgIcon('zap', 11)}
-                          <span>100M+ SHARE ${miner.bestShareStr}</span>
+                          <span>100M+ SHARE ${escapeHtml(miner.bestShareStr)}</span>
                         </span>
                       ` : ''}
                     </div>
                     <div class="pod-meta-strip">
                       <span class="status-orb" style="background: #34d399;"></span>
-                      <span style="color: #cbd5e1;">${miner.host}</span>
+                      <span style="color: #cbd5e1;">${escapeHtml(miner.host)}</span>
                       <span>•</span>
-                      <span>${miner.asic}</span>
+                      <span>${escapeHtml(miner.asic)}</span>
                       <span>•</span>
-                      <span style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'};">${miner.os}</span>
+                      <span style="color: ${isBitaxe ? '#fbbf24' : '#38bdf8'};">${escapeHtml(miner.os)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                  <button class="glass-btn edit-miner-btn" data-host="${miner.host}" data-name="${miner.name}" data-type="${miner.type}" data-pool="${miner.poolProvider || 'none'}" data-wallet="${miner.poolWallet || ''}" data-coin="${miner.coin || 'BTC'}">${svgIcon('settings', 12)} Edit</button>
-                  <button class="glass-btn danger delete-miner-btn" data-host="${miner.host}" data-name="${miner.name}">${svgIcon('trash', 12)} Delete</button>
-                  ${hasControls ? `<button class="glass-btn primary open-controls-btn" data-host="${miner.host}">${svgIcon('sliders', 12)} Controls</button>` : ''}
+                  <button class="glass-btn edit-miner-btn" data-host="${escapeHtml(miner.host)}" data-name="${escapeHtml(miner.name)}" data-type="${escapeHtml(miner.type)}" data-pool="${escapeHtml(miner.poolProvider || 'none')}" data-wallet="${escapeHtml(miner.poolWallet || '')}" data-coin="${escapeHtml(miner.coin || 'BTC')}">${svgIcon('settings', 12)} Edit</button>
+                  <button class="glass-btn danger delete-miner-btn" data-host="${escapeHtml(miner.host)}" data-name="${escapeHtml(miner.name)}">${svgIcon('trash', 12)} Delete</button>
+                  ${hasControls ? `<button class="glass-btn primary open-controls-btn" data-host="${escapeHtml(miner.host)}">${svgIcon('sliders', 12)} Controls</button>` : ''}
                   ${isBitaxe ? `
-                    <button class="glass-btn" data-action="restart-proc" data-entity="${miner.restartEntity}">Restart</button>
-                    <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot</button>
-                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
+                    <button class="glass-btn" data-action="restart-proc" data-entity="${escapeHtml(miner.restartEntity)}">Restart</button>
+                    <button class="glass-btn" data-action="reboot-miner" data-entity="${escapeHtml(miner.rebootEntity)}">Reboot</button>
+                    <a class="glass-btn primary" href="http://${escapeHtml(miner.host)}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
                   ` : `
-                    <button class="glass-btn" data-action="reboot-miner" data-entity="${miner.rebootEntity}">Reboot ASIC</button>
-                    <a class="glass-btn primary" href="http://${miner.host}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
+                    <button class="glass-btn" data-action="reboot-miner" data-entity="${escapeHtml(miner.rebootEntity)}">Reboot ASIC</button>
+                    <a class="glass-btn primary" href="http://${escapeHtml(miner.host)}" target="_blank">Web UI ${svgIcon('external-link', 11)}</a>
                   `}
                 </div>
               </div>
@@ -9679,13 +9689,13 @@ class HomeMinerFleetCard extends HTMLElement {
                   <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
                   <span style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-family: 'JetBrains Mono', monospace;">Pool Provider:</span>
                   <span style="font-size: 12px; font-weight: 700; color: #00e5ff; font-family: 'JetBrains Mono', monospace;">
-                    ${poolProviderMap[miner.poolProvider] || miner.poolProvider || 'Direct Stratum'}
+                    ${escapeHtml(poolProviderMap[miner.poolProvider] || miner.poolProvider || 'Direct Stratum')}
                   </span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
-                  <span style="color: #94a3b8;">Worker: <b style="color: #fbbf24;">${miner.poolUser || miner.poolWallet || 'Auto'}</b></span>
+                  <span style="color: #94a3b8;">Worker: <b style="color: #fbbf24;">${escapeHtml(miner.poolUser || miner.poolWallet || 'Auto')}</b></span>
                   <span style="color: #263147;">|</span>
-                  <span style="color: #10b981; font-weight: 700;">● ${miner.poolStatus || 'Alive'}</span>
+                  <span style="color: #10b981; font-weight: 700;">● ${escapeHtml(miner.poolStatus || 'Alive')}</span>
                   ${miner.ths > 0 ? `
                     <span style="color: #263147;">|</span>
                     <span style="color: #00e5ff; font-weight: 700;">${miner.ths.toFixed(2)} TH/s</span>
@@ -9697,12 +9707,12 @@ class HomeMinerFleetCard extends HTMLElement {
                   <div class="stratum-chips-row">
                     <div class="stratum-host-pill">
                       <span style="color: #94a3b8;">Endpoint:</span>
-                      <span style="color: #00e5ff; font-weight: 600;">${miner.poolUrl}</span>
+                      <span style="color: #00e5ff; font-weight: 600;">${escapeHtml(miner.poolUrl)}</span>
                       <span style="color: #263147;">|</span>
-                      <span style="color: #fbbf24;">Worker: ${miner.poolUser}</span>
+                      <span style="color: #fbbf24;">Worker: ${escapeHtml(miner.poolUser)}</span>
                     </div>
                     <div class="badge-glass-pill" style="color: #10b981; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
-                      ● ${miner.poolStatus}
+                      ● ${escapeHtml(miner.poolStatus)}
                     </div>
                   </div>
 

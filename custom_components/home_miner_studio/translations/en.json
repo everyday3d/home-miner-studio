@@ -53,5 +53,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "miner_auth_failed": {
+      "title": "Authentication failed for miner {name}",
+      "description": "Home Miner Studio failed to authenticate with miner {name} at {host}:{port}. Please check the configured password in the miner settings."
+    },
+    "miner_unreachable": {
+      "title": "Miner {name} unreachable",
+      "description": "Home Miner Studio cannot connect to miner {name} at {host}:{port}. Check that the miner is powered on and reachable on your local network."
+    }
   }
 }
