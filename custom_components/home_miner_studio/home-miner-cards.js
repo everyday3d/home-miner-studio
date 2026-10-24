@@ -152,7 +152,10 @@ function svgIcon(name, size = 14) {
     'link': `<svg ${base}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
     'terminal': `<svg ${base}><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>`,
     'box': `<svg ${base}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
-    'hash': `<svg ${base}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`
+    'hash': `<svg ${base}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`,
+    'database': `<svg ${base}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+    'download': `<svg ${base}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    'upload': `<svg ${base}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`
   };
   return icons[name] || icons['cpu'];
 }
@@ -2848,6 +2851,92 @@ class HomeMinerFleetCard extends HTMLElement {
           </div>
         </div>
 
+        <!-- FLEET BACKUP & RESTORE MODAL -->
+        <div id="backup-modal" class="modal-backdrop" style="display: none;">
+          <div class="modal-box" style="max-width: 580px; width: 95%; border-color: #26334d;">
+            <div class="modal-header" style="border-bottom: 1px solid #1f2737; padding-bottom: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color: #00e5ff; display: flex;">${svgIcon('database', 20)}</span>
+                <div>
+                  <span class="modal-title" id="backup-modal-title" style="color: #f8fafc; font-size: 16px;">Fleet Backup & Restore</span>
+                  <div class="mono" style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="backup-modal-sub">
+                    Last Backup: <span id="backup-last-time-label" style="color: #38bdf8; font-weight: 600;">Never backed up</span>
+                  </div>
+                </div>
+              </div>
+              <button class="glass-btn" id="backup-modal-close" style="padding: 4px 10px; font-size: 13px;">✕</button>
+            </div>
+
+            <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 16px;">
+              <!-- PROMPT CALLOUT (Dynamic visibility) -->
+              <div id="backup-prompt-box" class="backup-prompt-callout" style="display: none;">
+                <span style="color: #f59e0b; margin-top: 1px; flex-shrink: 0;">${svgIcon('shield', 16)}</span>
+                <div>
+                  <b>Fleet Setup Complete — Backup Advised:</b> You have active ASIC hardware configured. Download a backup now so all custom names, stratum pool keys, and voltage/frequency targets are preserved in case of Home Assistant host migration.
+                </div>
+              </div>
+
+              <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+                Export all configured ASIC miners, stratum endpoints, custom names, and telemetry options into a portable JSON backup file, or restore a previous backup to this Home Assistant instance.
+              </div>
+
+              <!-- EXPORT SECTION -->
+              <div class="backup-section-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <div>
+                    <div style="font-weight: 700; color: #f8fafc; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                      <span style="color: #00e5ff;">${svgIcon('download', 14)}</span>
+                      <span>Export Fleet Configuration</span>
+                    </div>
+                    <div style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;">
+                      Download complete configuration JSON with hardware entries & pool keys.
+                    </div>
+                  </div>
+                  <button class="glass-btn primary" id="btn-export-backup" style="white-space: nowrap; padding: 6px 14px;">
+                    ${svgIcon('download', 13)} Download JSON
+                  </button>
+                </div>
+              </div>
+
+              <!-- IMPORT / RESTORE SECTION -->
+              <div class="backup-section-box">
+                <div style="font-weight: 700; color: #f8fafc; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                  <span style="color: #38bdf8;">${svgIcon('upload', 14)}</span>
+                  <span>Restore Fleet from Backup</span>
+                </div>
+                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;">
+                  Select or drag a previously exported JSON backup file to import.
+                </div>
+
+                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                  <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;" />
+                  <div id="backup-drop-zone" class="backup-drop-zone">
+                    <span style="color: #00e5ff;">${svgIcon('upload', 24)}</span>
+                    <span id="backup-file-label" style="font-size: 12.5px; color: #cbd5e1; font-weight: 600;">Click to select backup JSON or drag & drop</span>
+                    <span style="font-size: 11px; color: #64748b;">Must be a valid Home Miner Studio backup file</span>
+                  </div>
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+                    <label style="font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                      <input type="checkbox" id="backup-overwrite-mode" style="accent-color: #00e5ff; cursor: pointer;" />
+                      <span>Overwrite existing miners with matching IP/port</span>
+                    </label>
+                    <button class="glass-btn" id="btn-restore-backup" disabled style="white-space: nowrap; padding: 6px 14px;">
+                      ${svgIcon('check', 13)} Restore Fleet
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="backup-status-msg" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 12px; line-height: 1.4;"></div>
+            </div>
+
+            <div class="modal-footer" style="padding-top: 14px; border-top: 1px solid #1f2737; display: flex; justify-content: flex-end;">
+              <button class="glass-btn" id="backup-modal-done" style="padding: 6px 18px; color: #38bdf8; border-color: #26334d;">Close</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     `;
     this._attachModalListeners();
@@ -3165,6 +3254,52 @@ class HomeMinerFleetCard extends HTMLElement {
     if (cModal) {
       this._bindModalBackdrop(cModal);
     }
+
+    const backupModal = this.shadowRoot.querySelector('#backup-modal');
+    if (backupModal) {
+      ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+        backupModal.addEventListener(eventType, stopPropagation);
+      });
+      this._bindModalBackdrop(backupModal);
+
+      const backupCloseBtn = this.shadowRoot.querySelector('#backup-modal-close');
+      const backupDoneBtn = this.shadowRoot.querySelector('#backup-modal-done');
+      if (backupCloseBtn) backupCloseBtn.addEventListener('click', () => this._closeModals());
+      if (backupDoneBtn) backupDoneBtn.addEventListener('click', () => this._closeModals());
+
+      const exportBtn = this.shadowRoot.querySelector('#btn-export-backup');
+      if (exportBtn) exportBtn.addEventListener('click', () => this._exportBackup());
+
+      const restoreBtn = this.shadowRoot.querySelector('#btn-restore-backup');
+      if (restoreBtn) restoreBtn.addEventListener('click', () => this._restoreBackup());
+
+      const dropZone = this.shadowRoot.querySelector('#backup-drop-zone');
+      const fileInput = this.shadowRoot.querySelector('#backup-file-input');
+
+      if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files[0]) {
+            this._handleBackupFile(e.target.files[0]);
+          }
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            this._handleBackupFile(e.dataTransfer.files[0]);
+          }
+        });
+      }
+    }
   }
 
   _closeModals() {
@@ -3175,14 +3310,228 @@ class HomeMinerFleetCard extends HTMLElement {
     const discModal = this.shadowRoot.querySelector('#discovery-modal');
     const stratumModal = this.shadowRoot.querySelector('#stratum-modal');
     const cModal = this.shadowRoot.querySelector('#chronicle-modal');
+    const backupModal = this.shadowRoot.querySelector('#backup-modal');
     const controlsModal = this.shadowRoot.querySelector('#controls-modal');
     if (controlsModal) controlsModal.style.display = 'none';
     this._controlsHost = null;
     if (cModal) cModal.style.display = 'none';
+    if (backupModal) backupModal.style.display = 'none';
     if (minerModal) minerModal.style.display = 'none';
     if (deleteModal) deleteModal.style.display = 'none';
     if (discModal) discModal.style.display = 'none';
     if (stratumModal) stratumModal.style.display = 'none';
+  }
+
+  _formatBackupTimestamp(isoStr) {
+    if (!isoStr) return 'Never backed up';
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      return d.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    } catch (_) {
+      return isoStr;
+    }
+  }
+
+  _openBackupModal() {
+    this._ensureDom();
+    const modal = this.shadowRoot.querySelector('#backup-modal');
+    if (!modal) return;
+    this._modalOpen = true;
+
+    const lastTime = safeStorage.get('miner_last_backup_time');
+    const lastLabel = this.shadowRoot.querySelector('#backup-last-time-label');
+    if (lastLabel) {
+      lastLabel.textContent = this._formatBackupTimestamp(lastTime);
+      lastLabel.style.color = lastTime ? '#38bdf8' : '#f59e0b';
+    }
+
+    const promptBox = this.shadowRoot.querySelector('#backup-prompt-box');
+    const miners = this._miners || [];
+    if (promptBox) {
+      promptBox.style.display = (!lastTime && miners.length > 0) ? 'flex' : 'none';
+    }
+
+    const statusMsg = this.shadowRoot.querySelector('#backup-status-msg');
+    if (statusMsg) statusMsg.style.display = 'none';
+    const fileInput = this.shadowRoot.querySelector('#backup-file-input');
+    if (fileInput) fileInput.value = '';
+    const fileLabel = this.shadowRoot.querySelector('#backup-file-label');
+    if (fileLabel) fileLabel.textContent = 'Click to select backup JSON or drag & drop';
+    const restoreBtn = this.shadowRoot.querySelector('#btn-restore-backup');
+    if (restoreBtn) restoreBtn.disabled = true;
+    this._pendingBackupData = null;
+
+    modal.style.display = 'flex';
+  }
+
+  async _exportBackup() {
+    const btn = this.shadowRoot.querySelector('#btn-export-backup');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `${svgIcon('refresh', 13)} Exporting...`;
+    }
+    try {
+      const resp = await this._hass.fetchWithAuth('/api/home_miner_studio/backup');
+      if (!resp.ok) {
+        throw new Error(`Export failed (${resp.status}): ${await resp.text()}`);
+      }
+      const data = await resp.json();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const nowIso = new Date().toISOString();
+      const fileStamp = nowIso.replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `home_miner_studio_fleet_backup_${fileStamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      safeStorage.set('miner_last_backup_time', nowIso);
+      const lastLabel = this.shadowRoot.querySelector('#backup-last-time-label');
+      if (lastLabel) {
+        lastLabel.textContent = this._formatBackupTimestamp(nowIso);
+        lastLabel.style.color = '#38bdf8';
+      }
+      const promptBox = this.shadowRoot.querySelector('#backup-prompt-box');
+      if (promptBox) promptBox.style.display = 'none';
+
+      this._showBackupStatus(`Successfully exported ${data.fleet_count || (data.fleet && data.fleet.length) || 0} miners to JSON backup!`, 'success');
+      this.render();
+    } catch (err) {
+      this._showBackupStatus(`Export error: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `${svgIcon('download', 13)} Download JSON`;
+      }
+    }
+  }
+
+  _handleBackupFile(file) {
+    if (!file) return;
+    const label = this.shadowRoot.querySelector('#backup-file-label');
+    const restoreBtn = this.shadowRoot.querySelector('#btn-restore-backup');
+    const statusMsg = this.shadowRoot.querySelector('#backup-status-msg');
+    if (statusMsg) statusMsg.style.display = 'none';
+
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      this._showBackupStatus('Please select a valid .json file.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const fleet = parsed.fleet || parsed.miners;
+        if (!Array.isArray(fleet) || fleet.length === 0) {
+          throw new Error('Backup file does not contain a valid "fleet" list.');
+        }
+        this._pendingBackupData = parsed;
+        if (label) label.textContent = `Selected: ${file.name} (${fleet.length} miners found)`;
+        if (restoreBtn) restoreBtn.disabled = false;
+        this._showBackupStatus(`Ready to restore ${fleet.length} miners from ${file.name}.`, 'info');
+      } catch (err) {
+        this._pendingBackupData = null;
+        if (label) label.textContent = 'Invalid file selected';
+        if (restoreBtn) restoreBtn.disabled = true;
+        this._showBackupStatus(`File parsing error: ${err.message}`, 'error');
+      }
+    };
+    reader.onerror = () => {
+      this._showBackupStatus('Failed to read file from disk.', 'error');
+    };
+    reader.readAsText(file);
+  }
+
+  async _restoreBackup() {
+    if (!this._pendingBackupData) return;
+    const btn = this.shadowRoot.querySelector('#btn-restore-backup');
+    const overwrite = !!this.shadowRoot.querySelector('#backup-overwrite-mode')?.checked;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `${svgIcon('refresh', 13)} Restoring...`;
+    }
+
+    try {
+      const resp = await this._hass.fetchWithAuth('/api/home_miner_studio/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          backup: this._pendingBackupData,
+          mode: overwrite ? 'overwrite' : 'merge'
+        })
+      });
+
+      if (!resp.ok) {
+        let errMsg = `HTTP ${resp.status}`;
+        try {
+          const errData = await resp.json();
+          errMsg = errData.error || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      const res = await resp.json();
+      const nowIso = new Date().toISOString();
+      safeStorage.set('miner_last_backup_time', nowIso);
+      const lastLabel = this.shadowRoot.querySelector('#backup-last-time-label');
+      if (lastLabel) {
+        lastLabel.textContent = this._formatBackupTimestamp(nowIso);
+        lastLabel.style.color = '#38bdf8';
+      }
+      const promptBox = this.shadowRoot.querySelector('#backup-prompt-box');
+      if (promptBox) promptBox.style.display = 'none';
+
+      const msg = `Restore complete: ${res.restored} added, ${res.updated} updated, ${res.skipped} skipped.`;
+      this._showBackupStatus(msg, res.errors && res.errors.length > 0 ? 'warning' : 'success');
+
+      setTimeout(() => {
+        this.render();
+      }, 1000);
+    } catch (err) {
+      this._showBackupStatus(`Restore failed: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `${svgIcon('check', 13)} Restore Fleet`;
+      }
+    }
+  }
+
+  _showBackupStatus(text, type = 'info') {
+    const el = this.shadowRoot.querySelector('#backup-status-msg');
+    if (!el) return;
+    el.style.display = 'block';
+    if (type === 'error') {
+      el.style.background = 'rgba(239, 68, 68, 0.15)';
+      el.style.border = '1px solid #ef4444';
+      el.style.color = '#fca5a5';
+    } else if (type === 'warning') {
+      el.style.background = 'rgba(245, 158, 11, 0.15)';
+      el.style.border = '1px solid #f59e0b';
+      el.style.color = '#fcd34d';
+    } else if (type === 'success') {
+      el.style.background = 'rgba(16, 185, 129, 0.15)';
+      el.style.border = '1px solid #10b981';
+      el.style.color = '#6ee7b7';
+    } else {
+      el.style.background = 'rgba(0, 229, 255, 0.1)';
+      el.style.border = '1px solid #00e5ff';
+      el.style.color = '#a5f3fc';
+    }
+    el.textContent = text;
   }
 
   _openControlsModal(host) {
@@ -5810,6 +6159,62 @@ class HomeMinerFleetCard extends HTMLElement {
           border-left: 3px solid #38bdf8;
           border-radius: 6px;
           padding: 12px 14px;
+        }
+
+        .backup-section-box {
+          background: rgba(15, 23, 42, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          padding: 14px 16px;
+        }
+
+        .backup-drop-zone {
+          border: 2px dashed rgba(0, 229, 255, 0.35);
+          border-radius: 8px;
+          padding: 18px;
+          text-align: center;
+          cursor: pointer;
+          background: rgba(11, 14, 20, 0.6);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .backup-drop-zone:hover, .backup-drop-zone.dragover {
+          border-color: #00e5ff;
+          background: rgba(0, 229, 255, 0.06);
+        }
+
+        .backup-recommended-btn {
+          border-color: rgba(0, 229, 255, 0.45) !important;
+          box-shadow: 0 0 12px rgba(0, 229, 255, 0.15) !important;
+        }
+
+        .backup-rec-pill {
+          font-size: 9.5px;
+          background: rgba(0, 229, 255, 0.2);
+          color: #00e5ff;
+          padding: 1px 6px;
+          border-radius: 4px;
+          margin-left: 5px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .backup-prompt-callout {
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px solid rgba(245, 158, 11, 0.35);
+          border-radius: 8px;
+          padding: 11px 14px;
+          font-size: 12px;
+          color: #fde68a;
+          line-height: 1.5;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
         }
 
         /* --- WORKSTATION SURFACE THEME ENGINE STYLES --- */
@@ -8530,6 +8935,9 @@ class HomeMinerFleetCard extends HTMLElement {
 
     this._saveScrollPositions(cardRoot);
 
+    const lastBackupTime = safeStorage.get('miner_last_backup_time');
+    const needsBackupPrompt = displayedMiners.length > 0 && !lastBackupTime;
+
     cardRoot.innerHTML = `
       <!-- TOP COMMAND BAR -->
       <div class="glass-base top-bar">
@@ -8559,6 +8967,9 @@ class HomeMinerFleetCard extends HTMLElement {
           </button>
           <button class="glass-btn primary" id="add-miner-btn">${svgIcon('plus', 13)} Add Miner</button>
           <button class="glass-btn" id="import-btn">${svgIcon('search', 13)} Discovery</button>
+          <button class="glass-btn ${needsBackupPrompt ? 'backup-recommended-btn' : ''}" id="backup-btn" title="Backup or Restore Fleet Configurations (JSON)">
+            ${svgIcon('database', 13)} Backup ${needsBackupPrompt ? '<span class="backup-rec-pill">Advised</span>' : ''}
+          </button>
           <button class="glass-btn" id="reload-btn" title="Refresh Fleet Telemetry (Shift+Click to Force-Purge Browser Cache & Reload)">${svgIcon('refresh', 13)} Refresh</button>
         </div>
       </div>
@@ -10117,6 +10528,14 @@ class HomeMinerFleetCard extends HTMLElement {
     if (importBtn) {
       importBtn.addEventListener('click', () => {
         this._openDiscoveryModal();
+      });
+    }
+
+    // Fleet Backup & Restore Button (Interactive Modal)
+    const backupBtn = this.shadowRoot.querySelector('#backup-btn');
+    if (backupBtn) {
+      backupBtn.addEventListener('click', () => {
+        this._openBackupModal();
       });
     }
 

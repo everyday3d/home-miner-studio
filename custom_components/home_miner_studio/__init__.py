@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import config_validation as cv
 from homeassistant.loader import async_get_integration
+import homeassistant.util.dt as dt_util
 
 import voluptuous as vol
 
@@ -29,6 +30,7 @@ from .const import (
     CONF_PORT,
     CONF_SCAN_INTERVAL,
     DEFAULT_PORT_BITAXE,
+    DEFAULT_PORT_CGMINER,
     DOMAIN,
     PLATFORMS,
     SERVICE_ADD_MINER,
@@ -336,6 +338,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.http.register_view(HomeMinerImportView)
     hass.http.register_view(HomeMinerManagerView)
     hass.http.register_view(HomeMinerMarketView)
+    hass.http.register_view(HomeMinerBackupView)
+    hass.http.register_view(HomeMinerRestoreView)
 
     # Automatic Lovelace Resource Cache-Buster Synchronization
     def _get_card_mtime(path: str) -> int:
@@ -631,3 +635,168 @@ class HomeMinerManagerView(HomeAssistantView):
 
         removed = await hass.config_entries.async_remove(target_entry.entry_id)
         return self.json({"success": removed, "entry_id": target_entry.entry_id})
+
+
+class HomeMinerBackupView(HomeAssistantView):
+    """View to export complete fleet configuration as JSON."""
+
+    url = "/api/home_miner_studio/backup"
+    name = "api:home_miner_studio:backup"
+    requires_auth = True
+
+    async def get(self, request: web.Request) -> web.Response:
+        """Export fleet configuration."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
+
+        hass: HomeAssistant = request.app["hass"]
+        entries = hass.config_entries.async_entries(DOMAIN)
+
+        miners = []
+        for e in entries:
+            miners.append({
+                CONF_NAME: e.title or e.data.get(CONF_NAME, "Miner"),
+                CONF_MINER_TYPE: e.data.get(CONF_MINER_TYPE, TYPE_BITAXE),
+                CONF_HOST: e.data.get(CONF_HOST, ""),
+                CONF_PORT: e.data.get(CONF_PORT, 80),
+                CONF_PASSWORD: e.data.get(CONF_PASSWORD, ""),
+                CONF_COIN: e.data.get(CONF_COIN, "BTC"),
+                CONF_POOL_PROVIDER: e.data.get(CONF_POOL_PROVIDER, "none"),
+                CONF_POOL_WALLET: e.data.get(CONF_POOL_WALLET, ""),
+                CONF_POOL_TOKEN: e.data.get(CONF_POOL_TOKEN, ""),
+                CONF_ELECTRICITY_RATE_SENSOR: e.data.get(CONF_ELECTRICITY_RATE_SENSOR, ""),
+                CONF_SCAN_INTERVAL: e.data.get(CONF_SCAN_INTERVAL, 30),
+            })
+
+        version_str = "0.7.9"
+        try:
+            integration = await async_get_integration(hass, DOMAIN)
+            if integration and integration.version:
+                version_str = str(integration.version)
+        except Exception:
+            pass
+
+        now_iso = dt_util.utcnow().isoformat()
+        now_slug = dt_util.now().strftime("%Y%m%d_%H%M%S")
+
+        payload = {
+            "schema_version": 1,
+            "domain": DOMAIN,
+            "integration_version": version_str,
+            "exported_at": now_iso,
+            "fleet_count": len(miners),
+            "fleet": miners,
+        }
+
+        headers = {
+            "Content-Disposition": f'attachment; filename="home_miner_studio_fleet_backup_{now_slug}.json"',
+            "Content-Type": "application/json",
+        }
+        return self.json(payload, headers=headers)
+
+
+class HomeMinerRestoreView(HomeAssistantView):
+    """View to restore fleet configuration from uploaded JSON backup."""
+
+    url = "/api/home_miner_studio/restore"
+    name = "api:home_miner_studio:restore"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        """Import / restore fleet configuration."""
+        user = request.get("hass_user")
+        if not user or not user.is_admin:
+            raise Unauthorized()
+
+        hass: HomeAssistant = request.app["hass"]
+        try:
+            body = await request.json()
+        except Exception:
+            return self.json({"error": "Invalid JSON body"}, status=400)
+
+        mode = body.get("mode", "merge")
+        raw_fleet = body.get("fleet") or body.get("miners")
+        if raw_fleet is None and isinstance(body.get("backup"), dict):
+            raw_fleet = body["backup"].get("fleet") or body["backup"].get("miners")
+
+        if not isinstance(raw_fleet, list):
+            return self.json({"error": "Malformed backup: missing 'fleet' list"}, status=400)
+
+        existing_entries = hass.config_entries.async_entries(DOMAIN)
+        existing_map = {}
+        for e in existing_entries:
+            h = e.data.get(CONF_HOST)
+            p = e.data.get(CONF_PORT, 80)
+            if h:
+                existing_map[(str(h).strip().lower(), int(p))] = e
+
+        from homeassistant import config_entries
+
+        restored_count = 0
+        updated_count = 0
+        skipped_count = 0
+        errors = []
+
+        for item in raw_fleet:
+            if not isinstance(item, dict):
+                continue
+            host = str(item.get(CONF_HOST) or item.get("host") or "").strip()
+            if not host:
+                skipped_count += 1
+                continue
+
+            miner_type = str(item.get(CONF_MINER_TYPE) or item.get("miner_type", TYPE_BITAXE)).lower()
+            default_port = DEFAULT_PORT_CGMINER if any(x in miner_type for x in ("avalon", "cgminer", "whatsminer", "antminer")) else DEFAULT_PORT_BITAXE
+            try:
+                port = int(item.get(CONF_PORT) or item.get("port") or default_port)
+            except (ValueError, TypeError):
+                port = default_port
+
+            key = (host.lower(), port)
+            data = {
+                CONF_NAME: str(item.get(CONF_NAME) or item.get("name") or f"{miner_type.title()} ({host})"),
+                CONF_MINER_TYPE: miner_type,
+                CONF_HOST: host,
+                CONF_PORT: port,
+                CONF_PASSWORD: str(item.get(CONF_PASSWORD) or item.get("password") or ""),
+                CONF_COIN: str(item.get(CONF_COIN) or item.get("coin") or "BTC").upper(),
+                CONF_POOL_PROVIDER: str(item.get(CONF_POOL_PROVIDER) or item.get("pool_provider") or "none").lower(),
+                CONF_POOL_WALLET: str(item.get(CONF_POOL_WALLET) or item.get("pool_wallet") or ""),
+                CONF_POOL_TOKEN: str(item.get(CONF_POOL_TOKEN) or item.get("pool_token") or ""),
+                CONF_ELECTRICITY_RATE_SENSOR: str(item.get(CONF_ELECTRICITY_RATE_SENSOR) or item.get("electricity_rate_sensor") or ""),
+                CONF_SCAN_INTERVAL: int(item.get(CONF_SCAN_INTERVAL) or item.get("scan_interval") or 30),
+            }
+
+            if key in existing_map:
+                if mode == "overwrite":
+                    entry = existing_map[key]
+                    hass.config_entries.async_update_entry(
+                        entry,
+                        title=data[CONF_NAME],
+                        data={**entry.data, **data},
+                    )
+                    await hass.config_entries.async_reload(entry.entry_id)
+                    updated_count += 1
+                else:
+                    skipped_count += 1
+            else:
+                flow_res = await hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": config_entries.SOURCE_IMPORT},
+                    data=data,
+                )
+                if flow_res.get("type") == "create_entry":
+                    restored_count += 1
+                else:
+                    errors.append(f"Failed to create {host}:{port}: {flow_res.get('reason')}")
+
+        return self.json({
+            "success": True,
+            "restored": restored_count,
+            "updated": updated_count,
+            "skipped": skipped_count,
+            "errors": errors,
+            "total": len(raw_fleet),
+        })
+

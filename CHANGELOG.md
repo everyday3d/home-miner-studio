@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Fleet Configuration Backup & Restore Console** ([#48](https://github.com/everyday3d/home-miner-studio/issues/48)):
+  - Added dedicated REST endpoints (`GET /api/home_miner_studio/backup` and `POST /api/home_miner_studio/restore`) strictly guarded with Admin RBAC (`request["hass_user"].is_admin`).
+  - 1-click JSON backup export preserving all configured ASIC rigs, friendly names, pool providers, wallet keys, and telemetry settings.
+  - Interactive restore dialog supporting drag-and-drop file upload, JSON schema validation, and selectable merge vs. overwrite modes.
+  - Setup completion encouragement: prominently displays "Last Backup" status timestamp and suggests backup upon initial rig configuration.
+
 ## [0.7.9] - 2026-10-24
 
 ### Added
