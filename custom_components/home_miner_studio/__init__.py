@@ -520,11 +520,11 @@ class HomeMinerManagerView(HomeAssistantView):
         try:
             payload = await request.json()
         except Exception:
-            return self.json({"error": "Invalid JSON body"}, status=400)
+            return self.json({"error": "Invalid JSON body"}, status_code=400)
 
         host = payload.get(CONF_HOST)
         if not host:
-            return self.json({"error": "Host / IP address is required"}, status=400)
+            return self.json({"error": "Host / IP address is required"}, status_code=400)
 
         miner_type = payload.get(CONF_MINER_TYPE, TYPE_BITAXE)
         port = int(payload.get(CONF_PORT, DEFAULT_PORT_BITAXE))
@@ -533,7 +533,7 @@ class HomeMinerManagerView(HomeAssistantView):
         # Check existing entries
         for e in hass.config_entries.async_entries(DOMAIN):
             if e.data.get(CONF_HOST) == host and e.data.get(CONF_PORT) == port:
-                return self.json({"error": f"Miner at {host}:{port} already exists"}, status=409)
+                return self.json({"error": f"Miner at {host}:{port} already exists"}, status_code=409)
 
         data = {
             CONF_NAME: name,
@@ -567,7 +567,7 @@ class HomeMinerManagerView(HomeAssistantView):
         try:
             payload = await request.json()
         except Exception:
-            return self.json({"error": "Invalid JSON body"}, status=400)
+            return self.json({"error": "Invalid JSON body"}, status_code=400)
 
         entry_id = payload.get("entry_id")
         host = payload.get(CONF_HOST)
@@ -579,7 +579,7 @@ class HomeMinerManagerView(HomeAssistantView):
                 break
 
         if not target_entry:
-            return self.json({"error": "Miner entry not found"}, status=404)
+            return self.json({"error": "Miner entry not found"}, status_code=404)
 
         updated_data = {**target_entry.data}
         for k in (
@@ -631,7 +631,7 @@ class HomeMinerManagerView(HomeAssistantView):
                 break
 
         if not target_entry:
-            return self.json({"error": "Miner entry not found"}, status=404)
+            return self.json({"error": "Miner entry not found"}, status_code=404)
 
         removed = await hass.config_entries.async_remove(target_entry.entry_id)
         return self.json({"success": removed, "entry_id": target_entry.entry_id})
@@ -689,11 +689,9 @@ class HomeMinerBackupView(HomeAssistantView):
             "fleet": miners,
         }
 
-        headers = {
-            "Content-Disposition": f'attachment; filename="home_miner_studio_fleet_backup_{now_slug}.json"',
-            "Content-Type": "application/json",
-        }
-        return self.json(payload, headers=headers)
+        resp = self.json(payload)
+        resp.headers["Content-Disposition"] = f'attachment; filename="home_miner_studio_fleet_backup_{now_slug}.json"'
+        return resp
 
 
 class HomeMinerRestoreView(HomeAssistantView):
@@ -713,7 +711,7 @@ class HomeMinerRestoreView(HomeAssistantView):
         try:
             body = await request.json()
         except Exception:
-            return self.json({"error": "Invalid JSON body"}, status=400)
+            return self.json({"error": "Invalid JSON body"}, status_code=400)
 
         mode = body.get("mode", "merge")
         raw_fleet = body.get("fleet") or body.get("miners")
@@ -721,7 +719,7 @@ class HomeMinerRestoreView(HomeAssistantView):
             raw_fleet = body["backup"].get("fleet") or body["backup"].get("miners")
 
         if not isinstance(raw_fleet, list):
-            return self.json({"error": "Malformed backup: missing 'fleet' list"}, status=400)
+            return self.json({"error": "Malformed backup: missing 'fleet' list"}, status_code=400)
 
         existing_entries = hass.config_entries.async_entries(DOMAIN)
         existing_map = {}
