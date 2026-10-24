@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Boxerdawg3D maker logo** in the top command bar, embedded as a transparent PNG (no extra file to install), with a faint light outline so it stays readable on dark glass.
 
+### Fixed
+- **Eliminated blocking file I/O in async loop for Lovelace card resource sync** ([#46](https://github.com/everyday3d/home-miner-studio/issues/46)):
+  - Removed synchronous `open()` and `json.load()` calls reading `manifest.json` on the event loop; integration version is now retrieved asynchronously via `await async_get_integration(hass, DOMAIN)`.
+  - Wrapped `os.path.exists()` and `os.path.getmtime()` file system checks in `await hass.async_add_executor_job(...)` to keep Home Assistant's event loop unblocked.
+
 ## [0.7.7] - 2026-10-22
 
 ### Added

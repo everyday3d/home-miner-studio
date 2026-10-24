@@ -9,6 +9,7 @@ from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.loader import async_get_integration
 
 import voluptuous as vol
 
@@ -59,7 +60,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     # Register static path to serve home-miner-cards.js
     card_path = os.path.join(os.path.dirname(__file__), CARD_FILE)
-    if os.path.exists(card_path):
+    card_exists = await hass.async_add_executor_job(os.path.exists, card_path)
+    if card_exists:
         try:
             await hass.http.async_register_static_paths([
                 StaticPathConfig(CARD_URL, card_path, cache_headers=False)
@@ -335,20 +337,21 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.http.register_view(HomeMinerMarketView)
 
     # Automatic Lovelace Resource Cache-Buster Synchronization
+    def _get_card_mtime(path: str) -> int:
+        return int(os.path.getmtime(path)) if os.path.exists(path) else 0
+
     async def _async_sync_lovelace_card_resource(call: ServiceCall | None = None) -> None:
         """Ensure Lovelace resource points to current version with cache buster."""
         try:
-            manifest_file = os.path.join(os.path.dirname(__file__), "manifest.json")
-            version_str = "0.5.2"
-            if os.path.exists(manifest_file):
-                import json
-                try:
-                    with open(manifest_file, "r", encoding="utf-8") as mf:
-                        version_str = json.load(mf).get("version", version_str)
-                except Exception:
-                    pass
+            version_str = "0.7.7"
+            try:
+                integration = await async_get_integration(hass, DOMAIN)
+                if integration and integration.version:
+                    version_str = str(integration.version)
+            except Exception as v_err:
+                _LOGGER.debug("Could not read integration version from loader: %s", v_err)
 
-            mtime = int(os.path.getmtime(card_path)) if os.path.exists(card_path) else 0
+            mtime = await hass.async_add_executor_job(_get_card_mtime, card_path)
             cache_url = f"/local/home-miner-cards.js?v={version_str}.{mtime}"
 
             lovelace = hass.data.get("lovelace")
