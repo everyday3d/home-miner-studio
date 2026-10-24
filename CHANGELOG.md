@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.9] - 2026-10-24
 
 ### Added
 - **Home Assistant Repairs integration for miner connectivity and authentication failures** ([#47](https://github.com/everyday3d/home-miner-studio/issues/47)): raises an issue when a miner returns 401/403 or is unreachable on the LAN, and clears it automatically upon reconnection.
