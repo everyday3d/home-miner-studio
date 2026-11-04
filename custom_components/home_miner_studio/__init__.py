@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.loader import async_get_integration
 import homeassistant.util.dt as dt_util
 
@@ -118,14 +119,16 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         for coord in _get_target_coordinators(call):
             await coord.async_restart_mining()
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_IMPORT_EXISTING,
         handle_import_service,
         schema=vol.Schema({}),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_APPLY_SOLAR_CURTAILMENT,
         handle_curtailment_service,
@@ -135,7 +138,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_SET_AXEOS_TUNING,
         handle_set_tuning_service,
@@ -146,7 +150,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_SET_AXEOS_PROFILE,
         handle_set_profile_service,
@@ -156,7 +161,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_REBOOT_MINER,
         handle_reboot_service,
@@ -186,7 +192,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 coin=coin,
             )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_SWITCH_STRATUM,
         handle_switch_stratum_service,
@@ -255,7 +262,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         if target:
             await hass.config_entries.async_remove(target.entry_id)
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_ADD_MINER,
         handle_add_miner_service,
@@ -274,7 +282,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_EDIT_MINER,
         handle_edit_miner_service,
@@ -293,7 +302,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_DELETE_MINER,
         handle_delete_miner_service,
@@ -354,7 +364,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         except Exception as err:
             _LOGGER.debug("Could not automatically synchronize Lovelace card resource: %s", err)
 
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_BUST_CARD_CACHE,
         _async_sync_lovelace_card_resource,

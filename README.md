@@ -201,11 +201,9 @@ home-miner-studio/
 
 ### Via HACS (Recommended)
 1. In Home Assistant, open **HACS** > **Integrations**.
-2. Click the three dots in the top right > **Custom repositories**.
-3. Add `https://github.com/everyday3d/home-miner-studio` with category **Integration**.
-4. Search for **Home Miner Studio** and click **Download**.
-5. Restart Home Assistant.
-6. Go to **Settings** > **Devices & Services** > **Add Integration**, search for **Home Miner Studio**, and follow the on-screen setup.
+2. Search for **Home Miner Studio** and click **Download**. *(If your HACS catalog has not synced yet, click the three dots in the top right > **Custom repositories** and add `https://github.com/everyday3d/home-miner-studio` with category **Integration**).*
+3. Restart Home Assistant.
+4. Go to **Settings** > **Devices & Services** > **Add Integration**, search for **Home Miner Studio**, and follow the on-screen setup.
 
 ### Lovelace Dashboard Card
 

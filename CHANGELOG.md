@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed entity-renaming loop in `handle_edit_miner_service` so user-customized entity names are preserved when renaming a miner.
 
 ### Security
+- **Admin RBAC Service Registration & Final Card Escaping** ([#51](https://github.com/everyday3d/home-miner-studio/issues/51)):
+  - Registered all miner management and hardware control services (`import_existing_miners`, `add_miner`, `edit_miner`, `delete_miner`, `switch_stratum`, `apply_solar_curtailment`, `set_axeos_tuning`, `set_axeos_profile`, `reboot_miner`, `bust_card_cache`) via `homeassistant.helpers.service.async_register_admin_service` so non-admin users cannot create, modify, or delete miners via service calls.
+  - Wrapped `fleetBestMinerName`, `rigName`, `rigCoin`, `radarCoin`, `activeStratumHost`, `activeStratumPort`, and Yield Matrix row fields in `escapeHtml()` across `home-miner-cards.js`.
 - **Mining-Dutch API Key Log Redaction & Coin Escaping** ([#50](https://github.com/everyday3d/home-miner-studio/issues/50)):
   - Removed `resp.raise_for_status()` in `_fetch_mining_dutch` and added explicit `aiohttp.ClientResponseError` status-only logging in `_fetch_pool_data` so query-string API keys are never written to Home Assistant logs.
   - Escaped remaining coin name/symbol interpolations in the Market Telemetry and Solo Lottery Radar views of `home-miner-cards.js`.

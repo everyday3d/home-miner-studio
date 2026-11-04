@@ -9135,10 +9135,10 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="pipeline-stage">
             <div class="stage-header">
               <span>01 / STRATUM INGRESS</span>
-              <span class="stage-tag" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8;">${activeStratumPort ? `TCP:${activeStratumPort}` : 'TCP:3333'}</span>
+              <span class="stage-tag" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8;">${activeStratumPort ? `TCP:${escapeHtml(activeStratumPort)}` : 'TCP:3333'}</span>
             </div>
             <div>
-              <div class="stage-mono" style="color: #38bdf8;" title="${activeStratumHost}:${activeStratumPort}">${activeStratumHost}:${activeStratumPort}</div>
+              <div class="stage-mono" style="color: #38bdf8;" title="${escapeHtml(activeStratumHost)}:${escapeHtml(activeStratumPort)}">${escapeHtml(activeStratumHost)}:${escapeHtml(activeStratumPort)}</div>
               <div class="stage-sub-meta" style="margin-top: 2px;">
                 <span>Job: <strong style="color: #cbd5e1;">#${jobIdHex}</strong></span>
                 <span style="color: ${profile.tagColor || '#34d399'};">${profile.algo}</span>
@@ -9649,14 +9649,14 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="lottery-metrics-column">
             <!-- Subsidy Banner -->
             <div class="jackpot-banner">
-              <div class="jackpot-label mono">CURRENT ${radarCoin} BLOCK SUBSIDY VALUE</div>
+              <div class="jackpot-label mono">CURRENT ${escapeHtml(radarCoin)} BLOCK SUBSIDY VALUE</div>
               <div class="jackpot-val-row">
                 <span class="jackpot-amount mono">$${blockBountyJackpotUsd >= 1 ? blockBountyJackpotUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : blockBountyJackpotUsd.toFixed(4)}</span>
                 <span class="jackpot-btc-badge mono" style="color: ${selectedProfile.accentColor}; border-color: ${selectedProfile.accentColor}; background: rgba(245, 158, 11, 0.12);">
-                  ${selectedProfile.reward.toLocaleString()} ${radarCoin}
+                  ${selectedProfile.reward.toLocaleString()} ${escapeHtml(radarCoin)}
                 </span>
               </div>
-              <div class="jackpot-sub mono">Full coinbase reward paid directly to solo worker upon valid ${radarCoin} block solution</div>
+              <div class="jackpot-sub mono">Full coinbase reward paid directly to solo worker upon valid ${escapeHtml(radarCoin)} block solution</div>
             </div>
 
             <!-- Odds & Stats 3-Card Rack -->
@@ -9670,12 +9670,12 @@ class HomeMinerFleetCard extends HTMLElement {
               </div>
               <div class="lottery-mini-tile">
                 <div class="mini-tile-label">Peak Verified Share</div>
-                <div class="mini-tile-val mono" style="color: #fbbf24;">${fleetBestShareStr}</div>
-                <div class="mini-tile-sub mono">${fleetBestMinerName || 'Fleet Leader'}</div>
+                <div class="mini-tile-val mono" style="color: #fbbf24;">${escapeHtml(fleetBestShareStr)}</div>
+                <div class="mini-tile-sub mono">${escapeHtml(fleetBestMinerName || 'Fleet Leader')}</div>
               </div>
               <div class="lottery-mini-tile">
                 <div class="mini-tile-label">Network Difficulty</div>
-                <div class="mini-tile-val mono" style="color: #a78bfa;">${selectedProfile.diffStr}</div>
+                <div class="mini-tile-val mono" style="color: #a78bfa;">${escapeHtml(selectedProfile.diffStr)}</div>
                 <div class="mini-tile-sub mono">Target: ~${selectedProfile.diffNum.toExponential(2)}</div>
               </div>
             </div>
@@ -9686,10 +9686,10 @@ class HomeMinerFleetCard extends HTMLElement {
         <div class="share-progress-container">
           <div class="share-progress-header">
             <span class="mono" style="font-size: 11px; color: #cbd5e1; font-weight: 600;">
-              Log10 Share Difficulty Progression Toward ${radarCoin} Block Target
+              Log10 Share Difficulty Progression Toward ${escapeHtml(radarCoin)} Block Target
             </span>
             <span class="mono" style="font-size: 11px; color: ${isBlockSolved ? '#34d399' : '#fbbf24'}; font-weight: 700;">
-              ${isBlockSolved ? `100% (${fleetBestShareStr} EXCEEDS ${radarCoin} TARGET)` : `${fleetBestShareStr} (${logProgressStr}% of Log10 Target)`}
+              ${isBlockSolved ? `100% (${escapeHtml(fleetBestShareStr)} EXCEEDS ${escapeHtml(radarCoin)} TARGET)` : `${escapeHtml(fleetBestShareStr)} (${logProgressStr}% of Log10 Target)`}
             </span>
           </div>
           <div class="share-progress-track">
@@ -9832,19 +9832,19 @@ class HomeMinerFleetCard extends HTMLElement {
                     </td>
                     <td>
                       <div class="yield-coin-cell">
-                        <span class="yield-coin-icon">${row.sign}</span>
+                        <span class="yield-coin-icon">${escapeHtml(row.sign)}</span>
                         <div>
                           <div class="yield-coin-symbol">
-                            ${row.name} (${row.coin})
+                            ${escapeHtml(row.name)} (${escapeHtml(row.coin)})
                             ${isTop ? '<span class="badge-glass-pill" style="margin-left: 6px; color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); font-size: 9px; padding: 1px 6px;">TOP YIELD</span>' : ''}
                           </div>
-                          <div class="yield-coin-name">${row.algo} • Subsidy: ${row.reward.toLocaleString()} ${row.coin}</div>
+                          <div class="yield-coin-name">${escapeHtml(row.algo)} • Subsidy: ${row.reward.toLocaleString()} ${escapeHtml(row.coin)}</div>
                         </div>
                       </div>
                     </td>
                     <td class="mono" style="font-weight: 700; color: #f8fafc;">${formattedPrice}</td>
-                    <td class="mono" style="color: #94a3b8;">${row.diffStr}</td>
-                    <td class="mono" style="color: #38bdf8; font-weight: 700;">${formattedDailyCoins} <span style="font-size: 10px; color: #64748b;">${row.coin}</span></td>
+                    <td class="mono" style="color: #94a3b8;">${escapeHtml(row.diffStr)}</td>
+                    <td class="mono" style="color: #38bdf8; font-weight: 700;">${formattedDailyCoins} <span style="font-size: 10px; color: #64748b;">${escapeHtml(row.coin)}</span></td>
                     <td class="mono" style="color: #cbd5e1;">${formattedGross} <span style="font-size: 10px; color: #64748b;">/ day</span></td>
                     <td>
                       <span class="yield-profit-badge ${isProfitable ? 'profit-positive' : 'profit-negative'}">
@@ -9855,7 +9855,7 @@ class HomeMinerFleetCard extends HTMLElement {
                       </div>
                     </td>
                     <td class="mono" style="font-size: 11px; color: #94a3b8;">
-                      ${row.stratumHost}:${row.stratumPort}
+                      ${escapeHtml(row.stratumHost)}:${escapeHtml(row.stratumPort)}
                     </td>
                     <td style="text-align: right;">
                       ${row.isMining ? `
@@ -9864,7 +9864,7 @@ class HomeMinerFleetCard extends HTMLElement {
                           Active
                         </span>
                       ` : `
-                        <button class="stratum-btn-action switch-coin-row-btn" data-coin="${row.coin}" data-host="${row.stratumHost}" data-port="${row.stratumPort}">
+                        <button class="stratum-btn-action switch-coin-row-btn" data-coin="${escapeHtml(row.coin)}" data-host="${escapeHtml(row.stratumHost)}" data-port="${escapeHtml(row.stratumPort)}">
                           ${svgIcon('zap', 11)} Switch Pool
                         </button>
                       `}
@@ -10018,9 +10018,9 @@ class HomeMinerFleetCard extends HTMLElement {
                 return `
                   <div class="rig-market-ticker-strip">
                     <div class="coin-badge-cluster">
-                      <div class="coin-symbol-circle">${rigSign}</div>
+                      <div class="coin-symbol-circle">${escapeHtml(rigSign)}</div>
                       <div>
-                        <div class="coin-name-label">${rigName} (${rigCoin})</div>
+                        <div class="coin-name-label">${escapeHtml(rigName)} (${escapeHtml(rigCoin)})</div>
                         <div class="mono" style="font-size: 10px; color: #64748b;">Active Mined Asset</div>
                       </div>
                     </div>
