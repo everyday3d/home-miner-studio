@@ -328,7 +328,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     async def _async_sync_lovelace_card_resource(call: ServiceCall | None = None) -> None:
         """Ensure Lovelace resource points to current version with cache buster."""
         try:
-            version_str = "0.7.11"
+            version_str = "0.7.12"
             try:
                 integration = await async_get_integration(hass, DOMAIN)
                 if integration and integration.version:

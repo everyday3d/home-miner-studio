@@ -1,6 +1,6 @@
-# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard [v0.7.11]
+# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard [v0.7.12]
 
-[![Release v0.7.11](https://img.shields.io/badge/Release-v0.7.11%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
+[![Release v0.7.12](https://img.shields.io/badge/Release-v0.7.12%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
 [![Wiki](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/wiki)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg?style=flat-square&logo=home-assistant)](https://www.home-assistant.io/)
@@ -11,12 +11,11 @@
 
 ---
 
-## 🆕 What's New in v0.7.11
+## 🆕 What's New in v0.7.12
 
-- **Live Mining Active Switch**: Toggling a miner's **Mining Active** switch in Home Assistant now sends the actual pause/curtailment command when turned off and resumes standard operation when turned back on (both over AxeOS HTTP for Bitaxe/NerdQaxe and CGMiner TCP socket for Avalon/WhatsMiner/Antminer).
-- **Configure Dialog Fix**: Fixed the integration's **Configure** dialog on newer Home Assistant releases so you can edit a miner's IP, port, coin, and pool credentials right from **Settings > Devices & Services** without an error.
-- **Custom Entity Names Preserved**: Renaming a miner in my dashboard now updates the integration entry and device name while leaving any custom entity names you set untouched.
-- **Cleaner Pool Error Logging & Resource Matching**: Query-string pool API keys are never written to Home Assistant's debug logs if a pool endpoint returns an HTTP error, and the automatic Lovelace card resource updater now strictly touches only the `/home_miner_studio/home-miner-cards.js` resource it registers.
+- **Admin-Only Miner Management Services**: All miner management and hardware control services (`add_miner`, `edit_miner`, `delete_miner`, `import_existing_miners`, `switch_stratum`, and hardware tuning actions) are now registered as Home Assistant admin services (`async_register_admin_service`) so non-admin accounts cannot add, edit, or remove rigs via service calls.
+- **Complete Card String Sanitization**: Wrapped the Solo Lottery Radar leader name and per-rig coin ticker badges in HTML escaping alongside the rest of the dashboard.
+- **Streamlined HACS Installation Steps**: Updated the Quick Start guide for direct HACS catalog search.
 
 ---
 
