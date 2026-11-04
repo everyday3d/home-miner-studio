@@ -77,11 +77,13 @@ class HomeMinerSwitch(CoordinatorEntity[MinerDataUpdateCoordinator], SwitchEntit
         return self._is_active and bool(self.coordinator.data.get("online", False))
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on mining."""
+        """Turn on mining (resume standard operating mode)."""
+        await self.coordinator.async_apply_solar_curtailment("standard")
         self._is_active = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off mining."""
+        """Turn off mining (apply pause / low-power curtailment mode)."""
+        await self.coordinator.async_apply_solar_curtailment("pause")
         self._is_active = False
         self.async_write_ha_state()

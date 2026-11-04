@@ -663,8 +663,10 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                             "pool_active_workers": worker_count,
                             "pool_reported_hashrate": round(hr_ghs, 2),
                         }
+        except aiohttp.ClientResponseError as err:
+            _LOGGER.debug("Pool data HTTP error status %s on %s", err.status, self.host)
         except Exception as err:
-            _LOGGER.debug("Pool data update error: %s", err)
+            _LOGGER.debug("Pool data update error on %s: %s", self.host, type(err).__name__)
 
         if self.pool_provider and self.pool_provider != POOL_NONE:
             if not self._cached_pool_data.get("pool_active_workers"):
@@ -710,7 +712,9 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             async with session.get(f"{base}&action={action}", timeout=timeout) as resp:
                 if resp.status in (401, 403):
                     raise PermissionError("Mining-Dutch rejected the API key")
-                resp.raise_for_status()
+                if resp.status != 200:
+                    _LOGGER.debug("Mining-Dutch HTTP status %s for %s", resp.status, self.host)
+                    return None
                 data = await resp.json(content_type=None)
                 return (data.get(action) or {}).get("data")
 
@@ -798,6 +802,7 @@ class MinerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif mode_lower == "standard":
             if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):
                 return await self.async_set_bitaxe_profile(PROFILE_STANDARD)
+            return await self._query_cgminer_socket("resume") is not None
         elif mode_lower == "pause":
             # Call pause via socket or REST
             if self.miner_type in (TYPE_BITAXE, TYPE_NERDQAXE):

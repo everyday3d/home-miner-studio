@@ -234,18 +234,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 data=new_data,
             )
             try:
-                from homeassistant.helpers import device_registry as dr, entity_registry as er
+                from homeassistant.helpers import device_registry as dr
                 dev_reg = dr.async_get(hass)
-                ent_reg = er.async_get(hass)
                 device = dev_reg.async_get_device(identifiers={(DOMAIN, target.entry_id)})
                 if device and new_title:
                     dev_reg.async_update_device(device.id, name_by_user=new_title)
-                    for ent in ent_reg.entities.values():
-                        if ent.device_id == device.id:
-                            base_sensor = ent.original_name or ent.entity_id.split(".")[-1]
-                            ent_reg.async_update_entity(ent.entity_id, name=f"{new_title} {base_sensor}")
             except Exception as d_err:
-                _LOGGER.warning("Could not update device/entity registry name: %s", d_err)
+                _LOGGER.warning("Could not update device registry name: %s", d_err)
             await hass.config_entries.async_reload(target.entry_id)
 
     async def handle_delete_miner_service(call: ServiceCall) -> None:
@@ -345,7 +340,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             matched = None
             for item in items:
                 u = item.get("url", "")
-                if "home-miner-cards.js" in u:
+                if u == CARD_URL or u.startswith(f"{CARD_URL}?"):
                     matched = item
                     break
 

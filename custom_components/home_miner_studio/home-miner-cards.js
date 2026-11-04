@@ -9488,12 +9488,12 @@ class HomeMinerFleetCard extends HTMLElement {
               <div class="coin-symbol-circle" style="width: 34px; height: 34px; font-size: 15px;">${activeCoinSign}</div>
               <div>
                 <div style="font-size: 14px; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
-                  <span>${activeCoinName} (${activeCoinSymbol}) Market Telemetry</span>
+                  <span>${escapeHtml(activeCoinName)} (${escapeHtml(activeCoinSymbol)}) Market Telemetry</span>
                   ${availableCoins.size > 1 ? `
                     <div style="display: flex; gap: 4px; margin-left: 8px;">
                       ${Array.from(availableCoins).map(c => `
-                        <button class="timeframe-btn coin-toggle-btn ${c === activeCoinSymbol ? 'active' : ''}" data-coin="${c}" style="padding: 2px 8px; font-size: 10px;">
-                          ${c}
+                        <button class="timeframe-btn coin-toggle-btn ${c === activeCoinSymbol ? 'active' : ''}" data-coin="${escapeHtml(c)}" style="padding: 2px 8px; font-size: 10px;">
+                          ${escapeHtml(c)}
                         </button>
                       `).join('')}
                     </div>
@@ -9553,9 +9553,9 @@ class HomeMinerFleetCard extends HTMLElement {
           <div class="lottery-title-cluster">
             <div class="lottery-icon-box">${selectedProfile.sign || svgIcon('target', 16)}</div>
             <div>
-              <div class="lottery-title">Solo Block Probability Radar • ${selectedProfile.name} (${radarCoin})</div>
+              <div class="lottery-title">Solo Block Probability Radar • ${escapeHtml(selectedProfile.name)} (${escapeHtml(radarCoin)})</div>
               <div class="mono" style="font-size: 11px; color: #94a3b8;">
-                Poisson Block Arrival Probability • ${selectedProfile.algo} Difficulty Target Tracker
+                Poisson Block Arrival Probability • ${escapeHtml(selectedProfile.algo)} Difficulty Target Tracker
               </div>
             </div>
           </div>
@@ -9568,7 +9568,7 @@ class HomeMinerFleetCard extends HTMLElement {
                   const isMining = fleetCoins.includes(c);
                   const isSel = c === radarCoin;
                   const tag = isMining ? ' [ACTIVE]' : '';
-                  return `<option value="${c}" ${isSel ? 'selected' : ''}>${c}${tag}</option>`;
+                  return `<option value="${escapeHtml(c)}" ${isSel ? 'selected' : ''}>${escapeHtml(c)}${tag}</option>`;
                 }).join('')}
               </select>
             </div>
