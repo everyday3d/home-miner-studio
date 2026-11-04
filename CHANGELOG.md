@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.11] - 2026-10-24
+
+### Fixed
+- **OptionsFlow Compatibility, Active Switch Wiring & Resource Matcher** ([#50](https://github.com/everyday3d/home-miner-studio/issues/50)):
+  - Removed deprecated `self.config_entry` assignment in `HomeMinerStudioOptionsFlow.__init__` so opening the Configure dialog uses Home Assistant's built-in `self.config_entry` property without raising `AttributeError`.
+  - Wired `HomeMinerSwitch` (`Mining Active` switch) to `coordinator.async_apply_solar_curtailment("pause")` on `turn_off` and `async_apply_solar_curtailment("standard")` on `turn_on` (including CGMiner `resume` socket support).
+  - Updated `_async_sync_lovelace_card_resource` in `__init__.py` to match only the resource created at `CARD_URL` (`u == CARD_URL or u.startswith(f"{CARD_URL}?")`).
+  - Removed entity-renaming loop in `handle_edit_miner_service` so user-customized entity names are preserved when renaming a miner.
+
+### Security
+- **Mining-Dutch API Key Log Redaction & Coin Escaping** ([#50](https://github.com/everyday3d/home-miner-studio/issues/50)):
+  - Removed `resp.raise_for_status()` in `_fetch_mining_dutch` and added explicit `aiohttp.ClientResponseError` status-only logging in `_fetch_pool_data` so query-string API keys are never written to Home Assistant logs.
+  - Escaped remaining coin name/symbol interpolations in the Market Telemetry and Solo Lottery Radar views of `home-miner-cards.js`.
+
 ## [0.7.10] - 2026-10-24
 
 ### Added
@@ -15,11 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Setup completion encouragement: prominently displays "Last Backup" status timestamp and suggests backup upon initial rig configuration.
 
 ### Fixed
-- **OptionsFlow Compatibility, Active Switch Wiring & Resource Matcher** ([#50](https://github.com/everyday3d/home-miner-studio/issues/50)):
-  - Removed deprecated `self.config_entry` assignment in `HomeMinerStudioOptionsFlow.__init__` so opening the Configure dialog uses Home Assistant's built-in `self.config_entry` property without raising `AttributeError`.
-  - Wired `HomeMinerSwitch` (`Mining Active` switch) to `coordinator.async_apply_solar_curtailment("pause")` on `turn_off` and `async_apply_solar_curtailment("standard")` on `turn_on` (including CGMiner `resume` socket support).
-  - Updated `_async_sync_lovelace_card_resource` in `__init__.py` to match only the resource created at `CARD_URL` (`u == CARD_URL or u.startswith(f"{CARD_URL}?")`).
-  - Removed entity-renaming loop in `handle_edit_miner_service` so user-customized entity names are preserved when renaming a miner.
 - **Lovelace Card Static Path & Resource URL Alignment** ([#49](https://github.com/everyday3d/home-miner-studio/issues/49)):
   - Fixed `_async_sync_lovelace_card_resource` in `__init__.py` to register `CARD_URL` (`/home_miner_studio/home-miner-cards.js`) instead of `/local/home-miner-cards.js`, ensuring clean HACS installs load the card without manual `/config/www/` file copies.
   - Added `"frontend"` to `dependencies` in `manifest.json`.
@@ -27,9 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced per-request `aiohttp.ClientSession()` instantiation across `coordinator.py` and `market.py` with Home Assistant's managed `async_get_clientsession(hass)` and added socket timeouts on CGMiner TCP queries.
 
 ### Security
-- **Mining-Dutch API Key Log Redaction & Coin Escaping** ([#50](https://github.com/everyday3d/home-miner-studio/issues/50)):
-  - Removed `resp.raise_for_status()` in `_fetch_mining_dutch` and added explicit `aiohttp.ClientResponseError` status-only logging in `_fetch_pool_data` so query-string API keys are never written to Home Assistant logs.
-  - Escaped remaining coin name/symbol interpolations in the Market Telemetry and Solo Lottery Radar views of `home-miner-cards.js`.
 - **Strict Integration Isolation & Credential Protection** ([#49](https://github.com/everyday3d/home-miner-studio/issues/49)):
   - Replaced foreign integration `config_entries` / device registry scraping in `discovery.py` with a standalone local LAN subnet probe (`Port 80` AxeOS & `Port 4028` CGMiner RPC), eliminating access to other integrations' entries and credentials.
   - Removed fallback foreign device/entity mutation in `handle_edit_miner_service`.

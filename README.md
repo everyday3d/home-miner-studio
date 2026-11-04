@@ -1,13 +1,22 @@
-# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard
+# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard [v0.7.11]
 
-[![Release v0.7.10](https://img.shields.io/badge/Release-v0.7.10%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
+[![Release v0.7.11](https://img.shields.io/badge/Release-v0.7.11%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
 [![Wiki](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/wiki)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg?style=flat-square&logo=home-assistant)](https://www.home-assistant.io/)
 [![Discussions](https://img.shields.io/badge/Community-Discussions%20%26%20Roadmap-blueviolet?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/discussions/7)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-**Home Miner Studio** is a unified, privacy-first Home Assistant custom integration and interactive Lovelace dashboard designed specifically for home cryptocurrency miners. It bridges local ASIC, micro-miner (Bitaxe, NerdMiner), and GPU rig telemetry directly into Home Assistant's native entities, energy dashboards, and solar automations.
+**Home Miner Studio** is a unified, privacy-first Home Assistant custom integration and interactive Lovelace dashboard I built for my home crypto mining fleet. It bridges local ASIC, micro-miner (Bitaxe, NerdQaxe, Canaan Avalon Nano), and GPU rig telemetry directly into Home Assistant's native entities, energy dashboards, and solar automations.
+
+---
+
+## 🆕 What's New in v0.7.11
+
+- **Live Mining Active Switch**: Toggling a miner's **Mining Active** switch in Home Assistant now sends the actual pause/curtailment command when turned off and resumes standard operation when turned back on (both over AxeOS HTTP for Bitaxe/NerdQaxe and CGMiner TCP socket for Avalon/WhatsMiner/Antminer).
+- **Configure Dialog Fix**: Fixed the integration's **Configure** dialog on newer Home Assistant releases so you can edit a miner's IP, port, coin, and pool credentials right from **Settings > Devices & Services** without an error.
+- **Custom Entity Names Preserved**: Renaming a miner in my dashboard now updates the integration entry and device name while leaving any custom entity names you set untouched.
+- **Cleaner Pool Error Logging & Resource Matching**: Query-string pool API keys are never written to Home Assistant's debug logs if a pool endpoint returns an HTTP error, and the automatic Lovelace card resource updater now strictly touches only the `/home_miner_studio/home-miner-cards.js` resource it registers.
 
 ---
 
