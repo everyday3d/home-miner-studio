@@ -1,6 +1,6 @@
-# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard [v0.7.12]
+# ⚡ Home Miner Studio — Home Assistant Mining Hub & Lovelace Dashboard [v0.7.13]
 
-[![Release v0.7.12](https://img.shields.io/badge/Release-v0.7.12%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
+[![Release v0.7.13](https://img.shields.io/badge/Release-v0.7.13%20(Official)-00e676?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/releases/latest)
 [![Wiki](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square&logo=github)](https://github.com/everyday3d/home-miner-studio/wiki)
 [![HACS](https://img.shields.io/badge/HACS-Default-blue.svg?style=flat-square)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg?style=flat-square&logo=home-assistant)](https://www.home-assistant.io/)
@@ -11,11 +11,10 @@
 
 ---
 
-## 🆕 What's New in v0.7.12
+## 🆕 What's New in v0.7.13
 
-- **Admin-Only Miner Management Services**: All miner management and hardware control services (`add_miner`, `edit_miner`, `delete_miner`, `import_existing_miners`, `switch_stratum`, and hardware tuning actions) are now registered as Home Assistant admin services (`async_register_admin_service`) so non-admin accounts cannot add, edit, or remove rigs via service calls.
-- **Complete Card String Sanitization**: Wrapped the Solo Lottery Radar leader name and per-rig coin ticker badges in HTML escaping alongside the rest of the dashboard.
-- **Streamlined HACS Installation Steps**: Updated the Quick Start guide for direct HACS catalog search.
+- **Official HACS Default Catalog Inclusion**: **Home Miner Studio** is now officially merged into the default HACS repository catalog! You can search for **Home Miner Studio** directly in **HACS > Integrations** and install it in one click.
+- **Registered `restart_mining` Admin Service**: Wired `home_miner_studio.restart_mining` via `async_register_admin_service` so Home Assistant automations and scripts can restart the mining process on a rig without a full hardware reboot.
 
 ---
 

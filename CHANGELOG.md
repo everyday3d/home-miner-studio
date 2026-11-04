@@ -5,11 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.12] - 2026-10-24
+## [0.7.13] - 2026-10-24
 
 ### Fixed
 - **Register `restart_mining` Admin Service** ([#52](https://github.com/everyday3d/home-miner-studio/issues/52)):
   - Registered `SERVICE_RESTART_MINING` (`handle_restart_mining_service`) via `async_register_admin_service` in `__init__.py` to match its declaration in `services.yaml`.
+
+## [0.7.12] - 2026-10-24
 
 ### Security
 - **Admin RBAC Service Registration & Final Card Escaping** ([#51](https://github.com/everyday3d/home-miner-studio/issues/51)):
