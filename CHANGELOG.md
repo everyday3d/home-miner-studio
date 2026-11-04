@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.12] - 2026-10-24
 
+### Fixed
+- **Register `restart_mining` Admin Service** ([#52](https://github.com/everyday3d/home-miner-studio/issues/52)):
+  - Registered `SERVICE_RESTART_MINING` (`handle_restart_mining_service`) via `async_register_admin_service` in `__init__.py` to match its declaration in `services.yaml`.
+
 ### Security
 - **Admin RBAC Service Registration & Final Card Escaping** ([#51](https://github.com/everyday3d/home-miner-studio/issues/51)):
   - Registered all miner management and hardware control services (`import_existing_miners`, `add_miner`, `edit_miner`, `delete_miner`, `switch_stratum`, `apply_solar_curtailment`, `set_axeos_tuning`, `set_axeos_profile`, `reboot_miner`, `bust_card_cache`) via `homeassistant.helpers.service.async_register_admin_service` so non-admin users cannot create, modify, or delete miners via service calls.

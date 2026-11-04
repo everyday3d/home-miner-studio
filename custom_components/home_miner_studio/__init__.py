@@ -171,6 +171,16 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         }),
     )
 
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_RESTART_MINING,
+        handle_restart_mining_service,
+        schema=vol.Schema({
+            vol.Optional("host"): cv.string,
+        }),
+    )
+
     async def handle_switch_stratum_service(call: ServiceCall) -> None:
         """Handle stratum pool switching service call."""
         stratum_url = call.data.get("stratum_url")
